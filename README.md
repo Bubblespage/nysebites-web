@@ -1,16 +1,11 @@
-# nyse_bites
+🍪 NYSE Bites — Artisanal Cookie & Cake Storefront
 
-A new Flutter project.
+A responsive, feature-packed e-commerce web application designed for NYSE Bites, an artisanal bakery specializing in handcrafted cookies, fudgy brownies, and custom celebration cakes.
 
-## Getting Started
+Built with Flutter Web, featuring dynamic client-side state management, interactive cake customization with live price recalculation, and a sliding review carousel.
 
-This project is a starting point for a Flutter application.
+🛠️ Tech Stack
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Framework: Flutter Web
+- Language: Dart
+- Package: `url_launcher` (social links & email contact)
