@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import '../data/mock_products.dart';
 import '../models/product.dart';
 import '../widgets/app_bar_header.dart';
+import '../widgets/auth_modal.dart';
 import '../widgets/cart_drawer.dart';
 import '../widgets/category_filter.dart';
+import '../widgets/contact_section.dart';
 import '../widgets/custom_cake_modal.dart';
 import '../widgets/footer.dart';
 import '../widgets/hero_banner.dart';
+import '../widgets/mobile_nav_drawer.dart';
 import '../widgets/product_card.dart';
 import '../widgets/reviews_slideshow.dart';
-import '../widgets/settings_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,54 +23,139 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+
+  final GlobalKey _heroKey = GlobalKey();
+  final GlobalKey _menuKey = GlobalKey();
+  final GlobalKey _reviewsKey = GlobalKey();
+  final GlobalKey _sweetNoteKey = GlobalKey();
+  final GlobalKey _footerKey = GlobalKey();
 
   String _selectedCategory = 'all';
   String _searchQuery = '';
   final List<Product> _cart = [];
 
-  // Settings State
-  bool _nutFreeFilter = false;
-  String _sweetnessLevel = '100% Regular Sweet';
-  bool _ecoPackaging = true;
+  // Auth User State
+  String? _currentUser;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   List<Product> get _filteredProducts {
     return mockProducts.where((p) {
-      final matchesCategory =
-          _selectedCategory == 'all' || p.category == _selectedCategory;
+      bool matchesCategory;
+      if (_selectedCategory == 'daily_batches') {
+        matchesCategory = p.category == 'cookies' || p.category == 'brownies';
+      } else if (_selectedCategory == 'all') {
+        matchesCategory = true;
+      } else {
+        matchesCategory = p.category == _selectedCategory;
+      }
+
       final matchesSearch =
           p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           p.description.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesNutFree =
-          !_nutFreeFilter || !p.description.toLowerCase().contains('walnut');
-
-      return matchesCategory && matchesSearch && matchesNutFree;
+      return matchesCategory && matchesSearch;
     }).toList();
   }
 
   double get _cartTotal => _cart.fold(0.0, (sum, item) => sum + item.price);
 
-  void _scrollToMenu() {
+  void _scrollToKey(GlobalKey key, {double alignment = 0.0}) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        alignment: alignment,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  void _scrollToTop() {
     _scrollController.animateTo(
-      600,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
+      0.0,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOutCubic,
     );
+  }
+
+  void _onMenuClick() {
+    setState(() => _selectedCategory = 'all');
+    _scrollToKey(_menuKey);
+  }
+
+  void _onCustomCakesClick() {
+    setState(() => _selectedCategory = 'cakes');
+    _scrollToKey(_menuKey);
+  }
+
+  void _onDailyBatchesClick() {
+    setState(() => _selectedCategory = 'daily_batches');
+    _scrollToKey(_menuKey);
+  }
+
+  void _onReviewsClick() {
+    _scrollToKey(_reviewsKey, alignment: 0.0);
+  }
+
+  void _onSweetNoteClick() {
+    _scrollToKey(_sweetNoteKey, alignment: 0.0);
+  }
+
+  void _onContactClick() {
+    _scrollToKey(_footerKey, alignment: 0.0);
+  }
+
+  void _openAuthModal() {
+    showDialog(
+      context: context,
+      builder: (context) => AuthModal(
+        onLoginSuccess: (userName) {
+          setState(() => _currentUser = userName);
+        },
+      ),
+    );
+  }
+
+  void _logout() {
+    setState(() => _currentUser = null);
   }
 
   void _addToCart(Product product) {
     setState(() => _cart.add(product));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added "${product.name}" to tray!'),
-        action: SnackBarAction(
-          label: 'VIEW TRAY',
-          textColor: const Color(0xFFDDB892),
-          onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-        ),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
+  }
+
+  void _removeSingleItem(Product product) {
+    final index = _cart.indexWhere(
+      (p) =>
+          p.id == product.id &&
+          p.price == product.price &&
+          p.name == product.name,
     );
+    if (index != -1) {
+      setState(() => _cart.removeAt(index));
+    }
+  }
+
+  void _removeAllOfProduct(Product product) {
+    setState(() {
+      _cart.removeWhere(
+        (p) =>
+            p.id == product.id &&
+            p.price == product.price &&
+            p.name == product.name,
+      );
+    });
+  }
+
+  void _clearCart() {
+    setState(() => _cart.clear());
   }
 
   void _openCustomCakeBuilder(Product cakeProduct) {
@@ -81,132 +168,231 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openSettings() {
-    showDialog(
-      context: context,
-      builder: (context) => SettingsModal(
-        nutFreeFilter: _nutFreeFilter,
-        sweetnessLevel: _sweetnessLevel,
-        ecoPackaging: _ecoPackaging,
-        onSave: (nutFree, sweetness, eco) {
-          setState(() {
-            _nutFreeFilter = nutFree;
-            _sweetnessLevel = sweetness;
-            _ecoPackaging = eco;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Bake preferences updated!'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _removeFromCart(int index) {
-    setState(() => _cart.removeAt(index));
-  }
-
-  void _checkout() {
-    if (_cart.isEmpty) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('🎉 Order Queued for Fresh Baking!'),
-        content: Text(
-          'Thank you for ordering with Nyse Bites.\n\n'
-          'Tray Total: ${_cart.length} item(s)\n'
-          'Amount: ₱${_cartTotal.toStringAsFixed(2)}\n'
-          'Sweetness Preference: $_sweetnessLevel\n'
-          'Eco Packaging: ${_ecoPackaging ? "Yes" : "Standard"}\n\n'
-          'Our kitchen will begin crafting your sweets!',
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8E4A23),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              setState(() => _cart.clear());
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 768;
+
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: const Color(0xFFFAF4ED),
+      // Left Mobile Navigation Drawer
+      drawer: MobileNavDrawer(
+        currentUser: _currentUser,
+        onMenuClick: _onMenuClick,
+        onCustomCakesClick: _onCustomCakesClick,
+        onDailyBatchesClick: _onDailyBatchesClick,
+        onReviewsClick: _onReviewsClick,
+        onSweetNoteClick: _onSweetNoteClick,
+        onContactClick: _onContactClick,
+        onOpenAuth: _openAuthModal,
+        onLogout: _logout,
+      ),
+      // Right Sweet Tray Drawer
       endDrawer: CartDrawer(
         cartItems: _cart,
         totalPrice: _cartTotal,
-        onRemoveItem: _removeFromCart,
-        onCheckout: _checkout,
+        currentUser: _currentUser,
+        onAddToCart: _addToCart,
+        onRemoveSingleItem: _removeSingleItem,
+        onRemoveAllOfProduct: _removeAllOfProduct,
+        onClearCart: _clearCart,
       ),
       appBar: AppBarHeader(
-        cartItemCount: _cart.length,
-        onOpenCart: () => _scaffoldKey.currentState?.openEndDrawer(),
-        onOpenSettings: _openSettings,
+        currentUser: _currentUser,
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+        onOpenAuth: _openAuthModal,
+        onLogout: _logout,
+        onLogoClick: _scrollToTop,
+        onMenuClick: _onMenuClick,
+        onCustomCakesClick: _onCustomCakesClick,
+        onDailyBatchesClick: _onDailyBatchesClick,
+        onReviewsClick: _onReviewsClick,
+        onSweetNoteClick: _onSweetNoteClick,
+        onContactClick: _onContactClick,
       ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        child: Column(
-          children: [
-            HeroBanner(onExploreMenu: _scrollToMenu),
-            _buildMenuSection(),
-            // Auto-sliding review carousel component
-            const ReviewsSlideshow(),
-            const Footer(),
-          ],
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: _buildIconOnlyFloatingTrayButton(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 0.25, 0.55, 0.85, 1.0],
+            colors: [
+              Color(0xFFFAF2E9),
+              Color(0xFFFBF6F0),
+              Color(0xFFF8EFE4),
+              Color(0xFFF5E9DB),
+              Color(0xFFEFE2D2),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: [
+              HeroBanner(
+                key: _heroKey,
+                onExploreMenu: _onMenuClick,
+                onBuildCustomCake: _onCustomCakesClick,
+              ),
+              _buildMenuSection(isMobile),
+
+              // Reviews Section
+              Container(
+                key: _reviewsKey,
+                constraints: BoxConstraints(
+                  minHeight: isMobile
+                      ? 0
+                      : MediaQuery.of(context).size.height * 0.7,
+                ),
+                alignment: Alignment.center,
+                child: const ReviewsSlideshow(),
+              ),
+
+              // Sweet Note Section
+              ContactSection(key: _sweetNoteKey),
+
+              // Footer Section
+              Footer(key: _footerKey),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuSection() {
+  Widget _buildIconOnlyFloatingTrayButton() {
+    final hasItems = _cart.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, right: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2E1B10),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFDCC8B8), width: 1.2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.28),
+                  blurRadius: 12,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: Colors.white,
+                  size: 22,
+                ),
+                if (hasItems)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8E4A23),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '${_cart.length}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuSection(bool isMobile) {
     return Container(
+      key: _menuKey,
       constraints: const BoxConstraints(maxWidth: 1200),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: isMobile ? 32 : 48,
+      ),
       child: Column(
         children: [
-          const Text(
-            'Explore Our Oven Creations',
+          Text(
+            _selectedCategory == 'daily_batches'
+                ? 'Today\'s Daily Oven Drops'
+                : 'Explore Our Oven Creations',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'serif',
-              fontSize: 28,
+              fontSize: isMobile ? 24 : 32,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF2E1B10),
+              color: const Color(0xFF2E1B10),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Handcrafted fresh daily • Click "Build" on cakes to customize layers & piping!',
-            style: TextStyle(color: Color(0xFF756256)),
+          Text(
+            _selectedCategory == 'daily_batches'
+                ? 'Small-batch cookies and fudge brownies baked fresh this morning.'
+                : 'Handcrafted fresh daily • Click "Build" on cakes to customize layers & piping!',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF756256), fontSize: 13),
           ),
           const SizedBox(height: 20),
 
           // Search Bar
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: const BoxConstraints(maxWidth: 540),
             child: TextField(
+              controller: _searchController,
               onChanged: (val) => setState(() => _searchQuery = val),
               decoration: InputDecoration(
                 hintText: 'Search cookies, fudge brownies, cakes...',
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF8E4A23)),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.cancel,
+                          color: Color(0xFF8E4A23),
+                          size: 18,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
+                  vertical: 10,
                   horizontal: 16,
                 ),
                 border: OutlineInputBorder(
@@ -224,12 +410,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Category Pills
           CategoryFilter(
-            selectedCategory: _selectedCategory,
+            selectedCategory: _selectedCategory == 'daily_batches'
+                ? 'all'
+                : _selectedCategory,
             onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
           ),
           const SizedBox(height: 28),
 
-          // Product Grid
           if (_filteredProducts.isEmpty)
             Container(
               padding: const EdgeInsets.all(40),
@@ -239,22 +426,38 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             )
           else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _filteredProducts.length,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 340,
-                childAspectRatio: 0.74,
-                crossAxisSpacing: 24,
-                mainAxisSpacing: 24,
-              ),
-              itemBuilder: (context, index) {
-                final product = _filteredProducts[index];
-                return ProductCard(
-                  product: product,
-                  onAddToCart: _addToCart,
-                  onCustomize: _openCustomCakeBuilder,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth;
+                final columnCount = availableWidth < 900
+                    ? 2
+                    : availableWidth < 1060
+                    ? 3
+                    : 4;
+                final spacing = availableWidth < 760 ? 12.0 : 20.0;
+                final cardWidth =
+                    (availableWidth - (columnCount - 1) * spacing) /
+                    columnCount;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _filteredProducts.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columnCount,
+                    childAspectRatio: cardWidth < 220 ? 0.62 : 0.76,
+                    mainAxisExtent: availableWidth < 900 ? 310 : null,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                  ),
+                  itemBuilder: (context, index) {
+                    final product = _filteredProducts[index];
+                    return ProductCard(
+                      product: product,
+                      onAddToCart: _addToCart,
+                      onCustomize: _openCustomCakeBuilder,
+                    );
+                  },
                 );
               },
             ),

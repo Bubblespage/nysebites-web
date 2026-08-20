@@ -52,175 +52,191 @@ class Footer extends StatelessWidget {
           child: Column(
             children: [
               // Main Footer Columns
-              Wrap(
-                spacing: 40,
-                runSpacing: 32,
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.start,
-                children: [
-                  // Brand & Story Column
-                  SizedBox(
-                    width: 280,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compactColumnWidth = constraints.maxWidth < 600
+                      ? constraints.maxWidth
+                      : null;
+
+                  return Wrap(
+                    spacing: 40,
+                    runSpacing: 32,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    children: [
+                      // Brand & Story Column
+                      SizedBox(
+                        width: compactColumnWidth ?? 280,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/images/logo.jpg',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.cookie_outlined,
-                                    color: Color(0xFF8E4A23),
-                                    size: 18,
+                            Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: ClipOval(
+                                    child: Image.asset(
+                                      'assets/images/logo.jpg',
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.cookie_outlined,
+                                        color: Color(0xFF8E4A23),
+                                        size: 18,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Nyse Bites.',
-                              style: TextStyle(
-                                fontFamily: 'serif',
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Handcrafted cookies, brownies, and signature cakes made from scratch daily using premium real butter and chocolates.',
-                          style: TextStyle(
-                            color: Color(0xFFD1C5BC),
-                            fontSize: 13,
-                            height: 1.6,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Contact & Email Column
-                  SizedBox(
-                    width: 240,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Get In Touch',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _sendEmail('aromanteacup@gmail.com'),
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.email_outlined,
-                                  color: Color(0xFFDDB892),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  'aromanteacup@gmail.com',
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Nyse Bites.',
                                   style: TextStyle(
-                                    color: Color(0xFFEFE4D6),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    decoration: TextDecoration.underline,
+                                    fontFamily: 'serif',
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: const [
-                            Icon(
-                              Icons.location_on_outlined,
-                              color: Color(0xFFDDB892),
-                              size: 18,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Fresh Daily Bakehouse',
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Handcrafted cookies, brownies, and signature cakes made from scratch daily using premium real butter and chocolates.',
                               style: TextStyle(
                                 color: Color(0xFFD1C5BC),
                                 fontSize: 13,
+                                height: 1.6,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
 
-                  // Social Media & Hours Column
-                  SizedBox(
-                    width: 240,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Follow Our Bakes',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
+                      // Contact & Email Column
+                      SizedBox(
+                        width: compactColumnWidth ?? 240,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Instagram Link Button
-                            _FooterSocialBtn(
-                              icon: Icons.camera_alt_outlined,
-                              label: 'Instagram',
-                              onTap: () => _openUrl(
-                                'https://www.instagram.com/nysebites?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+                            const Text(
+                              'Get In Touch',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            // Facebook Link Button
-                            _FooterSocialBtn(
-                              icon: Icons.facebook,
-                              label: 'Facebook',
-                              onTap: () => _openUrl(
-                                'https://www.facebook.com/NYSEbites',
+                            const SizedBox(height: 14),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () =>
+                                    _sendEmail('aromanteacup@gmail.com'),
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.email_outlined,
+                                      color: Color(0xFFDDB892),
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Flexible(
+                                      child: Text(
+                                        'aromanteacup@gmail.com',
+                                        style: TextStyle(
+                                          color: Color(0xFFEFE4D6),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: const [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  color: Color(0xFFDDB892),
+                                  size: 18,
+                                ),
+                                SizedBox(width: 10),
+                                Flexible(
+                                  child: Text(
+                                    'Fresh Daily Bakehouse',
+                                    style: TextStyle(
+                                      color: Color(0xFFD1C5BC),
+                                      fontSize: 13,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Social Media & Hours Column
+                      SizedBox(
+                        width: compactColumnWidth ?? 240,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Follow Our Bakes',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 8,
+                              children: [
+                                // Instagram Link Button
+                                _FooterSocialBtn(
+                                  icon: Icons.camera_alt_outlined,
+                                  label: 'Instagram',
+                                  onTap: () => _openUrl(
+                                    'https://www.instagram.com/nysebites?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+                                  ),
+                                ),
+                                // Facebook Link Button
+                                _FooterSocialBtn(
+                                  icon: Icons.facebook,
+                                  label: 'Facebook',
+                                  onTap: () => _openUrl(
+                                    'https://www.facebook.com/NYSEbites',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              'Mon – Sat: 9:00 AM – 6:00 PM',
+                              style: TextStyle(
+                                color: Color(0xFFA89A90),
+                                fontSize: 12,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 14),
-                        const Text(
-                          'Mon – Sat: 9:00 AM – 6:00 PM',
-                          style: TextStyle(
-                            color: Color(0xFFA89A90),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(height: 40),

@@ -1,64 +1,117 @@
 import '../models/product.dart';
 
 final List<Product> mockProducts = [
+  // ==========================================
+  // 🍪 ARTISANAL COOKIES (Box of 4 / Box of 6)
+  // ==========================================
   const Product(
     id: 1,
-    name: "Classic Chocolate Chip",
-    category: "cookies",
-    price: 65.00,
+    name: 'Snicker-Doodle Hug',
+    category: 'cookies',
+    price: 240.0,
+    priceBox6: 350.0,
+    servingSize: 'Box of 4/6',
     description:
-        "Golden brown exterior with gooey melted belgian chocolate chunks.",
-    imageUrl:
-        "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=600&q=80",
+        'Soft-baked cookie studded with roasted peanuts, gooey nougat caramel pockets, and creamy melted milk chocolate.',
+    imgSrc: 'assets/images/snickers.jpg',
   ),
   const Product(
     id: 2,
-    name: "White Chocolate",
-    category: "cookies",
-    price: 75.00,
+    name: 'Dark Chocolate Noir',
+    category: 'cookies',
+    price: 220.0,
+    priceBox6: 320.0,
+    servingSize: 'Box of 4/6',
     description:
-        "Uji matcha infused dough topped with sweet white chocolate morsels.",
-    imageUrl:
-        "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80",
-  ),
-  const Product(
-    id: 3,
-    name: "Triple Chocolate Fudge Brownie",
-    category: "brownies",
-    price: 85.00,
-    description:
-        "Dense, chewy dark chocolate fudge brownie with a crackly crust.",
-    imageUrl:
-        "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80",
+        'Intense 70% dark Belgian cocoa dough packed with molten dark chocolate morsels and finished with flaky sea salt.',
+    imgSrc: 'assets/images/dark choco.jpg',
   ),
   const Product(
     id: 4,
-    name: "Salted Caramel Brownie",
-    category: "brownies",
-    price: 90.00,
+    name: 'Red Velvet Kiss Blossom',
+    category: 'cookies',
+    price: 230.0,
+    priceBox6: 330.0,
+    servingSize: 'Box of 4/6',
     description:
-        "Rich fudge brownie swirled with homemade salted butter caramel.",
-    imageUrl:
-        "https://images.unsplash.com/photo-1515037893149-de7f840978e2?auto=format&fit=crop&w=600&q=80",
+        'Vibrant crimson cocoa cookie with a gooey cream cheese molten center and studded with premium white chocolate chips.',
+    imgSrc: 'assets/images/redvelvet.jpg',
   ),
   const Product(
     id: 5,
-    name: "Signature Red Velvet Layer Cake",
-    category: "cakes",
-    price: 450.00,
+    name: 'Biscoff Nocciola Swirl',
+    category: 'cookies',
+    price: 260.0,
+    priceBox6: 375.0,
+    servingSize: 'Box of 4/6',
     description:
-        "Fluffy scarlet sponge layered with smooth cream cheese frosting.",
-    imageUrl:
-        "https://images.unsplash.com/photo-1586788680434-30d324b2d46f?auto=format&fit=crop&w=600&q=80",
+        'Golden cookie filled with spiced Lotus Biscoff cookie butter spread and swirled with rich Nutella hazelnut cocoa.',
+    imgSrc: 'assets/images/biscoff.jpg',
   ),
   const Product(
-    id: 6,
-    name: "Old-Fashioned Carrot Cake",
-    category: "cakes",
-    price: 480.00,
+    id: 3,
+    name: 'Belgian Choco Chip',
+    category: 'cookies',
+    price: 200.0,
+    priceBox6: 290.0,
+    servingSize: 'Box of 4/6',
     description:
-        "Spiced cake packed with fresh carrots, walnuts, and cinnamon cream.",
-    imageUrl:
-        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80",
+        'Our signature browned-butter cookie with golden, chewy edges and loaded with molten semi-sweet chocolate pools.',
+    imgSrc: 'assets/images/og.jpg',
+  ),
+
+  // ==========================================
+  // 🍫 FUDGE BROWNIES (Box of 8 pieces)
+  // ==========================================
+  const Product(
+    id: 6,
+    name: 'Hershey\'s Almond Cloud Squares',
+    category: 'brownies',
+    price: 380.0,
+    servingSize: 'Box of 8 pcs',
+    description:
+        'Ultra-fudgy dark cocoa brownie squares topped with crunchy roasted whole almonds and a smooth Hershey’s chocolate drizzle.',
+    imgSrc: 'assets/images/brownies.jpg',
+  ),
+  const Product(
+    id: 7,
+    name: 'Dark Kissed Melt Bites',
+    category: 'brownies',
+    price: 390.0,
+    servingSize: 'Box of 8 pcs',
+    description:
+        'Decadent, crinkle-top double fudge brownie squares baked with rich Hershey’s Special Dark Kisses melted throughout.',
+    imgSrc: 'assets/images/brownies1.jpg',
+  ),
+
+  // ==========================================
+  // 🎂 CUSTOM CAKES (Celebration Layers)
+  // ==========================================
+  const Product(
+    id: 8,
+    name: 'Pure Decadence Cocoa Fudge',
+    category: 'cakes',
+    price: 850.0,
+    description:
+        'All-chocolate indulgence with deep cocoa sponge layers, rich dark fudge filling, and vintage piped chocolate buttercream borders.',
+    imgSrc: 'assets/images/cake4.jpg',
+  ),
+  const Product(
+    id: 9,
+    name: 'Vanilla Sky Cerulean Dream',
+    category: 'cakes',
+    price: 880.0,
+    description:
+        'Playful sky-blue celebration cake featuring handcrafted 3D edible fondant character toppers, cloud piping, and vanilla buttercream swirls.',
+    imgSrc: 'assets/images/cake2_.jpg',
+  ),
+  const Product(
+    id: 10,
+    name: 'Lavender Noir Velvet',
+    category: 'cakes',
+    price: 950.0,
+    description:
+        'Stunning 3D sculpted doll celebration cake with dramatic tiered cascading purple buttercream ruffles and floral petal piping.',
+    imgSrc: 'assets/images/cake1.jpg',
   ),
 ];

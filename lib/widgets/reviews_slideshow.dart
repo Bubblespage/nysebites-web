@@ -89,7 +89,10 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
     _autoSlideTimer?.cancel();
     _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!_isHovered && mounted) {
-        final nextPage = (_currentPage + 1) % _reviewBatches.length;
+        final pageCount = MediaQuery.of(context).size.width < 980
+            ? _reviewBatches.expand((batch) => batch).length
+            : _reviewBatches.length;
+        final nextPage = (_currentPage + 1) % pageCount;
         _pageController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 600),
@@ -118,11 +121,18 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 980;
+    final mobileReviews = _reviewBatches.expand((batch) => batch).toList();
+    final mobileCardWidth = screenWidth > 40
+        ? (screenWidth - 40).clamp(200.0, 310.0)
+        : 280.0;
 
     return Container(
       width: double.infinity,
       color: const Color(0xFFF7ECE1),
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        vertical: isMobile ? 28 : 48,
+        horizontal: 20,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1060),
@@ -148,15 +158,21 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
                   height: isMobile ? 200 : 175,
                   child: PageView.builder(
                     controller: _pageController,
-                    itemCount: _reviewBatches.length,
+                    itemCount: isMobile
+                        ? mobileReviews.length
+                        : _reviewBatches.length,
                     onPageChanged: (index) =>
                         setState(() => _currentPage = index),
                     itemBuilder: (context, index) {
                       final batch = _reviewBatches[index];
 
                       if (isMobile) {
-                        // Display 1 card per slide on mobile screens
-                        return Center(child: _buildSmallCard(batch[0]));
+                        return Center(
+                          child: _buildSmallCard(
+                            mobileReviews[index],
+                            width: mobileCardWidth,
+                          ),
+                        );
                       }
 
                       // Display exact 3 side-by-side small cards on desktop
@@ -165,7 +181,7 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
                         children: batch.map((review) {
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: _buildSmallCard(review),
+                            child: _buildSmallCard(review, width: 310),
                           );
                         }).toList(),
                       );
@@ -178,25 +194,28 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
               // Pagination Indicator Dots
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_reviewBatches.length, (index) {
-                  final isActive = index == _currentPage;
-                  return InkWell(
-                    onTap: () => _goToPage(index),
-                    borderRadius: BorderRadius.circular(10),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isActive ? 18 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? const Color(0xFF8E4A23)
-                            : const Color(0xFFDDB892),
-                        borderRadius: BorderRadius.circular(10),
+                children: List.generate(
+                  isMobile ? mobileReviews.length : _reviewBatches.length,
+                  (index) {
+                    final isActive = index == _currentPage;
+                    return InkWell(
+                      onTap: () => _goToPage(index),
+                      borderRadius: BorderRadius.circular(10),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: isActive ? 18 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFF8E4A23)
+                              : const Color(0xFFDDB892),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -206,9 +225,9 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
   }
 
   // Exact card size & proportions matching your screenshot
-  Widget _buildSmallCard(Map<String, String> review) {
+  Widget _buildSmallCard(Map<String, String> review, {required double width}) {
     return Container(
-      width: 310,
+      width: width,
       height: 165,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
