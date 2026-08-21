@@ -82,7 +82,9 @@ class _ContactSectionState extends State<ContactSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8E4A23),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               _nameController.clear();
@@ -137,7 +139,10 @@ class _ContactSectionState extends State<ContactSection> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF8E4A23).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -145,7 +150,11 @@ class _ContactSectionState extends State<ContactSection> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.edit_note_rounded, color: Color(0xFF8E4A23), size: 16),
+                      Icon(
+                        Icons.edit_note_rounded,
+                        color: Color(0xFF8E4A23),
+                        size: 16,
+                      ),
                       SizedBox(width: 6),
                       Text(
                         'DROP US A MESSAGE',
@@ -183,7 +192,7 @@ class _ContactSectionState extends State<ContactSection> {
                     if (_nameError != null) setState(() => _nameError = null);
                   },
                   decoration: _inputDecoration(
-                    hint: 'Full Name (e.g. Maria Santos)',
+                    hint: 'Full Name (e.g. Shaina Rynne)',
                     icon: Icons.person_outline,
                     errorText: _nameError,
                   ),
@@ -197,7 +206,7 @@ class _ContactSectionState extends State<ContactSection> {
                     if (_emailError != null) setState(() => _emailError = null);
                   },
                   decoration: _inputDecoration(
-                    hint: 'Correct Email (e.g. maria@gmail.com)',
+                    hint: 'Correct Email (e.g. shaina@gmail.com)',
                     icon: Icons.email_outlined,
                     errorText: _emailError,
                   ),
@@ -225,14 +234,19 @@ class _ContactSectionState extends State<ContactSection> {
                       backgroundColor: const Color(0xFF8E4A23),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       elevation: 2,
                     ),
                     onPressed: _sendSweetNote,
                     icon: const Icon(Icons.send_rounded, size: 16),
                     label: const Text(
                       'Send Sweet Note',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
