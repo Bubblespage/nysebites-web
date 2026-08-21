@@ -495,7 +495,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
 
   Widget _deliveryOptionPill(String title, String price) {
     final isSelected = _deliveryType == title;
-    return Expanded(
+    final optionWidth = (MediaQuery.sizeOf(context).width - 80).clamp(
+      180.0,
+      240.0,
+    );
+    return SizedBox(
+      width: optionWidth,
       child: InkWell(
         onTap: () => setState(() => _deliveryType = title),
         borderRadius: BorderRadius.circular(12),
