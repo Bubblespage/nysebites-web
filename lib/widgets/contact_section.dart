@@ -192,7 +192,7 @@ class _ContactSectionState extends State<ContactSection> {
                     if (_nameError != null) setState(() => _nameError = null);
                   },
                   decoration: _inputDecoration(
-                    hint: 'Full Name (e.g. Shaina Rynne)',
+                    hint: 'Full Name (e.g. Jane Doe)',
                     icon: Icons.person_outline,
                     errorText: _nameError,
                   ),
@@ -206,7 +206,7 @@ class _ContactSectionState extends State<ContactSection> {
                     if (_emailError != null) setState(() => _emailError = null);
                   },
                   decoration: _inputDecoration(
-                    hint: 'Correct Email (e.g. shaina@gmail.com)',
+                    hint: 'Correct Email (e.g. jane@gmail.com)',
                     icon: Icons.email_outlined,
                     errorText: _emailError,
                   ),
