@@ -12,6 +12,7 @@ import '../widgets/hero_banner.dart';
 import '../widgets/mobile_nav_drawer.dart';
 import '../widgets/product_card.dart';
 import '../widgets/reviews_slideshow.dart';
+import '../widgets/order_tracker_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,6 +35,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedCategory = 'all';
   String _searchQuery = '';
   final List<Product> _cart = [];
+  String? _activeOrderNumber;
+  int _activeOrderItemCount = 0;
+  double _activeOrderTotal = 0;
+  DateTime? _activeOrderPlacedAt;
 
   // Auth User State
   String? _currentUser;
@@ -158,6 +163,32 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _cart.clear());
   }
 
+  void _savePlacedOrder(int itemCount, double totalAmount) {
+    setState(() {
+      _activeOrderNumber =
+          'NB-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      _activeOrderItemCount = itemCount;
+      _activeOrderTotal = totalAmount;
+      _activeOrderPlacedAt = DateTime.now();
+    });
+  }
+
+  void _openOrderTracker() {
+    final placedAt = _activeOrderPlacedAt;
+    final orderNumber = _activeOrderNumber;
+    if (placedAt == null || orderNumber == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => OrderTrackerModal(
+        orderNumber: orderNumber,
+        itemCount: _activeOrderItemCount,
+        totalAmount: _activeOrderTotal,
+        placedAt: placedAt,
+      ),
+    );
+  }
+
   void _openCustomCakeBuilder(Product cakeProduct) {
     showDialog(
       context: context,
@@ -197,6 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onRemoveSingleItem: _removeSingleItem,
         onRemoveAllOfProduct: _removeAllOfProduct,
         onClearCart: _clearCart,
+        onOrderPlaced: _savePlacedOrder,
       ),
       appBar: AppBarHeader(
         currentUser: _currentUser,
@@ -212,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onContactClick: _onContactClick,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _buildIconOnlyFloatingTrayButton(),
+      floatingActionButton: _buildFloatingActions(),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -332,6 +364,42 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFloatingActions() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (_activeOrderNumber != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10, right: 12),
+            child: ElevatedButton.icon(
+              onPressed: _openOrderTracker,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFAF2E9),
+                foregroundColor: const Color(0xFF8E4A23),
+                elevation: 4,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                  side: const BorderSide(color: Color(0xFFE5D5C5)),
+                ),
+              ),
+              icon: const Icon(Icons.local_shipping_outlined, size: 18),
+              label: const Text(
+                'Track Order',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+        _buildIconOnlyFloatingTrayButton(),
+      ],
     );
   }
 

@@ -9,6 +9,7 @@ class CartDrawer extends StatelessWidget {
   final Function(Product) onRemoveSingleItem;
   final Function(Product) onRemoveAllOfProduct;
   final VoidCallback onClearCart;
+  final void Function(int itemCount, double totalAmount) onOrderPlaced;
   final String? currentUser;
 
   const CartDrawer({
@@ -19,6 +20,7 @@ class CartDrawer extends StatelessWidget {
     required this.onRemoveSingleItem,
     required this.onRemoveAllOfProduct,
     required this.onClearCart,
+    required this.onOrderPlaced,
     this.currentUser,
   });
 
@@ -43,7 +45,10 @@ class CartDrawer extends StatelessWidget {
         cartItems: cartItems,
         totalAmount: totalPrice,
         currentUser: currentUser,
-        onOrderSuccess: onClearCart,
+        onOrderSuccess: () {
+          onOrderPlaced(cartItems.length, totalPrice);
+          onClearCart();
+        },
       ),
     );
   }
