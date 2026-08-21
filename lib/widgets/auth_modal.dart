@@ -256,7 +256,7 @@ class _AuthModalState extends State<AuthModal> {
                     _buildValidatedField(
                       controller: _nameController,
                       label: 'Full Name',
-                      hint: 'e.g. Shaina Rynne',
+                      hint: 'e.g. Jane Doe',
                       icon: Icons.person_outline_rounded,
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
