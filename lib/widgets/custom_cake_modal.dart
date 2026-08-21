@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
@@ -196,7 +195,8 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                     ),
                   ),
                   Positioned(
-                    bottom: 12,
+                    top: kIsWeb ? 12 : null,
+                    bottom: kIsWeb ? null : 12,
                     left: 16,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -227,7 +227,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildImagePickerControl(),
+                      if (!kIsWeb) _buildImagePickerControl(),
                       const SizedBox(height: 20),
                       // 1. Size
                       _sectionTitle('1. Choose Cake Size & Servings'),
@@ -484,6 +484,10 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                           ),
                         ),
                       ),
+                      if (kIsWeb) ...[
+                        const SizedBox(height: 18),
+                        _buildImagePickerControl(),
+                      ],
                     ],
                   ),
                 ),
