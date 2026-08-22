@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReviewsSlideshow extends StatefulWidget {
   const ReviewsSlideshow({super.key});
@@ -14,85 +15,67 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
   Timer? _autoSlideTimer;
   bool _isHovered = false;
 
-  // Review triplets (3 cards per slide on desktop)
-  final List<List<Map<String, String>>> _reviewBatches = [
-    [
-      {
-        'rating': '★★★★',
-        'comment':
-            'The customized red velvet cake with gold leaf was the highlight of our party!',
-        'name': '- Law R.',
-      },
-      {
-        'rating': '★★★★★',
-        'comment':
-            'Ordered a batch of fudge brownies for a family gathering and they were gone in minutes.',
-        'name': '- Mark D.',
-      },
-      {
-        'rating': '★★★★★',
-        'comment':
-            'Love the less-sweet option! Rich flavors without an overwhelming sugar crash.',
-        'name': '- Hanah L.',
-      },
-    ],
-    [
-      {
-        'rating': '★★★★',
-        'comment':
-            'Warm them for 2 minutes and they taste like pure bakery perfection. Unmatched quality!',
-        'name': '- Rain P.',
-      },
-      {
-        'rating': '★★★★★',
-        'comment':
-            'Fast response and the eco-packaging looked so premium. Every guest asked where we ordered from!',
-        'name': '- Niko V.',
-      },
-      {
-        'rating': '★★★★★',
-        'comment':
-            'The balance of sea salt with rich homemade caramel in the fudge brownies is 10/10.',
-        'name': '- Xander L.',
-      },
-    ],
-    [
-      {
-        'rating': '★★★',
-        'comment':
-            'I requested custom oat-milk frosting in the notes box and Nyse Bites delivered perfectly!',
-        'name': '- Patricia L.',
-      },
-      {
-        'rating': '★★★★',
-        'comment':
-            'Loaded with toasted walnuts and silky spiced cinnamon cream. Best carrot cake in town.',
-        'name': '- Angelo R.',
-      },
-      {
-        'rating': '★★★★★',
-        'comment':
-            'The matcha white chocolate cookies are thick, gooey, and packed with real Uji matcha flavor.',
-        'name': '- Sophia K.',
-      },
-    ],
+  final List<Map<String, String>> _fallbackReviews = [
+    {
+      'rating': '★★★★★',
+      'comment': 'The customized red velvet cake with gold leaf was the highlight of our party!',
+      'name': '- Law R.',
+    },
+    {
+      'rating': '★★★★★',
+      'comment': 'Ordered a batch of fudge brownies for a family gathering and they were gone in minutes.',
+      'name': '- Mark D.',
+    },
+    {
+      'rating': '★★★★★',
+      'comment': 'Love the less-sweet option! Rich flavors without an overwhelming sugar crash.',
+      'name': '- Hanah L.',
+    },
+    {
+      'rating': '★★★★',
+      'comment': 'Warm them for 2 minutes and they taste like pure bakery perfection. Unmatched quality!',
+      'name': '- Rain P.',
+    },
+    {
+      'rating': '★★★★★',
+      'comment': 'Fast response and the eco-packaging looked so premium. Every guest asked where we ordered from!',
+      'name': '- Niko V.',
+    },
+    {
+      'rating': '★★★★★',
+      'comment': 'The balance of sea salt with rich homemade caramel in the fudge brownies is 10/10.',
+      'name': '- Xander L.',
+    },
+    {
+      'rating': '★★★★',
+      'comment': 'I requested custom oat-milk frosting in the notes box and Nyse Bites delivered perfectly!',
+      'name': '- Patricia L.',
+    },
+    {
+      'rating': '★★★★★',
+      'comment': 'Loaded with toasted walnuts and silky spiced cinnamon cream. Best carrot cake in town.',
+      'name': '- Angelo R.',
+    },
+    {
+      'rating': '★★★★★',
+      'comment': 'The matcha white chocolate cookies are thick, gooey, and packed with real Uji matcha flavor.',
+      'name': '- Sophia K.',
+    },
   ];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    _startAutoSlide();
   }
 
-  void _startAutoSlide() {
+  void _startAutoSlide(int totalPages) {
     _autoSlideTimer?.cancel();
+    if (totalPages <= 1) return;
+
     _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!_isHovered && mounted) {
-        final pageCount = MediaQuery.of(context).size.width < 980
-            ? _reviewBatches.expand((batch) => batch).length
-            : _reviewBatches.length;
-        final nextPage = (_currentPage + 1) % pageCount;
+        final nextPage = (_currentPage + 1) % totalPages;
         _pageController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 600),
@@ -117,114 +100,137 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
     super.dispose();
   }
 
+  List<List<Map<String, String>>> _chunkReviews(List<Map<String, String>> list, int chunkSize) {
+    List<List<Map<String, String>>> chunks = [];
+    for (var i = 0; i < list.length; i += chunkSize) {
+      chunks.add(
+        list.sublist(i, i + chunkSize > list.length ? list.length : i + chunkSize),
+      );
+    }
+    return chunks;
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 980;
-    final mobileReviews = _reviewBatches.expand((batch) => batch).toList();
     final mobileCardWidth = screenWidth > 40
         ? (screenWidth - 40).clamp(200.0, 310.0)
         : 280.0;
 
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFFF7ECE1),
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 28 : 48,
-        horizontal: 20,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1060),
-          child: Column(
-            children: [
-              // Title
-              const Text(
-                'Loved By Sweet Lovers',
-                style: TextStyle(
-                  fontFamily: 'serif',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E1B10),
-                ),
-              ),
-              const SizedBox(height: 28),
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('reviews').snapshots(),
+      builder: (context, snapshot) {
+        List<Map<String, String>> reviews = [];
 
-              // Sliding Cards Container
-              MouseRegion(
-                onEnter: (_) => setState(() => _isHovered = true),
-                onExit: (_) => setState(() => _isHovered = false),
-                child: SizedBox(
-                  height: isMobile ? 200 : 175,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: isMobile
-                        ? mobileReviews.length
-                        : _reviewBatches.length,
-                    onPageChanged: (index) =>
-                        setState(() => _currentPage = index),
-                    itemBuilder: (context, index) {
-                      final batch = _reviewBatches[index];
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          reviews = snapshot.data!.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'rating': data['rating']?.toString() ?? '★★★★★',
+              'comment': data['comment']?.toString() ?? '',
+              'name': data['name']?.toString() ?? '- Sweet Customer',
+            };
+          }).toList();
+        } else {
+          reviews = _fallbackReviews;
+        }
 
-                      if (isMobile) {
-                        return Center(
-                          child: _buildSmallCard(
-                            mobileReviews[index],
-                            width: mobileCardWidth,
+        final reviewBatches = _chunkReviews(reviews, 3);
+        final totalPages = isMobile ? reviews.length : reviewBatches.length;
+
+        // Reset slide timer for current page length
+        _startAutoSlide(totalPages);
+
+        return Container(
+          width: double.infinity,
+          color: const Color(0xFFF7ECE1),
+          padding: EdgeInsets.symmetric(
+            vertical: isMobile ? 28 : 48,
+            horizontal: 20,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1060),
+              child: Column(
+                children: [
+                  const Text(
+                    'Loved By Sweet Lovers',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E1B10),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  MouseRegion(
+                    onEnter: (_) => setState(() => _isHovered = true),
+                    onExit: (_) => setState(() => _isHovered = false),
+                    child: SizedBox(
+                      height: isMobile ? 200 : 175,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: totalPages,
+                        onPageChanged: (index) =>
+                            setState(() => _currentPage = index),
+                        itemBuilder: (context, index) {
+                          if (isMobile) {
+                            return Center(
+                              child: _buildSmallCard(
+                                reviews[index],
+                                width: mobileCardWidth,
+                              ),
+                            );
+                          }
+
+                          final batch = reviewBatches[index];
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: batch.map((review) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                child: _buildSmallCard(review, width: 310),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (totalPages > 1)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(totalPages, (index) {
+                        final isActive = index == _currentPage;
+                        return InkWell(
+                          onTap: () => _goToPage(index),
+                          borderRadius: BorderRadius.circular(10),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: isActive ? 18 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF8E4A23)
+                                  : const Color(0xFFDDB892),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         );
-                      }
-
-                      // Display exact 3 side-by-side small cards on desktop
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: batch.map((review) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: _buildSmallCard(review, width: 310),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ),
+                      }),
+                    ),
+                ],
               ),
-              const SizedBox(height: 18),
-
-              // Pagination Indicator Dots
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  isMobile ? mobileReviews.length : _reviewBatches.length,
-                  (index) {
-                    final isActive = index == _currentPage;
-                    return InkWell(
-                      onTap: () => _goToPage(index),
-                      borderRadius: BorderRadius.circular(10),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: isActive ? 18 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? const Color(0xFF8E4A23)
-                              : const Color(0xFFDDB892),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  // Exact card size & proportions matching your screenshot
   Widget _buildSmallCard(Map<String, String> review, {required double width}) {
     return Container(
       width: width,
@@ -246,19 +252,16 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // 5-Star Row
           Text(
-            review['rating']!,
+            review['rating'] ?? '★★★★★',
             style: const TextStyle(
               color: Color(0xFF8E4A23),
               fontSize: 16,
               letterSpacing: 2,
             ),
           ),
-
-          // Comment Text
           Text(
-            '"${review['comment']}"',
+            '"${review['comment'] ?? ''}"',
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -267,10 +270,8 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
               color: Color(0xFF2E1B10),
             ),
           ),
-
-          // Customer Signature
           Text(
-            review['name']!,
+            review['name'] ?? '- Sweet Customer',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/mock_products.dart';
 import '../models/product.dart';
 import '../widgets/app_bar_header.dart';
@@ -40,32 +41,27 @@ class _HomeScreenState extends State<HomeScreen> {
   double _activeOrderTotal = 0;
   DateTime? _activeOrderPlacedAt;
 
-  // Auth User State
   String? _currentUser;
+
+  // Strict visual ordering map (Belgian Choco Chip at 5, Lavender Noir Velvet at 10)
+  static const Map<String, int> _productOrderMap = {
+    'Biscoff Nocciola Swirl': 1,
+    'Snicker-Doodle Hug': 2,
+    'Dark Chocolate Noir': 3,
+    'Red Velvet Kiss Blossom': 4,
+    'Belgian Choco Chip': 5,
+    "Hershey's Almond Cloud Squares": 6,
+    'Dark Kissed Melt Bites': 7,
+    'Pure Decadence Cocoa Fudge': 8,
+    'Vanilla Sky Cerulean Dream': 9,
+    'Lavender Noir Velvet': 10,
+  };
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  List<Product> get _filteredProducts {
-    return mockProducts.where((p) {
-      bool matchesCategory;
-      if (_selectedCategory == 'daily_batches') {
-        matchesCategory = p.category == 'cookies' || p.category == 'brownies';
-      } else if (_selectedCategory == 'all') {
-        matchesCategory = true;
-      } else {
-        matchesCategory = p.category == _selectedCategory;
-      }
-
-      final matchesSearch =
-          p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.description.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    }).toList();
   }
 
   double get _cartTotal => _cart.fold(0.0, (sum, item) => sum + item.price);
@@ -163,10 +159,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _cart.clear());
   }
 
-  void _savePlacedOrder(int itemCount, double totalAmount) {
+  void _savePlacedOrder(String orderId, int itemCount, double totalAmount) {
     setState(() {
-      _activeOrderNumber =
-          'NB-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      _activeOrderNumber = orderId;
       _activeOrderItemCount = itemCount;
       _activeOrderTotal = totalAmount;
       _activeOrderPlacedAt = DateTime.now();
@@ -189,7 +184,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openCustomCakeBuilder(Product cakeProduct) {
+  void _openCustomCakeBuilder(Product cakeProduct, bool acceptCustomCakes) {
+    if (!acceptCustomCakes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFF251811),
+          content: Text(
+            'Custom cake commissions are currently paused by the bakery.',
+          ),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => CustomCakeModal(
@@ -204,94 +211,150 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFFAF4ED),
-      // Left Mobile Navigation Drawer
-      drawer: MobileNavDrawer(
-        currentUser: _currentUser,
-        onMenuClick: _onMenuClick,
-        onCustomCakesClick: _onCustomCakesClick,
-        onDailyBatchesClick: _onDailyBatchesClick,
-        onReviewsClick: _onReviewsClick,
-        onSweetNoteClick: _onSweetNoteClick,
-        onContactClick: _onContactClick,
-        onOpenAuth: _openAuthModal,
-        onLogout: _logout,
-      ),
-      // Right Sweet Tray Drawer
-      endDrawer: CartDrawer(
-        cartItems: _cart,
-        totalPrice: _cartTotal,
-        currentUser: _currentUser,
-        onAddToCart: _addToCart,
-        onRemoveSingleItem: _removeSingleItem,
-        onRemoveAllOfProduct: _removeAllOfProduct,
-        onClearCart: _clearCart,
-        onOrderPlaced: _savePlacedOrder,
-      ),
-      appBar: AppBarHeader(
-        currentUser: _currentUser,
-        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-        onOpenAuth: _openAuthModal,
-        onLogout: _logout,
-        onLogoClick: _scrollToTop,
-        onMenuClick: _onMenuClick,
-        onCustomCakesClick: _onCustomCakesClick,
-        onDailyBatchesClick: _onDailyBatchesClick,
-        onReviewsClick: _onReviewsClick,
-        onSweetNoteClick: _onSweetNoteClick,
-        onContactClick: _onContactClick,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _buildFloatingActions(),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.25, 0.55, 0.85, 1.0],
-            colors: [
-              Color(0xFFFAF2E9),
-              Color(0xFFFBF6F0),
-              Color(0xFFF8EFE4),
-              Color(0xFFF5E9DB),
-              Color(0xFFEFE2D2),
-            ],
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('settings')
+          .doc('storefront')
+          .snapshots(),
+      builder: (context, settingsSnapshot) {
+        final settingsData = settingsSnapshot.data?.data() ?? {};
+
+        // 1. Live Shop Controls
+        final bool isStoreOpen = settingsData['isStoreOpen'] ?? true;
+        final bool acceptCustomCakes =
+            settingsData['acceptCustomCakes'] ?? true;
+
+        // 2. Real-Time Admin Announcements (Reading directly from Firestore)
+        final String announcement1 =
+            settingsData['announcement1']?.toString() ??
+            settingsData['announcementText']?.toString() ??
+            '🔥 Fresh Morning Drop at 9:00 AM • Free delivery on orders over ₱1,000!';
+        final String announcement2 =
+            settingsData['announcement2']?.toString() ??
+            'Handcrafted small-batch cookies & fudgy brownies baked fresh daily at 9:00 AM';
+        final String announcement3 =
+            settingsData['announcement3']?.toString() ??
+            'Enjoy free insulated doorstep delivery on all orders over ₱1,000';
+
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: const Color(0xFFFAF4ED),
+          drawer: MobileNavDrawer(
+            currentUser: _currentUser,
+            onMenuClick: _onMenuClick,
+            onCustomCakesClick: _onCustomCakesClick,
+            onDailyBatchesClick: _onDailyBatchesClick,
+            onReviewsClick: _onReviewsClick,
+            onSweetNoteClick: _onSweetNoteClick,
+            onContactClick: _onContactClick,
+            onOpenAuth: _openAuthModal,
+            onLogout: _logout,
           ),
-        ),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Column(
-            children: [
-              HeroBanner(
-                key: _heroKey,
-                onExploreMenu: _onMenuClick,
-                onBuildCustomCake: _onCustomCakesClick,
-              ),
-              _buildMenuSection(isMobile),
-
-              // Reviews Section
-              Container(
-                key: _reviewsKey,
-                constraints: BoxConstraints(
-                  minHeight: isMobile
-                      ? 0
-                      : MediaQuery.of(context).size.height * 0.7,
-                ),
-                alignment: Alignment.center,
-                child: const ReviewsSlideshow(),
-              ),
-
-              // Sweet Note Section
-              ContactSection(key: _sweetNoteKey),
-
-              // Footer Section
-              Footer(key: _footerKey),
-            ],
+          endDrawer: CartDrawer(
+            cartItems: _cart,
+            totalPrice: _cartTotal,
+            currentUser: _currentUser,
+            onAddToCart: _addToCart,
+            onRemoveSingleItem: _removeSingleItem,
+            onRemoveAllOfProduct: _removeAllOfProduct,
+            onClearCart: _clearCart,
+            onOrderPlaced: (orderId, itemCount, totalAmount) {
+              _savePlacedOrder(orderId, itemCount, totalAmount);
+            },
           ),
-        ),
-      ),
+          appBar: AppBarHeader(
+            currentUser: _currentUser,
+            onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+            onOpenAuth: _openAuthModal,
+            onLogout: _logout,
+            onLogoClick: _scrollToTop,
+            onMenuClick: _onMenuClick,
+            onCustomCakesClick: _onCustomCakesClick,
+            onDailyBatchesClick: _onDailyBatchesClick,
+            onReviewsClick: _onReviewsClick,
+            onSweetNoteClick: _onSweetNoteClick,
+            onContactClick: _onContactClick,
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: _buildFloatingActions(),
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.0, 0.25, 0.55, 0.85, 1.0],
+                colors: [
+                  Color(0xFFFAF2E9),
+                  Color(0xFFFBF6F0),
+                  Color(0xFFF8EFE4),
+                  Color(0xFFF5E9DB),
+                  Color(0xFFEFE2D2),
+                ],
+              ),
+            ),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
+                children: [
+                  // Real-Time Animated Marquee Ribbon
+                  Container(
+                    width: double.infinity,
+                    height: 36,
+                    color: const Color(0xFF251811),
+                    alignment: Alignment.center,
+                    child: _MarqueeTicker(
+                      announcement1: announcement1,
+                      announcement2: announcement2,
+                      announcement3: announcement3,
+                      velocity: 38.0,
+                    ),
+                  ),
+
+                  // Storefront Orders Paused Alert Banner
+                  if (!isStoreOpen)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
+                      color: const Color(0xFFD32F2F),
+                      child: const Center(
+                        child: Text(
+                          '⚠️ Online order checkout is temporarily paused by the kitchen admin.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  HeroBanner(
+                    key: _heroKey,
+                    onExploreMenu: _onMenuClick,
+                    onBuildCustomCake: _onCustomCakesClick,
+                  ),
+                  _buildMenuSection(isMobile, acceptCustomCakes),
+                  Container(
+                    key: _reviewsKey,
+                    constraints: BoxConstraints(
+                      minHeight: isMobile
+                          ? 0
+                          : MediaQuery.of(context).size.height * 0.7,
+                    ),
+                    alignment: Alignment.center,
+                    child: const ReviewsSlideshow(),
+                  ),
+                  ContactSection(key: _sweetNoteKey),
+                  Footer(key: _footerKey),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -403,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMenuSection(bool isMobile) {
+  Widget _buildMenuSection(bool isMobile, bool acceptCustomCakes) {
     return Container(
       key: _menuKey,
       constraints: const BoxConstraints(maxWidth: 1200),
@@ -434,8 +497,6 @@ class _HomeScreenState extends State<HomeScreen> {
             style: const TextStyle(color: Color(0xFF756256), fontSize: 13),
           ),
           const SizedBox(height: 20),
-
-          // Search Bar
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 540),
             child: TextField(
@@ -475,8 +536,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Category Pills
           CategoryFilter(
             selectedCategory: _selectedCategory == 'daily_batches'
                 ? 'all'
@@ -484,52 +543,232 @@ class _HomeScreenState extends State<HomeScreen> {
             onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
           ),
           const SizedBox(height: 28),
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('products')
+                .snapshots(),
+            builder: (context, snapshot) {
+              List<Product> rawList = [];
 
-          if (_filteredProducts.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(40),
-              alignment: Alignment.center,
-              child: const Text(
-                'No delicious treats match your search or allergen settings.',
-              ),
-            )
-          else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final availableWidth = constraints.maxWidth;
-                final columnCount = availableWidth < 900
-                    ? 2
-                    : availableWidth < 1060
-                    ? 3
-                    : 4;
-                final spacing = availableWidth < 760 ? 12.0 : 20.0;
-                final cardWidth =
-                    (availableWidth - (columnCount - 1) * spacing) /
-                    columnCount;
+              if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                rawList = snapshot.data!.docs
+                    .map((doc) => Product.fromMap(doc.id, doc.data()))
+                    .toList();
+              } else {
+                rawList = List.from(mockProducts);
+              }
 
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _filteredProducts.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columnCount,
-                    childAspectRatio: cardWidth < 220 ? 0.62 : 0.76,
-                    mainAxisExtent: availableWidth < 900 ? 310 : null,
-                    crossAxisSpacing: spacing,
-                    mainAxisSpacing: spacing,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = _filteredProducts[index];
-                    return ProductCard(
-                      product: product,
-                      onAddToCart: _addToCart,
-                      onCustomize: _openCustomCakeBuilder,
+              // Strict Sort Order
+              rawList.sort((a, b) {
+                final int orderA = _productOrderMap[a.name] ?? a.order;
+                final int orderB = _productOrderMap[b.name] ?? b.order;
+                return orderA.compareTo(orderB);
+              });
+
+              final List<Product> products = rawList.where((Product p) {
+                bool matchesCategory;
+                final cat = p.category.toLowerCase();
+                if (_selectedCategory == 'daily_batches') {
+                  matchesCategory = cat == 'cookies' || cat == 'brownies';
+                } else if (_selectedCategory == 'all') {
+                  matchesCategory = true;
+                } else {
+                  matchesCategory = cat == _selectedCategory.toLowerCase();
+                }
+
+                final matchesSearch =
+                    p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                    p.description.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
                     );
-                  },
+
+                return matchesCategory && matchesSearch && p.active;
+              }).toList();
+
+              if (products.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(40),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'No delicious treats match your search or allergen settings.',
+                    style: TextStyle(color: Color(0xFF756256)),
+                  ),
                 );
-              },
-            ),
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final availableWidth = constraints.maxWidth;
+                  final columnCount = availableWidth < 900
+                      ? 2
+                      : availableWidth < 1060
+                      ? 3
+                      : 4;
+                  final spacing = availableWidth < 760 ? 12.0 : 20.0;
+                  final cardWidth =
+                      (availableWidth - (columnCount - 1) * spacing) /
+                      columnCount;
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: products.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columnCount,
+                      childAspectRatio: cardWidth < 220 ? 0.62 : 0.76,
+                      mainAxisExtent: availableWidth < 900 ? 310 : null,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                    ),
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return ProductCard(
+                        product: product,
+                        onAddToCart: _addToCart,
+                        onCustomize: (prod) =>
+                            _openCustomCakeBuilder(prod, acceptCustomCakes),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// Seamless Dynamic Ticker Reading Straight from Firestore
+class _MarqueeTicker extends StatefulWidget {
+  final String announcement1;
+  final String announcement2;
+  final String announcement3;
+  final TextStyle? style;
+  final double velocity;
+
+  const _MarqueeTicker({
+    required this.announcement1,
+    required this.announcement2,
+    required this.announcement3,
+    this.style,
+    this.velocity = 38.0,
+  });
+
+  @override
+  State<_MarqueeTicker> createState() => _MarqueeTickerState();
+}
+
+class _MarqueeTickerState extends State<_MarqueeTicker> {
+  late final ScrollController _scrollController;
+  bool _isScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startLoop());
+  }
+
+  void _startLoop() async {
+    if (!mounted) return;
+    _isScrolling = true;
+
+    while (mounted && _isScrolling) {
+      if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        if (maxScroll > 0) {
+          final int durationSec = (maxScroll / widget.velocity)
+              .clamp(10, 45)
+              .toInt();
+          await _scrollController.animateTo(
+            maxScroll,
+            duration: Duration(seconds: durationSec),
+            curve: Curves.linear,
+          );
+          if (mounted && _scrollController.hasClients) {
+            _scrollController.jumpTo(0.0);
+          }
+        }
+      }
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+  }
+
+  @override
+  void dispose() {
+    _isScrolling = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Map<String, String>> tickerItems = [
+      {'icon': '✨', 'title': 'STORE NOTICE', 'body': widget.announcement1},
+      {'icon': '🥐', 'title': 'DAILY OVEN DROP', 'body': widget.announcement2},
+      {
+        'icon': '📦',
+        'title': 'COMPLIMENTARY DELIVERY',
+        'body': widget.announcement3,
+      },
+    ];
+
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: tickerItems.map((item) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(width: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8E4A23),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(item['icon']!, style: const TextStyle(fontSize: 10)),
+                    const SizedBox(width: 5),
+                    Text(
+                      item['title']!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                item['body']!,
+                style:
+                    widget.style ??
+                    const TextStyle(
+                      color: Color(0xFFF5EBE1),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+              ),
+              const SizedBox(width: 24),
+              const Text(
+                '✦',
+                style: TextStyle(color: Color(0xFFC89269), fontSize: 11),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }

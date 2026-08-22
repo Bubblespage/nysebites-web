@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import '../models/product.dart';
 
 class CustomCakeModal extends StatefulWidget {
@@ -71,35 +71,34 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
   void _handleAddCustomCake() {
     final customDescription = StringBuffer();
     customDescription.write(
-      'Size: $_selectedSize | Base: $_selectedBase | Frosting: $_selectedFrosting',
+      'Tier: $_selectedSize • Base: $_selectedBase • Frosting: $_selectedFrosting',
     );
 
     if (_selectedToppings.isNotEmpty) {
-      customDescription.write(' | Toppings: ${_selectedToppings.join(", ")}');
+      customDescription.write(' • Toppings: ${_selectedToppings.join(", ")}');
     }
     if (_pipingMessageController.text.trim().isNotEmpty) {
       customDescription.write(
-        ' | Message: "${_pipingMessageController.text.trim()}"',
+        ' • Piping: "${_pipingMessageController.text.trim()}"',
       );
     }
     if (_customNotesController.text.trim().isNotEmpty) {
       customDescription.write(
-        ' | Notes: ${_customNotesController.text.trim()}',
+        ' • Notes: ${_customNotesController.text.trim()}',
       );
     }
     if (_preferredImageName != null) {
-      customDescription.write(
-        ' | Preferred reference image: $_preferredImageName',
-      );
+      customDescription.write(' • Reference Attached: $_preferredImageName');
     }
 
     final customizedCake = Product(
-      id: DateTime.now().millisecondsSinceEpoch,
+      id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
       name: 'Custom ${widget.baseProduct.name}',
       category: 'cakes',
       price: _calculatedTotal,
       description: customDescription.toString(),
       imgSrc: widget.baseProduct.imgSrc,
+      icon: '🎂',
     );
 
     widget.onAddCustomCake(customizedCake);
@@ -160,12 +159,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                     child: SizedBox(
                       height: 160,
                       width: double.infinity,
-                      child: _preferredImageBytes != null
-                          ? Image.memory(
-                              _preferredImageBytes!,
-                              fit: BoxFit.cover,
-                            )
-                          : widget.baseProduct.imgSrc.startsWith('http')
+                      child: widget.baseProduct.imgSrc.startsWith('http')
                           ? Image.network(
                               widget.baseProduct.imgSrc,
                               fit: BoxFit.cover,
@@ -195,8 +189,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                     ),
                   ),
                   Positioned(
-                    top: kIsWeb ? 12 : null,
-                    bottom: kIsWeb ? null : 12,
+                    bottom: 12,
                     left: 16,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -227,8 +220,6 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (!kIsWeb) _buildImagePickerControl(),
-                      const SizedBox(height: 20),
                       // 1. Size
                       _sectionTitle('1. Choose Cake Size & Servings'),
                       const SizedBox(height: 10),
@@ -383,7 +374,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                       }),
                       const SizedBox(height: 18),
 
-                      // 5. Piping Message Text Box
+                      // 5. Inscription
                       _sectionTitle('5. Cake Piping Message / Inscription'),
                       const SizedBox(height: 8),
                       TextField(
@@ -422,18 +413,11 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                               color: Color(0xFFEFE4D6),
                             ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8E4A23),
-                              width: 1.5,
-                            ),
-                          ),
                         ),
                       ),
                       const SizedBox(height: 14),
 
-                      // 6. Special Customization & Baking Notes Text Box
+                      // 6. Notes
                       _sectionTitle(
                         '6. Special Baking Instructions / Custom Notes',
                       ),
@@ -447,7 +431,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         ),
                         decoration: InputDecoration(
                           hintText:
-                              'e.g. Less sweet frosting, vintage heart border, add 2 candles, allergen notice...',
+                              'e.g. Less sweet frosting, vintage heart border, add 2 candles...',
                           hintStyle: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF9E8E84),
@@ -475,19 +459,16 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                               color: Color(0xFFEFE4D6),
                             ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8E4A23),
-                              width: 1.5,
-                            ),
-                          ),
                         ),
                       ),
-                      if (kIsWeb) ...[
-                        const SizedBox(height: 18),
-                        _buildImagePickerControl(),
-                      ],
+                      const SizedBox(height: 18),
+
+                      // 7. Reference Image Attachment (Positioned Below Section 6)
+                      _sectionTitle(
+                        '7. Preferred Cake Reference Image (Optional)',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildImagePickerControl(),
                     ],
                   ),
                 ),
@@ -571,50 +552,65 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
   }
 
   Widget _buildImagePickerControl() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('Preferred Cake Reference Image'),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _pickPreferredImage,
+    return InkWell(
+      onTap: _pickPreferredImage,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF2E9),
           borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAF2E9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5D5C5)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.add_photo_alternate_outlined,
-                  color: Color(0xFF8E4A23),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _preferredImageName ??
-                        'Add a photo for your cake design reference',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF5A4438),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Icon(
-                  Icons.upload_outlined,
-                  color: Color(0xFF8E4A23),
-                  size: 20,
-                ),
-              ],
-            ),
+          border: Border.all(
+            color: _preferredImageBytes != null
+                ? const Color(0xFF8E4A23)
+                : const Color(0xFFE5D5C5),
+            width: _preferredImageBytes != null ? 1.5 : 1.0,
           ),
         ),
-      ],
+        child: Row(
+          children: [
+            if (_preferredImageBytes != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: Image.memory(_preferredImageBytes!, fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ] else ...[
+              const Icon(
+                Icons.add_photo_alternate_outlined,
+                color: Color(0xFF8E4A23),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Text(
+                _preferredImageName ??
+                    'Upload sample cake photo from gallery...',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: _preferredImageName != null
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                  color: const Color(0xFF5A4438),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              _preferredImageBytes != null
+                  ? Icons.check_circle
+                  : Icons.upload_outlined,
+              color: const Color(0xFF8E4A23),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

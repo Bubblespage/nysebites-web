@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthModal extends StatefulWidget {
   final Function(String userName) onLoginSuccess;
@@ -10,21 +12,11 @@ class AuthModal extends StatefulWidget {
 }
 
 class _AuthModalState extends State<AuthModal> {
-  static final Map<String, Map<String, String>> _userDatabase = {
-    'shaina@nysebites.com': {
-      'name': 'Shaina Rynne',
-      'password': 'Password@123',
-    },
-    'demo@nysebites.com': {
-      'name': 'Demo Baker',
-      'password': 'Password@123',
-    },
-  };
-
   final _formKey = GlobalKey<FormState>();
 
   bool _isSignUp = false;
   bool _obscurePassword = true;
+  bool _isLoading = false;
   String? _authErrorMessage;
 
   final TextEditingController _nameController = TextEditingController();
@@ -66,7 +58,7 @@ class _AuthModalState extends State<AuthModal> {
         .hasMatch(email.trim());
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     setState(() => _authErrorMessage = null);
 
     if (!_formKey.currentState!.validate()) {
@@ -77,57 +69,91 @@ class _AuthModalState extends State<AuthModal> {
     final password = _passwordController.text;
     final name = _nameController.text.trim();
 
-    if (_isSignUp) {
-      if (!_isPasswordValid) {
-        setState(() {
-          _authErrorMessage = 'Please fulfill all password requirements below.';
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isSignUp) {
+        if (!_isPasswordValid) {
+          setState(() {
+            _isLoading = false;
+            _authErrorMessage = 'Please fulfill all password requirements below.';
+          });
+          return;
+        }
+
+        final UserCredential cred = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+
+        await cred.user?.updateDisplayName(name);
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(cred.user!.uid)
+            .set({
+          'name': name,
+          'displayName': name,
+          'email': email,
+          'role': 'customer',
+          'createdAt': FieldValue.serverTimestamp(),
         });
-        return;
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome to Nyse Bites, $name! 🎉'),
+            backgroundColor: const Color(0xFF8E4A23),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        widget.onLoginSuccess(name);
+        Navigator.pop(context);
+      } else {
+        final UserCredential cred = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: email, password: password);
+
+        String resolvedName = cred.user?.displayName ?? '';
+
+        if (resolvedName.isEmpty) {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(cred.user!.uid)
+              .get();
+
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            resolvedName = data['name'] ?? data['displayName'] ?? '';
+          }
+        }
+
+        if (resolvedName.isEmpty) {
+          resolvedName = email.split('@').first;
+        }
+
+        if (!mounted) return;
+        widget.onLoginSuccess(resolvedName);
+        Navigator.pop(context);
       }
-
-      if (_userDatabase.containsKey(email)) {
-        setState(() {
-          _authErrorMessage =
-              'An account with this email already exists. Please sign in instead.';
-        });
-        return;
-      }
-
-      _userDatabase[email] = {
-        'name': name,
-        'password': password,
-      };
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Account created successfully for $name! 🎉'),
-          backgroundColor: const Color(0xFF8E4A23),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      widget.onLoginSuccess(name);
-      Navigator.pop(context);
-    } else {
-      if (!_userDatabase.containsKey(email)) {
-        setState(() {
-          _authErrorMessage =
-              'No account found with this email. Please sign up first!';
-        });
-        return;
-      }
-
-      final userData = _userDatabase[email]!;
-      if (userData['password'] != password) {
-        setState(() {
-          _authErrorMessage = 'Incorrect password. Please try again.';
-        });
-        return;
-      }
-
-      final registeredName = userData['name'] ?? 'Baker';
-      widget.onLoginSuccess(registeredName);
-      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'user-not-found' ||
+            e.code == 'wrong-password' ||
+            e.code == 'invalid-credential') {
+          _authErrorMessage = 'Invalid email or password.';
+        } else if (e.code == 'email-already-in-use') {
+          _authErrorMessage = 'An account with this email already exists. Please sign in.';
+        } else if (e.code == 'weak-password') {
+          _authErrorMessage = 'The password provided is too weak.';
+        } else if (e.code == 'operation-not-allowed') {
+          _authErrorMessage = 'Email/Password sign-in is disabled in Firebase Console.';
+        } else {
+          _authErrorMessage = e.message ?? 'Authentication failed.';
+        }
+      });
+    } catch (e) {
+      setState(() => _authErrorMessage = 'An error occurred: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -164,7 +190,6 @@ class _AuthModalState extends State<AuthModal> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with Logo Image
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -360,23 +385,6 @@ class _AuthModalState extends State<AuthModal> {
                     ),
                   ],
 
-                  if (!_isSignUp)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(
-                            padding: const EdgeInsets.only(top: 4)),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                              fontSize: 11.5,
-                              color: Color(0xFF8E4A23),
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-
                   const SizedBox(height: 18),
 
                   SizedBox(
@@ -390,12 +398,21 @@ class _AuthModalState extends State<AuthModal> {
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 1,
                       ),
-                      onPressed: _handleSubmit,
-                      child: Text(
-                        _isSignUp ? 'Complete Sign Up' : 'Sign In',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
+                      onPressed: _isLoading ? null : _handleSubmit,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              _isSignUp ? 'Complete Sign Up' : 'Sign In',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -435,8 +452,8 @@ class _AuthModalState extends State<AuthModal> {
                           size: 18, color: Color(0xFF8E4A23)),
                       label: const Text(
                         'Continue as Guest',
-                        style:
-                            TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13),
                       ),
                     ),
                   ),

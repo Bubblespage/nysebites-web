@@ -15,11 +15,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.nyse_bites" // Keep your existing applicationId
+        applicationId = "com.example.nyse_bites"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     buildTypes {

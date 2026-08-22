@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ContactSection extends StatefulWidget {
   const ContactSection({super.key});
@@ -8,242 +9,405 @@ class ContactSection extends StatefulWidget {
 }
 
 class _ContactSectionState extends State<ContactSection> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _noteController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  String? _nameError;
-  String? _emailError;
-  String? _noteError;
+  String _name = '';
+  String _email = '';
+  String _subject = '';
+  String _message = '';
 
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
-    return emailRegex.hasMatch(email.trim());
-  }
+  bool _isSending = false;
+  String? _validationErrorMessage;
 
-  bool _isValidFullName(String name) {
-    final trimmed = name.trim();
-    final parts = trimmed.split(RegExp(r'\s+'));
-    return parts.length >= 2 && trimmed.length >= 4;
-  }
-
-  void _sendSweetNote() {
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final note = _noteController.text.trim();
-
-    setState(() {
-      _nameError = null;
-      _emailError = null;
-      _noteError = null;
-
-      if (name.isEmpty) {
-        _nameError = 'Please enter your full name.';
-      } else if (!_isValidFullName(name)) {
-        _nameError = 'Please provide both your first and last name.';
-      }
-
-      if (email.isEmpty) {
-        _emailError = 'Please enter your email address.';
-      } else if (!_isValidEmail(email)) {
-        _emailError = 'Please enter a valid email (e.g. name@gmail.com).';
-      }
-
-      if (note.isEmpty) {
-        _noteError = 'Please write a brief note or question.';
-      } else if (note.length < 5) {
-        _noteError = 'Note must be at least 5 characters long.';
-      }
-    });
-
-    if (_nameError != null || _emailError != null || _noteError != null) {
-      return;
-    }
-
+  void _showSuccessDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.mark_email_read_outlined, color: Color(0xFF8E4A23)),
-            SizedBox(width: 8),
-            Text('💌 Note Sent!'),
-          ],
-        ),
-        content: Text(
-          'Thanks for reaching out, $name!\n\nOur bakery team has received your sweet note. We\'ll send our reply directly to $email shortly.',
-          style: const TextStyle(height: 1.5),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8E4A23),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          width: 420,
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFDFBF7),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFEFE4D6)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(60, 34, 22, 0.16),
+                blurRadius: 24,
+                offset: Offset(0, 10),
               ),
-            ),
-            onPressed: () {
-              _nameController.clear();
-              _emailController.clear();
-              _noteController.clear();
-              setState(() {
-                _nameError = null;
-                _emailError = null;
-                _noteError = null;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Done'),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF2E9),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE5D5C5)),
+                ),
+                child: const Center(
+                  child: Text('💌', style: TextStyle(fontSize: 30)),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Sweet Note Delivered!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF2E1B10),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Thank you for reaching out! Our kitchen and bakery team have received your note and will get back to you shortly.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF756256),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8E4A23),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 1,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Back to Bakery',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _noteController.dispose();
-    super.dispose();
+  Future<void> _handleSendSweetNote() async {
+    setState(() => _validationErrorMessage = null);
+
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _validationErrorMessage =
+            'Please complete all required fields with a valid message.';
+      });
+      return;
+    }
+
+    if (_name.trim().isEmpty ||
+        _email.trim().isEmpty ||
+        _subject.trim().isEmpty ||
+        _message.trim().isEmpty) {
+      setState(() {
+        _validationErrorMessage = 'Your sweet note message cannot be empty.';
+      });
+      return;
+    }
+
+    _formKey.currentState!.save();
+    setState(() => _isSending = true);
+
+    try {
+      await FirebaseFirestore.instance.collection('sweet_notes').add({
+        'name': _name.trim(),
+        'email': _email.trim(),
+        'subject': _subject.trim(),
+        'message': _message.trim(),
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+
+      _formKey.currentState!.reset();
+      setState(() {
+        _name = '';
+        _email = '';
+        _subject = '';
+        _message = '';
+        _validationErrorMessage = null;
+      });
+
+      _showSuccessDialog();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send note: $e'),
+          backgroundColor: const Color(0xFFD32F2F),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 768;
+
     return Container(
       width: double.infinity,
       color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 20),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620),
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFEFE4D6), width: 1.5),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(60, 34, 22, 0.06),
-                  blurRadius: 20,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: isMobile ? 24 : 32,
+      ),
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Container(
+          padding: EdgeInsets.all(isMobile ? 20 : 36),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFEFE4D6)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(60, 34, 22, 0.06),
+                blurRadius: 24,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Form(
+            key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8E4A23).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_note_rounded,
-                        color: Color(0xFF8E4A23),
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'DROP US A MESSAGE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                          color: Color(0xFF8E4A23),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
                 const Text(
-                  'Leave a Quick Sweet Note',
+                  'Leave a Sweet Note 💌',
                   style: TextStyle(
                     fontFamily: 'serif',
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
                     color: Color(0xFF2E1B10),
                   ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Have a custom cake inquiry, event order, or feedback for the bakers?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF756256), fontSize: 13),
+                  'Questions about bulk catering, custom themes, or ingredient inquiries? Send our kitchen team a note!',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF756256),
+                    height: 1.4,
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                TextField(
-                  controller: _nameController,
-                  onChanged: (_) {
-                    if (_nameError != null) setState(() => _nameError = null);
-                  },
-                  decoration: _inputDecoration(
-                    hint: 'Full Name (e.g. Jane Doe)',
-                    icon: Icons.person_outline,
-                    errorText: _nameError,
+                if (_validationErrorMessage != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDE8E8),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFF8B4B4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: Color(0xFF9B1C1C),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _validationErrorMessage!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF9B1C1C),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // 1. Name
+                _buildInputWrapper(
+                  label: 'Your Name',
+                  child: TextFormField(
+                    initialValue: _name,
+                    onChanged: (val) {
+                      _name = val;
+                      if (_validationErrorMessage != null) {
+                        setState(() => _validationErrorMessage = null);
+                      }
+                    },
+                    onSaved: (val) => _name = val ?? '',
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Please enter your name'
+                        : null,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF2E1B10),
+                    ),
+                    decoration: _inputDecoration(
+                      hint: 'e.g. Jane Doe',
+                      icon: Icons.person_outline,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  onChanged: (_) {
-                    if (_emailError != null) setState(() => _emailError = null);
-                  },
-                  decoration: _inputDecoration(
-                    hint: 'Correct Email (e.g. jane@gmail.com)',
-                    icon: Icons.email_outlined,
-                    errorText: _emailError,
+                // 2. Email
+                _buildInputWrapper(
+                  label: 'Email Address',
+                  child: TextFormField(
+                    initialValue: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    onChanged: (val) {
+                      _email = val;
+                      if (_validationErrorMessage != null) {
+                        setState(() => _validationErrorMessage = null);
+                      }
+                    },
+                    onSaved: (val) => _email = val ?? '',
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Please enter your email address';
+                      }
+                      if (!RegExp(
+                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                      ).hasMatch(v.trim())) {
+                        return 'Please enter a valid email address';
+                      }
+                      return null;
+                    },
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF2E1B10),
+                    ),
+                    decoration: _inputDecoration(
+                      hint: 'e.g. name@example.com',
+                      icon: Icons.email_outlined,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                TextField(
-                  controller: _noteController,
-                  maxLines: 3,
-                  onChanged: (_) {
-                    if (_noteError != null) setState(() => _noteError = null);
-                  },
-                  decoration: _inputDecoration(
-                    hint: 'Write your sweet note or order question here...',
-                    icon: Icons.favorite_border,
-                    errorText: _noteError,
+                // 3. Subject
+                _buildInputWrapper(
+                  label: 'Subject / Event',
+                  child: TextFormField(
+                    initialValue: _subject,
+                    onChanged: (val) {
+                      _subject = val;
+                      if (_validationErrorMessage != null) {
+                        setState(() => _validationErrorMessage = null);
+                      }
+                    },
+                    onSaved: (val) => _subject = val ?? '',
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Please enter a subject or topic'
+                        : null,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF2E1B10),
+                    ),
+                    decoration: _inputDecoration(
+                      hint: 'e.g. Birthday Celebration Bulk Order',
+                      icon: Icons.bookmark_outline,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // 4. Message
+                _buildInputWrapper(
+                  label: 'Message',
+                  child: TextFormField(
+                    initialValue: _message,
+                    maxLines: 4,
+                    onChanged: (val) {
+                      _message = val;
+                      if (_validationErrorMessage != null) {
+                        setState(() => _validationErrorMessage = null);
+                      }
+                    },
+                    onSaved: (val) => _message = val ?? '',
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Please write your message before sending.';
+                      }
+                      if (v.trim().length < 5) {
+                        return 'Your note is too short. Please provide more details.';
+                      }
+                      return null;
+                    },
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF2E1B10),
+                    ),
+                    decoration: _inputDecoration(
+                      hint:
+                          'Tell us about your questions or custom cake design ideas...',
+                      icon: Icons.chat_bubble_outline,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 22),
 
+                // Submit Button
                 SizedBox(
                   width: double.infinity,
+                  height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8E4A23),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 2,
+                      elevation: 1,
                     ),
-                    onPressed: _sendSweetNote,
-                    icon: const Icon(Icons.send_rounded, size: 16),
-                    label: const Text(
-                      'Send Sweet Note',
-                      style: TextStyle(
+                    onPressed: _isSending ? null : _handleSendSweetNote,
+                    icon: _isSending
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded, size: 18),
+                    label: Text(
+                      _isSending ? 'Sending Note...' : 'Send Sweet Note',
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -258,17 +422,34 @@ class _ContactSectionState extends State<ContactSection> {
     );
   }
 
+  Widget _buildInputWrapper({required String label, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: Color(0xFF2E1B10),
+          ),
+        ),
+        const SizedBox(height: 6),
+        child,
+      ],
+    );
+  }
+
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
-    String? errorText,
   }) {
     return InputDecoration(
       hintText: hint,
-      errorText: errorText,
+      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9E8E84)),
       prefixIcon: Icon(icon, color: const Color(0xFF8E4A23), size: 18),
       filled: true,
-      fillColor: const Color(0xFFFAF6F0),
+      fillColor: const Color(0xFFFDFBF7),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -289,6 +470,11 @@ class _ContactSectionState extends State<ContactSection> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+      errorStyle: const TextStyle(
+        fontSize: 11,
+        height: 1.1,
+        color: Colors.redAccent,
       ),
     );
   }

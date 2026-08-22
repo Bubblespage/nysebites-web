@@ -10,10 +10,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+    
+  pdf: ^3.10.8
+  printing: ^5.13.1
+  qr_flutter: ^4.1.0
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.2
   image_picker: ^1.2.3
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
+  cloud_firestore: ^6.8.0
 
 dev_dependencies:
   flutter_test:
@@ -24,10 +30,16 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
   image_path: assets/images/logo.jpg
   adaptive_icon_background: '#F3E7DC'
   adaptive_icon_foreground: assets/images/logo.jpg
+
+  web:
+    generate: true
+    image_path: assets/images/logo.jpg
+    background_color: "#F3E7DC"
+    theme_color: "#8C4A27"
 
 flutter:
 

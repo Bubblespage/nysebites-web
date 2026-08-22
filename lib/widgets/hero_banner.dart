@@ -57,9 +57,8 @@ class HeroBanner extends StatelessWidget {
 
   Widget _buildLeftHeroContent(bool isMobile) {
     return Column(
-      crossAxisAlignment: isMobile
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
+      crossAxisAlignment:
+          isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -70,8 +69,9 @@ class HeroBanner extends StatelessWidget {
               color: const Color(0xFF8E4A23).withOpacity(0.25),
             ),
           ),
-          child: Row(
-            children: const [
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Icon(
                 Icons.local_fire_department,
                 size: 16,
@@ -384,8 +384,8 @@ class HeroBanner extends StatelessWidget {
       child: isMobile
           ? Column(
               children: badges.map((b) {
-                return SizedBox(
-                  width: double.infinity,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   child: _badgeItem(
                     b['icon'] as IconData,
                     b['title'] as String,
@@ -395,14 +395,15 @@ class HeroBanner extends StatelessWidget {
               }).toList(),
             )
           : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: badges.map((b) {
-                return SizedBox(
-                  width: 230,
-                  child: _badgeItem(
-                    b['icon'] as IconData,
-                    b['title'] as String,
-                    b['desc'] as String,
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: _badgeItem(
+                      b['icon'] as IconData,
+                      b['title'] as String,
+                      b['desc'] as String,
+                    ),
                   ),
                 );
               }).toList(),
@@ -411,45 +412,46 @@ class HeroBanner extends StatelessWidget {
   }
 
   Widget _badgeItem(IconData icon, String title, String desc) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5EAE0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: const Color(0xFF8E4A23), size: 22),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5EAE0),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13.5,
-                    color: Color(0xFF2B170E),
-                  ),
-                  overflow: TextOverflow.ellipsis,
+          child: Icon(icon, color: const Color(0xFF8E4A23), size: 20),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: Color(0xFF2B170E),
                 ),
-                Text(
-                  desc,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: Color(0xFF756256),
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                desc,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF756256),
                 ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
