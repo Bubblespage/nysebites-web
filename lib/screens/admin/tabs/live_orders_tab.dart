@@ -416,6 +416,7 @@ class LiveOrdersTab extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> order,
   ) {
+    final String targetDocId = (order['docId'] ?? order['id'] ?? '').toString();
     final String status = order['status'] ?? '';
     final bool isCustom = order['isCustom'] == true;
     final bool isRider = currentRole == 'Order Dispatcher';
@@ -454,7 +455,7 @@ class LiveOrdersTab extends StatelessWidget {
             ),
           ),
           onPressed: () =>
-              onUpdateStatus(order['id'], 'delivering', '🛵 Out for Delivery'),
+              onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
           icon: const Icon(Icons.takeout_dining, size: 13, color: Colors.white),
           label: const Text(
             'Pick Up Batch',
@@ -485,7 +486,7 @@ class LiveOrdersTab extends StatelessWidget {
             context,
             order,
             () => onUpdateStatus(
-              order['id'],
+              targetDocId,
               'delivered',
               '✓ Completed Delivery',
             ),
@@ -531,12 +532,12 @@ class LiveOrdersTab extends StatelessWidget {
           () {
             if (isCustom) {
               onUpdateStatus(
-                order['id'],
+                targetDocId,
                 'pending_spec_review',
                 '🎂 Needs Spec Review',
               );
             } else {
-              onUpdateStatus(order['id'], 'ready_to_bake', '✓ Ready for Oven');
+              onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven');
             }
           },
         ),
@@ -565,12 +566,12 @@ class LiveOrdersTab extends StatelessWidget {
           () {
             if (isCustom) {
               onUpdateStatus(
-                order['id'],
+                targetDocId,
                 'pending_spec_review',
                 '🎂 Needs Spec Review',
               );
             } else {
-              onUpdateStatus(order['id'], 'ready_to_bake', '✓ Ready for Oven');
+              onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven');
             }
           },
         ),
@@ -596,8 +597,8 @@ class LiveOrdersTab extends StatelessWidget {
         onPressed: () => AdminModals.showCustomCakeInspectionDrawer(
           context,
           order,
-          () => onUpdateStatus(order['id'], 'baking', '🍪 Baking & Packing'),
-          () => onUpdateStatus(order['id'], 'spec_rejected', '❌ Spec Rejected'),
+          () => onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Packing'),
+          () => onUpdateStatus(targetDocId, 'spec_rejected', '❌ Spec Rejected'),
         ),
         icon: const Icon(Icons.cake_outlined, size: 13, color: Colors.white),
         label: const Text(
@@ -620,7 +621,7 @@ class LiveOrdersTab extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         onPressed: () =>
-            onUpdateStatus(order['id'], 'baking', '🍪 Baking & Packing'),
+            onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Packing'),
         child: const Text(
           'Start Bake',
           style: TextStyle(
@@ -641,7 +642,7 @@ class LiveOrdersTab extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         onPressed: () =>
-            onUpdateStatus(order['id'], 'delivering', '🛵 Out for Delivery'),
+            onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
         child: const Text(
           'Mark Ready',
           style: TextStyle(
@@ -663,7 +664,7 @@ class LiveOrdersTab extends StatelessWidget {
       onPressed: () => AdminModals.showRiderTrackerModal(
         context,
         order,
-        () => onUpdateStatus(order['id'], 'delivered', '✓ Completed Delivery'),
+        () => onUpdateStatus(targetDocId, 'delivered', '✓ Completed Delivery'),
       ),
       child: const Text(
         'Track Rider',
@@ -754,7 +755,6 @@ class LiveOrdersTab extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Breakpoints: 4 cards on desktop, 2-column grid on mobile/tablet
         final double width = constraints.maxWidth;
         final double cardWidth = width >= 800
             ? (width - (3 * 12)) / 4

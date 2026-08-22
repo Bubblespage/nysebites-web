@@ -11,7 +11,8 @@ class CheckoutModal extends StatefulWidget {
     int itemCount,
     double grandTotal,
     String paymentMethod,
-  ) onOrderSuccess;
+  )
+  onOrderSuccess;
 
   const CheckoutModal({
     super.key,
@@ -111,8 +112,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
         : 'Scheduled Fresh Batch';
 
     final String rawPhone = _phoneController.text.trim();
-    final String completePhone =
-        rawPhone.startsWith('+63') ? rawPhone : '+63 $rawPhone';
+    final String completePhone = rawPhone.startsWith('+63')
+        ? rawPhone
+        : '+63 $rawPhone';
 
     try {
       await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
@@ -205,13 +207,14 @@ class _CheckoutModalState extends State<CheckoutModal> {
               final bool enableCod = data['enableCod'] ?? true;
               final bool enableEwallet = data['enableEwallet'] ?? true;
 
-              final String gcashQr = data['gcashQrUrl'] ?? 'assets/images/gcash_qr.png';
-              final String qrphQr = data['qrphQrUrl'] ?? 'assets/images/qrph_qr.png';
+              final String gcashQr =
+                  data['gcashQrUrl'] ?? 'assets/images/gcash_qr.png';
+              final String qrphQr =
+                  data['qrphQrUrl'] ?? 'assets/images/qrph_qr.png';
 
-              final double standardDeliveryFee = (data['standardDeliveryFee'] ??
-                      data['deliveryFee'] ??
-                      80.0)
-                  .toDouble();
+              final double standardDeliveryFee =
+                  (data['standardDeliveryFee'] ?? data['deliveryFee'] ?? 80.0)
+                      .toDouble();
               final double scheduledDeliveryFee =
                   (data['scheduledDeliveryFee'] ?? 70.0).toDouble();
               final double freeDeliveryThreshold =
@@ -224,15 +227,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   ? standardDeliveryFee
                   : scheduledDeliveryFee;
 
-              final double effectiveDeliveryFee =
-                  isFreeDelivery ? 0.0 : selectedBaseFee;
+              final double effectiveDeliveryFee = isFreeDelivery
+                  ? 0.0
+                  : selectedBaseFee;
 
               final double grandTotal =
                   widget.totalAmount + effectiveDeliveryFee + _packagingFee;
 
-              if (!enableEwallet && _selectedPaymentMethod != 'Cash on Delivery') {
+              if (!enableEwallet &&
+                  _selectedPaymentMethod != 'Cash on Delivery') {
                 _selectedPaymentMethod = 'Cash on Delivery';
-              } else if (!enableCod && _selectedPaymentMethod == 'Cash on Delivery') {
+              } else if (!enableCod &&
+                  _selectedPaymentMethod == 'Cash on Delivery') {
                 _selectedPaymentMethod = 'GCash';
               }
 
@@ -241,7 +247,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                 children: [
                   // Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -272,7 +281,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Color(0xFF756256)),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Color(0xFF756256),
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -283,11 +295,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   if (!isStoreOpen)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
                       color: const Color(0xFFFDE8E8),
                       child: const Row(
                         children: [
-                          Icon(Icons.lock_clock, size: 16, color: Color(0xFFC62828)),
+                          Icon(
+                            Icons.lock_clock,
+                            size: 16,
+                            color: Color(0xFFC62828),
+                          ),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -326,20 +345,30 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               decoration: InputDecoration(
                                 labelText: 'Recipient Full Name *',
                                 hintText: 'e.g. Maria Santos',
-                                prefixIcon: const Icon(Icons.person_outline, size: 18, color: Color(0xFF8E4A23)),
+                                prefixIcon: const Icon(
+                                  Icons.person_outline,
+                                  size: 18,
+                                  color: Color(0xFF8E4A23),
+                                ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 isDense: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                               ),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter recipient name' : null,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Please enter recipient name'
+                                  : null,
                             ),
                             const SizedBox(height: 12),
 
@@ -356,12 +385,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 labelText: 'Mobile Number *',
                                 hintText: '917 123 4567',
                                 prefixIcon: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   alignment: Alignment.centerLeft,
                                   width: 78,
                                   child: const Row(
                                     children: [
-                                      Icon(Icons.phone_outlined, size: 16, color: Color(0xFF8E4A23)),
+                                      Icon(
+                                        Icons.phone_outlined,
+                                        size: 16,
+                                        color: Color(0xFF8E4A23),
+                                      ),
                                       SizedBox(width: 4),
                                       Text(
                                         '+63',
@@ -379,17 +414,23 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 isDense: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                               ),
                               validator: (v) {
-                                if (v == null || v.trim().isEmpty) return 'Please enter your mobile number';
+                                if (v == null || v.trim().isEmpty)
+                                  return 'Please enter your mobile number';
                                 final cleaned = v.replaceAll(RegExp(r'\D'), '');
-                                if (cleaned.length < 10) return 'Please enter a valid 10 or 11-digit mobile number';
+                                if (cleaned.length < 10)
+                                  return 'Please enter a valid 10 or 11-digit mobile number';
                                 return null;
                               },
                             ),
@@ -406,21 +447,32 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               ),
                               decoration: InputDecoration(
                                 labelText: 'Complete Delivery Address *',
-                                hintText: 'Unit/House No., Street, Barangay, Subdivision, City',
-                                prefixIcon: const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF8E4A23)),
+                                hintText:
+                                    'Unit/House No., Street, Barangay, Subdivision, City',
+                                prefixIcon: const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 18,
+                                  color: Color(0xFF8E4A23),
+                                ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 isDense: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                               ),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your full delivery address' : null,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Please enter your full delivery address'
+                                  : null,
                             ),
                             const SizedBox(height: 20),
 
@@ -429,7 +481,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             const SizedBox(height: 8),
                             LayoutBuilder(
                               builder: (context, boxConstraints) {
-                                final bool stackCards = boxConstraints.maxWidth < 360;
+                                final bool stackCards =
+                                    boxConstraints.maxWidth < 360;
 
                                 if (stackCards) {
                                   return Column(
@@ -441,7 +494,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             : '₱${standardDeliveryFee.toStringAsFixed(2)}',
                                         isSelected: _isStandardDelivery,
                                         isFree: isFreeDelivery,
-                                        onTap: () => setState(() => _isStandardDelivery = true),
+                                        onTap: () => setState(
+                                          () => _isStandardDelivery = true,
+                                        ),
                                       ),
                                       const SizedBox(height: 8),
                                       _deliveryOptionCard(
@@ -451,7 +506,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             : '₱${scheduledDeliveryFee.toStringAsFixed(2)}',
                                         isSelected: !_isStandardDelivery,
                                         isFree: isFreeDelivery,
-                                        onTap: () => setState(() => _isStandardDelivery = false),
+                                        onTap: () => setState(
+                                          () => _isStandardDelivery = false,
+                                        ),
                                       ),
                                     ],
                                   );
@@ -467,7 +524,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             : '₱${standardDeliveryFee.toStringAsFixed(2)}',
                                         isSelected: _isStandardDelivery,
                                         isFree: isFreeDelivery,
-                                        onTap: () => setState(() => _isStandardDelivery = true),
+                                        onTap: () => setState(
+                                          () => _isStandardDelivery = true,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -479,7 +538,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             : '₱${scheduledDeliveryFee.toStringAsFixed(2)}',
                                         isSelected: !_isStandardDelivery,
                                         isFree: isFreeDelivery,
-                                        onTap: () => setState(() => _isStandardDelivery = false),
+                                        onTap: () => setState(
+                                          () => _isStandardDelivery = false,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -495,16 +556,26 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               runSpacing: 8,
                               children: [
                                 if (enableEwallet) ...[
-                                  _paymentChip('GCash', Icons.account_balance_wallet_outlined),
-                                  _paymentChip('QRPh (MariBank/SeaBank)', Icons.qr_code_scanner_outlined),
+                                  _paymentChip(
+                                    'GCash',
+                                    Icons.account_balance_wallet_outlined,
+                                  ),
+                                  _paymentChip(
+                                    'QRPh',
+                                    Icons.qr_code_scanner_outlined,
+                                  ),
                                 ],
                                 if (enableCod)
-                                  _paymentChip('Cash on Delivery', Icons.payments_outlined),
+                                  _paymentChip(
+                                    'Cash on Delivery',
+                                    Icons.payments_outlined,
+                                  ),
                               ],
                             ),
 
                             // QR Image Card
-                            if (_selectedPaymentMethod != 'Cash on Delivery') ...[
+                            if (_selectedPaymentMethod !=
+                                'Cash on Delivery') ...[
                               const SizedBox(height: 14),
                               Container(
                                 width: double.infinity,
@@ -512,7 +583,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFAF2E9),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFE8D0C3)),
+                                  border: Border.all(
+                                    color: const Color(0xFFE8D0C3),
+                                  ),
                                 ),
                                 child: Column(
                                   children: [
@@ -522,9 +595,15 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           padding: const EdgeInsets.all(5),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF8E4A23),
-                                            borderRadius: BorderRadius.circular(7),
+                                            borderRadius: BorderRadius.circular(
+                                              7,
+                                            ),
                                           ),
-                                          child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 14),
+                                          child: const Icon(
+                                            Icons.qr_code_scanner,
+                                            color: Colors.white,
+                                            size: 14,
+                                          ),
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(
@@ -545,7 +624,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: const Color(0xFFE5D5C5)),
+                                        border: Border.all(
+                                          color: const Color(0xFFE5D5C5),
+                                        ),
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
@@ -553,7 +634,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           width: 140,
                                           height: 140,
                                           child: _buildQrImage(
-                                            _selectedPaymentMethod == 'GCash' ? gcashQr : qrphQr,
+                                            _selectedPaymentMethod == 'GCash'
+                                                ? gcashQr
+                                                : qrphQr,
                                           ),
                                         ),
                                       ),
@@ -573,21 +656,37 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     const SizedBox(height: 12),
                                     TextFormField(
                                       controller: _refNumberController,
-                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                       decoration: InputDecoration(
-                                        labelText: 'Payment Reference No. (Optional)',
+                                        labelText:
+                                            'Payment Reference No. (Optional)',
                                         hintText: 'e.g. 1029384756',
-                                        prefixIcon: const Icon(Icons.receipt_long, size: 16, color: Color(0xFF8E4A23)),
+                                        prefixIcon: const Icon(
+                                          Icons.receipt_long,
+                                          size: 16,
+                                          color: Color(0xFF8E4A23),
+                                        ),
                                         filled: true,
                                         fillColor: Colors.white,
                                         isDense: true,
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFEFE4D6),
+                                          ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFEFE4D6),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -602,20 +701,34 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _noteController,
-                              style: const TextStyle(fontSize: 12.5, color: Color(0xFF2E1B10)),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF2E1B10),
+                              ),
                               decoration: InputDecoration(
-                                hintText: 'e.g. Leave at guardhouse, ring doorbell...',
-                                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9E8E84)),
+                                hintText:
+                                    'e.g. Leave at guardhouse, ring doorbell...',
+                                hintStyle: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF9E8E84),
+                                ),
                                 filled: true,
                                 fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFEFE4D6),
+                                  ),
                                 ),
                               ),
                             ),
@@ -628,21 +741,52 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFEFE4D6)),
+                                border: Border.all(
+                                  color: const Color(0xFFEFE4D6),
+                                ),
                               ),
                               child: Column(
                                 children: [
-                                  _receiptRow('Items Subtotal (${widget.cartItems.length} items)', '₱${widget.totalAmount.toStringAsFixed(2)}'),
+                                  _receiptRow(
+                                    'Items Subtotal (${widget.cartItems.length} items)',
+                                    '₱${widget.totalAmount.toStringAsFixed(2)}',
+                                  ),
                                   const SizedBox(height: 6),
-                                  _receiptRow('Delivery Fee', isFreeDelivery ? 'FREE (₱0.00)' : '₱${effectiveDeliveryFee.toStringAsFixed(2)}'),
+                                  _receiptRow(
+                                    'Delivery Fee',
+                                    isFreeDelivery
+                                        ? 'FREE (₱0.00)'
+                                        : '₱${effectiveDeliveryFee.toStringAsFixed(2)}',
+                                  ),
                                   const SizedBox(height: 6),
-                                  _receiptRow('Bakery Eco Seal Packaging', '₱${_packagingFee.toStringAsFixed(2)}'),
-                                  const Divider(color: Color(0xFFEFE4D6), height: 16),
+                                  _receiptRow(
+                                    'Bakery Eco Seal Packaging',
+                                    '₱${_packagingFee.toStringAsFixed(2)}',
+                                  ),
+                                  const Divider(
+                                    color: Color(0xFFEFE4D6),
+                                    height: 16,
+                                  ),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text('Grand Total:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF2E1B10))),
-                                      Text('₱${grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF8E4A23))),
+                                      const Text(
+                                        'Grand Total:',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 13.5,
+                                          color: Color(0xFF2E1B10),
+                                        ),
+                                      ),
+                                      Text(
+                                        '₱${grandTotal.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 17,
+                                          color: Color(0xFF8E4A23),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -656,11 +800,16 @@ class _CheckoutModalState extends State<CheckoutModal> {
 
                   // Bottom Action Bar
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       border: Border(top: BorderSide(color: Color(0xFFEFE4D6))),
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(23)),
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(23),
+                      ),
                     ),
                     child: SizedBox(
                       width: double.infinity,
@@ -675,11 +824,19 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             children: [
                               Text(
                                 'Paying with $_selectedPaymentMethod',
-                                style: const TextStyle(fontSize: 10.5, color: Color(0xFF756256), fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: Color(0xFF756256),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               Text(
                                 '₱${grandTotal.toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF8E4A23)),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF8E4A23),
+                                ),
                               ),
                             ],
                           ),
@@ -687,8 +844,13 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF8E4A23),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 2,
                             ),
                             onPressed: (_isSubmitting || !isStoreOpen)
@@ -699,11 +861,26 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     isStoreOpen: isStoreOpen,
                                   ),
                             icon: _isSubmitting
-                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Icon(Icons.check_circle_outline, size: 16),
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.check_circle_outline,
+                                    size: 16,
+                                  ),
                             label: Text(
-                              _isSubmitting ? 'Placing Order...' : 'Place Sweet Order',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              _isSubmitting
+                                  ? 'Placing Order...'
+                                  : 'Place Sweet Order',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ],
@@ -746,7 +923,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
           Text(
             'Official QR Ready\nat Counter',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF756256)),
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF756256),
+            ),
           ),
         ],
       ),
@@ -756,7 +937,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
   Widget _sectionLabel(String label) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF8E4A23)),
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.8,
+        color: Color(0xFF8E4A23),
+      ),
     );
   }
 
@@ -776,20 +962,31 @@ class _CheckoutModalState extends State<CheckoutModal> {
           color: isSelected ? const Color(0xFFFAF2E9) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF8E4A23) : const Color(0xFFEFE4D6),
+            color: isSelected
+                ? const Color(0xFF8E4A23)
+                : const Color(0xFFEFE4D6),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF2E1B10))),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2E1B10),
+              ),
+            ),
             const SizedBox(height: 3),
             Text(
               priceText,
               style: TextStyle(
                 fontSize: 11.5,
-                color: isFree ? const Color(0xFF2E7D32) : const Color(0xFF8E4A23),
+                color: isFree
+                    ? const Color(0xFF2E7D32)
+                    : const Color(0xFF8E4A23),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -799,21 +996,34 @@ class _CheckoutModalState extends State<CheckoutModal> {
     );
   }
 
-  Widget _paymentChip(String name, IconData icon) {
-    final isSelected = _selectedPaymentMethod == name;
+  Widget _paymentChip(String labelName, IconData icon) {
+    // Map short label back to your full logic string if needed, or keep it clean
+    final bool isSelected = _selectedPaymentMethod.startsWith(labelName);
+
     return ChoiceChip(
-      avatar: Icon(icon, size: 15, color: isSelected ? Colors.white : const Color(0xFF8E4A23)),
-      label: Text(name),
+      avatar: Icon(
+        icon,
+        size: 14,
+        color: isSelected ? Colors.white : const Color(0xFF8E4A23),
+      ),
+      label: Text(labelName),
       selected: isSelected,
       selectedColor: const Color(0xFF8E4A23),
       backgroundColor: Colors.white,
       labelStyle: TextStyle(
         color: isSelected ? Colors.white : const Color(0xFF2E1B10),
         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-        fontSize: 11.5,
+        fontSize: 11,
       ),
       onSelected: (selected) {
-        if (selected) setState(() => _selectedPaymentMethod = name);
+        if (selected) {
+          setState(() {
+            // If they select QRPh, set it cleanly
+            _selectedPaymentMethod = labelName == 'QRPh'
+                ? 'QRPh (MariBank/SeaBank)'
+                : labelName;
+          });
+        }
       },
     );
   }
@@ -822,8 +1032,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF756256))),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF2E1B10))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF756256)),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF2E1B10),
+          ),
+        ),
       ],
     );
   }

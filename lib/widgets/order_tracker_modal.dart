@@ -36,33 +36,47 @@ class OrderTrackerModal extends StatelessWidget {
               ),
             ],
           ),
+          // Directly listen to the document path using orderNumber as the Document ID
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
                 .collection('orders')
                 .doc(orderNumber)
                 .snapshots(),
             builder: (context, snapshot) {
-              String status = 'pending_cod';
-              String statusLabel = 'Order Sent to Kitchen';
-              String payment = 'Cash on Delivery';
-              String riderName = 'Assigning kitchen rider...';
+              Map<String, dynamic> data = {};
 
-              if (snapshot.hasData && snapshot.data!.exists) {
-                final data = snapshot.data!.data()!;
-                status = data['status']?.toString() ?? 'pending_cod';
-                statusLabel = data['statusLabel']?.toString() ?? 'Order Sent to Kitchen';
-                payment = data['payment']?.toString() ?? 'Cash on Delivery';
-                riderName = data['riderName']?.toString() ?? riderName;
+              if (snapshot.hasData &&
+                  snapshot.data != null &&
+                  snapshot.data!.exists) {
+                data = snapshot.data!.data() ?? {};
               }
 
-              // Step completions
-              final bool isSent = true;
-              final bool isBaking = status == 'baking' ||
-                  status == 'ready_to_bake' ||
-                  status == 'delivering' ||
-                  status == 'delivered';
-              final bool isDelivering = status == 'delivering' || status == 'delivered';
-              final bool isDelivered = status == 'delivered';
+              final String status = (data['status'] ?? 'pending_cod')
+                  .toString()
+                  .toLowerCase()
+                  .trim();
+              final String statusLabel =
+                  (data['statusLabel'] ?? 'Order Sent to Kitchen').toString();
+              final String payment = (data['payment'] ?? 'Cash on Delivery')
+                  .toString();
+              final String riderName =
+                  (data['riderName'] ?? 'Assigning kitchen rider...')
+                      .toString();
+
+              final cleanStatus = status.replaceAll(' ', '_');
+
+              // Pipeline flags
+              const bool isSent = true;
+              final bool isBaking =
+                  cleanStatus == 'baking' ||
+                  cleanStatus == 'ready_to_bake' ||
+                  cleanStatus == 'preparing' ||
+                  cleanStatus == 'in_kitchen' ||
+                  cleanStatus == 'delivering' ||
+                  cleanStatus == 'delivered';
+              final bool isDelivering =
+                  cleanStatus == 'delivering' || cleanStatus == 'delivered';
+              final bool isDelivered = cleanStatus == 'delivered';
 
               return SingleChildScrollView(
                 child: Column(
@@ -96,16 +110,22 @@ class OrderTrackerModal extends StatelessWidget {
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Color(0xFF756256)),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Color(0xFF756256),
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
-                    // Status pill
+                    // Status Pill
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFAF2E9),
                         borderRadius: BorderRadius.circular(16),
@@ -114,7 +134,11 @@ class OrderTrackerModal extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.sync, color: Color(0xFF8E4A23), size: 16),
+                          const Icon(
+                            Icons.sync,
+                            color: Color(0xFF8E4A23),
+                            size: 16,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             statusLabel,
@@ -129,7 +153,7 @@ class OrderTrackerModal extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Live timeline
+                    // Timeline Container
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
@@ -171,12 +195,12 @@ class OrderTrackerModal extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
 
-                    // Order Summary
+                    // Summary Footer
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$itemCount items • ₱${totalAmount.toStringAsFixed(2)}',
+                          '$itemCount items • PHP ${totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12.5,
@@ -214,7 +238,12 @@ class OrderTrackerModal extends StatelessWidget {
     );
   }
 
-  Widget _buildTrackingStep(IconData icon, String title, String subtitle, bool isDone) {
+  Widget _buildTrackingStep(
+    IconData icon,
+    String title,
+    String subtitle,
+    bool isDone,
+  ) {
     return Row(
       children: [
         Container(
@@ -240,7 +269,9 @@ class OrderTrackerModal extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: isDone ? const Color(0xFF2E1B10) : const Color(0xFF9E8E84),
+                  color: isDone
+                      ? const Color(0xFF2E1B10)
+                      : const Color(0xFF9E8E84),
                 ),
               ),
               Text(
@@ -254,3 +285,4 @@ class OrderTrackerModal extends StatelessWidget {
     );
   }
 }
+

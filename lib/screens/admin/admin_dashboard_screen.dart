@@ -132,10 +132,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     String newLabel,
   ) async {
     try {
-      await _firestore.collection('orders').doc(id).update({
-        'status': newStatus,
-        'statusLabel': newLabel,
-      });
+      final docRef = _firestore.collection('orders').doc(id);
+      final docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        await docRef.update({
+          'status': newStatus,
+          'statusLabel': newLabel,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        final queryById = await _firestore
+            .collection('orders')
+            .where('id', isEqualTo: id)
+            .limit(1)
+            .get();
+
+        if (queryById.docs.isNotEmpty) {
+          await queryById.docs.first.reference.update({
+            'status': newStatus,
+            'statusLabel': newLabel,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          final queryByOrderNum = await _firestore
+              .collection('orders')
+              .where('orderNumber', isEqualTo: id)
+              .limit(1)
+              .get();
+
+          if (queryByOrderNum.docs.isNotEmpty) {
+            await queryByOrderNum.docs.first.reference.update({
+              'status': newStatus,
+              'statusLabel': newLabel,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -255,10 +290,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               Expanded(
                 child: Column(
                   children: [
-                    _buildHeader(isDesktop: isDesktop, isSmallMobile: isSmallMobile),
+                    _buildHeader(
+                      isDesktop: isDesktop,
+                      isSmallMobile: isSmallMobile,
+                    ),
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.all(isDesktop ? 28 : (isSmallMobile ? 12 : 16)),
+                        padding: EdgeInsets.all(
+                          isDesktop ? 28 : (isSmallMobile ? 12 : 16),
+                        ),
                         child: FadeTransition(
                           opacity: _fadeAnim,
                           child: SlideTransition(
@@ -305,8 +345,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           stream: _firestore.collection('sweet_notes').snapshots(),
           builder: (context, notesSnap) {
             final notesDocs = notesSnap.data?.docs ?? [];
-            final int unreadNotesCount =
-                notesDocs.where((d) => d.data()['isRead'] == false).length;
+            final int unreadNotesCount = notesDocs
+                .where((d) => d.data()['isRead'] == false)
+                .length;
 
             return Container(
               color: darkEspresso,
@@ -328,7 +369,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             height: 40,
                             color: borderLight,
                             alignment: Alignment.center,
-                            child: const Text('🍪', style: TextStyle(fontSize: 20)),
+                            child: const Text(
+                              '🍪',
+                              style: TextStyle(fontSize: 20),
+                            ),
                           ),
                         ),
                       ),
@@ -369,7 +413,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     _buildNavItem(
                       2,
                       '🎂 Custom Cake Desk',
-                      count: pendingCustomCakesCount > 0 ? '$pendingCustomCakesCount' : null,
+                      count: pendingCustomCakesCount > 0
+                          ? '$pendingCustomCakesCount'
+                          : null,
                       isDrawer: isDrawer,
                     ),
                     _buildNavItem(
@@ -509,7 +555,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 color: wellBg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: _searchQuery.isNotEmpty ? brandCocoa : Colors.transparent,
+                  color: _searchQuery.isNotEmpty
+                      ? brandCocoa
+                      : Colors.transparent,
                   width: 1.2,
                 ),
               ),
@@ -558,7 +606,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               border: Border.all(color: borderLight),
             ),
             child: Text(
-              isSmallMobile ? widget.currentRole.split(' ').first : widget.currentRole,
+              isSmallMobile
+                  ? widget.currentRole.split(' ').first
+                  : widget.currentRole,
               style: const TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.bold,
@@ -577,12 +627,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('orders').snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return _buildStreamLoader('Connecting to live order desk...');
             }
             final docs = snapshot.data?.docs ?? [];
 
-            var orders = docs.map((d) => {'docId': d.id, ...d.data()}).where((o) {
+            var orders = docs.map((d) => {'docId': d.id, ...d.data()}).where((
+              o,
+            ) {
               if (_searchQuery.trim().isEmpty) return true;
               final q = _searchQuery.toLowerCase();
               return (o['id'] ?? '').toString().toLowerCase().contains(q) ||
@@ -601,12 +654,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               if (bTime is Timestamp) dateB = bTime.toDate();
 
               if (dateA == dateB) {
-                final idA = int.tryParse(
-                      (a['id'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), ''),
+                final idA =
+                    int.tryParse(
+                      (a['id'] ?? '').toString().replaceAll(
+                        RegExp(r'[^0-9]'),
+                        '',
+                      ),
                     ) ??
                     0;
-                final idB = int.tryParse(
-                      (b['id'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), ''),
+                final idB =
+                    int.tryParse(
+                      (b['id'] ?? '').toString().replaceAll(
+                        RegExp(r'[^0-9]'),
+                        '',
+                      ),
                     ) ??
                     0;
                 return idB.compareTo(idA);
@@ -629,12 +690,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('orders').snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-              return _buildStreamLoader('Computing bakery revenue and oven deck load...');
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              return _buildStreamLoader(
+                'Computing bakery revenue and oven deck load...',
+              );
             }
 
             final docs = snapshot.data?.docs ?? [];
-            final orders = docs.map((d) => {'docId': d.id, ...d.data()}).toList();
+            final orders = docs
+                .map((d) => {'docId': d.id, ...d.data()})
+                .toList();
 
             return DashboardOverviewTab(orders: orders);
           },
@@ -644,41 +710,71 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('orders').snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-              return _buildStreamLoader('Loading custom cake specifications...');
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              return _buildStreamLoader(
+                'Loading custom cake specifications...',
+              );
             }
             final docs = snapshot.data?.docs ?? [];
-            final customCakes = docs.map((d) => {'docId': d.id, ...d.data()}).where((o) {
-              final bool isCustomFlag =
-                  o['isCustom'] == true || o['isCustom']?.toString().toLowerCase() == 'true';
-              final String itemName = (o['item'] ?? o['productName'] ?? '').toString().toLowerCase();
-              final String category = (o['category'] ?? '').toString().toLowerCase();
+            final customCakes = docs
+                .map((d) => {'docId': d.id, ...d.data()})
+                .where((o) {
+                  final bool isCustomFlag =
+                      o['isCustom'] == true ||
+                      o['isCustom']?.toString().toLowerCase() == 'true';
+                  final String itemName = (o['item'] ?? o['productName'] ?? '')
+                      .toString()
+                      .toLowerCase();
+                  final String category = (o['category'] ?? '')
+                      .toString()
+                      .toLowerCase();
 
-              final bool isCustomCake = isCustomFlag ||
-                  itemName.contains('custom') ||
-                  itemName.contains('cake') ||
-                  category.contains('cake');
+                  final bool isCustomCake =
+                      isCustomFlag ||
+                      itemName.contains('custom') ||
+                      itemName.contains('cake') ||
+                      category.contains('cake');
 
-              if (!isCustomCake) return false;
+                  if (!isCustomCake) return false;
 
-              if (_searchQuery.trim().isEmpty) return true;
-              final q = _searchQuery.toLowerCase();
-              return (o['id'] ?? '').toString().toLowerCase().contains(q) ||
-                  (o['customer'] ?? '').toString().toLowerCase().contains(q) ||
-                  itemName.contains(q) ||
-                  (o['note'] ?? '').toString().toLowerCase().contains(q);
-            }).toList();
+                  if (_searchQuery.trim().isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return (o['id'] ?? '').toString().toLowerCase().contains(q) ||
+                      (o['customer'] ?? '').toString().toLowerCase().contains(
+                        q,
+                      ) ||
+                      itemName.contains(q) ||
+                      (o['note'] ?? '').toString().toLowerCase().contains(q);
+                })
+                .toList();
 
             return CustomCakeDeskTab(
               customCakes: customCakes,
               onUpdateStatus: _updateOrderStatus,
               onRejectSpec: (id) async {
-                await _firestore.collection('orders').doc(id).delete();
+                final docRef = _firestore.collection('orders').doc(id);
+                final docSnap = await docRef.get();
+                if (docSnap.exists) {
+                  await docRef.delete();
+                } else {
+                  final query = await _firestore
+                      .collection('orders')
+                      .where('id', isEqualTo: id)
+                      .limit(1)
+                      .get();
+                  if (query.docs.isNotEmpty) {
+                    await query.docs.first.reference.delete();
+                  }
+                }
+
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: darkEspresso,
-                    content: Text('Custom cake spec for $id rejected and removed.'),
+                    content: Text(
+                      'Custom cake spec for $id rejected and removed.',
+                    ),
                   ),
                 );
               },
@@ -690,16 +786,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('products').snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return _buildStreamLoader('Fetching bakery menu inventory...');
             }
             final docs = snapshot.data?.docs ?? [];
-            final inventory = docs.map((d) => {'docId': d.id, ...d.data()}).where((item) {
-              if (_searchQuery.trim().isEmpty) return true;
-              final q = _searchQuery.toLowerCase();
-              return (item['name'] ?? '').toString().toLowerCase().contains(q) ||
-                  (item['category'] ?? '').toString().toLowerCase().contains(q);
-            }).toList();
+            final inventory = docs
+                .map((d) => {'docId': d.id, ...d.data()})
+                .where((item) {
+                  if (_searchQuery.trim().isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return (item['name'] ?? '').toString().toLowerCase().contains(
+                        q,
+                      ) ||
+                      (item['category'] ?? '')
+                          .toString()
+                          .toLowerCase()
+                          .contains(q);
+                })
+                .toList();
 
             return BatchDropsMenuTab(
               inventory: inventory,
@@ -722,16 +827,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _firestore.collection('sweet_notes').snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return _buildStreamLoader('Opening sweet notes inbox...');
             }
             final docs = snapshot.data?.docs ?? [];
-            final notes = docs.map((d) => {'docId': d.id, ...d.data()}).where((note) {
+            final notes = docs.map((d) => {'docId': d.id, ...d.data()}).where((
+              note,
+            ) {
               if (_searchQuery.trim().isEmpty) return true;
               final q = _searchQuery.toLowerCase();
-              return (note['name'] ?? '').toString().toLowerCase().contains(q) ||
+              return (note['name'] ?? '').toString().toLowerCase().contains(
+                    q,
+                  ) ||
                   (note['email'] ?? '').toString().toLowerCase().contains(q) ||
-                  (note['subject'] ?? '').toString().toLowerCase().contains(q) ||
+                  (note['subject'] ?? '').toString().toLowerCase().contains(
+                    q,
+                  ) ||
                   (note['message'] ?? '').toString().toLowerCase().contains(q);
             }).toList();
 
