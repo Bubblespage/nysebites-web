@@ -44,13 +44,13 @@ final List<Product> mockProducts = [
   const Product(
     id: 4,
     order: 4,
-    name: 'KitKat Chocolate',
+    name: 'Red Velvet Kiss Blossom',
     category: 'cookies',
     price: 260.0,
     priceBox6: 390.0,
     servingSize: 'Box of 4',
     description:
-        'Crispy wafer-infused cocoa cookie with a smooth milk chocolate shell and creamy center.',
+        'Vibrant crimson cocoa cookie with a smooth milk chocolate shell and creamy center.',
     imgSrc: 'assets/images/redvelvet.jpg',
     icon: '❤️',
   ),

@@ -28,7 +28,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Refreshing kitchen tracking stream...'),
+        content: Text('Syncing live kitchen pipeline...'),
         duration: Duration(milliseconds: 900),
       ),
     );
@@ -77,16 +77,15 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
               final String statusLabel =
                   (data['statusLabel'] ?? 'Order Sent to Kitchen').toString();
 
-              // Robust multi-key payment lookup to accurately display GCash, QRPh, or COD
               final String payment =
                   (data['payment'] ??
                           data['paymentMethod'] ??
                           data['method'] ??
-                          'Cash on Delivery')
+                          'GCash')
                       .toString();
 
               final String riderName =
-                  (data['riderName'] ?? 'Assigning kitchen rider...')
+                  (data['riderName'] ?? 'Assigning GrabCar driver...')
                       .toString();
 
               final cleanStatus = status.replaceAll(' ', '_');
@@ -97,6 +96,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   cleanStatus == 'ready_to_bake' ||
                   cleanStatus == 'preparing' ||
                   cleanStatus == 'in_kitchen' ||
+                  cleanStatus == 'pending_spec_review' ||
                   cleanStatus == 'delivering' ||
                   cleanStatus == 'delivered';
               final bool isDelivering =
@@ -211,7 +211,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                           ),
                           _buildStepConnector(isDelivering),
                           _buildTrackingStep(
-                            Icons.delivery_dining_outlined,
+                            Icons.local_taxi_outlined,
                             'Out for Delivery',
                             riderName,
                             isDelivering,
@@ -231,7 +231,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${widget.itemCount} items • PHP ${widget.totalAmount.toStringAsFixed(2)}',
+                          '${widget.itemCount} items • ₱${widget.totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12.5,
