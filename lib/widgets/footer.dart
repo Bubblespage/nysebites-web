@@ -5,12 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 class Footer extends StatelessWidget {
   const Footer({super.key});
 
-  // Cross-platform URL Launcher method
   Future<void> _openUrl(String urlString) async {
     final Uri uri = Uri.parse(urlString);
     try {
       if (kIsWeb) {
-        // On Flutter Web, launch directly into a new browser tab
         await launchUrl(uri, webOnlyWindowName: '_blank');
       } else {
         if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -22,7 +20,6 @@ class Footer extends StatelessWidget {
     }
   }
 
-  // Cross-platform Email Launcher method
   Future<void> _sendEmail(String email) async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
@@ -40,6 +37,141 @@ class Footer extends StatelessWidget {
     }
   }
 
+  void _showCutePolicyDialog(
+    BuildContext context,
+    String title,
+    IconData icon,
+    String subtitle,
+    List<String> sections,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 540, maxHeight: 600),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDFBF7),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFE5D5C5), width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(60, 34, 22, 0.22),
+                  blurRadius: 28,
+                  offset: Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3E7DC),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            icon,
+                            color: const Color(0xFF8E4A23),
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontFamily: 'serif',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF2E1B10),
+                              ),
+                            ),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF8E4A23),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Color(0xFF756256)),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFFEFE4D6)),
+                const SizedBox(height: 12),
+
+                // Content Body
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: sections.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: Text(
+                          sections[index],
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF5A4438),
+                            height: 1.5,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Footer button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E1B10),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Got it, thanks! 🍪',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -51,7 +183,6 @@ class Footer extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 1100),
           child: Column(
             children: [
-              // Main Footer Columns
               LayoutBuilder(
                 builder: (context, constraints) {
                   final compactColumnWidth = constraints.maxWidth < 600
@@ -66,7 +197,7 @@ class Footer extends StatelessWidget {
                     children: [
                       // Brand & Story Column
                       SizedBox(
-                        width: compactColumnWidth ?? 280,
+                        width: compactColumnWidth ?? 260,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -116,7 +247,70 @@ class Footer extends StatelessWidget {
                         ),
                       ),
 
-                      // Contact & Email Column
+                      // Customer Care & Cute Legal Links Column
+                      SizedBox(
+                        width: compactColumnWidth ?? 220,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Customer Care',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _footerLink(
+                              'Privacy Policy',
+                              () => _showCutePolicyDialog(
+                                context,
+                                'Privacy Policy',
+                                Icons.privacy_tip_outlined,
+                                'Your trust is our secret ingredient 🤎',
+                                [
+                                  '✨ 1. Information We Collect: When you place an order or interact with Nyse Bites, we collect your name, contact phone number, delivery address, and payment confirmation details to ensure smooth fulfillment.',
+                                  '🔒 2. Data Protection: All personal data is stored securely via Firebase cloud architecture. We do not sell, trade, or share your private information with third-party marketing entities.',
+                                  '🛵 3. Delivery Usage: Your address and contact number are securely provided to assigned delivery riders or GrabCar dispatchers solely for the purpose of bringing your fresh bakes to your doorstep.',
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _footerLink(
+                              'Terms & Conditions',
+                              () => _showCutePolicyDialog(
+                                context,
+                                'Terms & Conditions',
+                                Icons.gavel_outlined,
+                                'Baked fresh with love and guidelines 📜',
+                                [
+                                  '🍪 1. Fresh Batch Quality: All cookies, brownies, and cakes are baked in small batches daily using premium ingredients. Exact visual toppings may slightly vary depending on seasonal harvests.',
+                                  '💳 2. Payment & Verification: Online orders via GCash or e-wallets require valid receipt references. Cash on Delivery (COD) orders are subject to rider confirmation.',
+                                  '🎂 3. Custom Cakes & Cancellations: Custom multi-tier cake commissions require early notice. Order cancellations or modifications are only accommodated before kitchen prep begins.',
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _footerLink(
+                              'Frequently Asked Questions (FAQ)',
+                              () => _showCutePolicyDialog(
+                                context,
+                                'Frequently Asked Questions',
+                                Icons.help_outline_rounded,
+                                'Everything you need to know about our bakes ✨',
+                                [
+                                  '🛵 Q: How does the delivery model work?\nA: We utilize GrabCar-based dispatching! You can select Standard or Priority Express delivery rates calculated right at checkout.',
+                                  '👀 Q: How do I track my active order?\nA: Simply tap the floating "Track Order" button on your screen anytime to view real-time kitchen preparation status and assigned rider details!',
+                                  '📦 Q: Can I choose box sizes for cookies?\nA: Yes! Our artisanal cookies are available in convenient Box of 4 or Box of 6 sizes with special bundle pricing.',
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Contact & Location Column
                       SizedBox(
                         width: compactColumnWidth ?? 240,
                         child: Column(
@@ -134,27 +328,21 @@ class Footer extends StatelessWidget {
                             MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () =>
-                                    _sendEmail('aromanteacup@gmail.com'),
+                                onTap: () => _sendEmail('nysebites@gmail.com'),
                                 child: Row(
                                   children: const [
                                     Icon(
                                       Icons.email_outlined,
                                       color: Color(0xFFDDB892),
-                                      size: 18,
+                                      size: 16,
                                     ),
-                                    SizedBox(width: 10),
-                                    Flexible(
-                                      child: Text(
-                                        'aromanteacup@gmail.com',
-                                        style: TextStyle(
-                                          color: Color(0xFFEFE4D6),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'nysebites@gmail.com',
+                                      style: TextStyle(
+                                        color: Color(0xFFEFE4D6),
+                                        fontSize: 12.5,
+                                        decoration: TextDecoration.underline,
                                       ),
                                     ),
                                   ],
@@ -167,53 +355,33 @@ class Footer extends StatelessWidget {
                                 Icon(
                                   Icons.location_on_outlined,
                                   color: Color(0xFFDDB892),
-                                  size: 18,
+                                  size: 16,
                                 ),
-                                SizedBox(width: 10),
+                                SizedBox(width: 8),
                                 Flexible(
                                   child: Text(
-                                    'Fresh Daily Bakehouse',
+                                    'Carsadang Bago II • Imus, Cavite',
                                     style: TextStyle(
                                       color: Color(0xFFD1C5BC),
-                                      fontSize: 13,
+                                      fontSize: 12.5,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-
-                      // Social Media & Hours Column
-                      SizedBox(
-                        width: compactColumnWidth ?? 240,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Follow Our Bakes',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             Wrap(
                               spacing: 10,
                               runSpacing: 8,
                               children: [
-                                // Instagram Link Button
                                 _FooterSocialBtn(
                                   icon: Icons.camera_alt_outlined,
                                   label: 'Instagram',
                                   onTap: () => _openUrl(
-                                    'https://www.instagram.com/nysebites?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+                                    'https://www.instagram.com/nysebites',
                                   ),
                                 ),
-                                // Facebook Link Button
                                 _FooterSocialBtn(
                                   icon: Icons.facebook,
                                   label: 'Facebook',
@@ -223,14 +391,6 @@ class Footer extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Mon – Sat: 9:00 AM – 6:00 PM',
-                              style: TextStyle(
-                                color: Color(0xFFA89A90),
-                                fontSize: 12,
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -238,18 +398,28 @@ class Footer extends StatelessWidget {
                   );
                 },
               ),
-
               const SizedBox(height: 40),
               const Divider(color: Color(0xFF4A3428)),
               const SizedBox(height: 16),
-
-              // Bottom Copyright
               const Text(
                 '© 2026 Nyse Bites Bakery. All rights reserved.',
                 style: TextStyle(color: Color(0xFFA89A90), fontSize: 12),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _footerLink(String title, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Text(
+          title,
+          style: const TextStyle(color: Color(0xFFD1C5BC), fontSize: 12.5),
         ),
       ),
     );
@@ -272,10 +442,9 @@ class _FooterSocialBtn extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFF3C2216),
             borderRadius: BorderRadius.circular(8),
@@ -284,13 +453,13 @@ class _FooterSocialBtn extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: const Color(0xFFDDB892), size: 16),
+              Icon(icon, color: const Color(0xFFDDB892), size: 14),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                 ),
               ),

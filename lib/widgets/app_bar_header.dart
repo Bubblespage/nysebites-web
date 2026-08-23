@@ -10,6 +10,7 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onCustomCakesClick;
   final VoidCallback onDailyBatchesClick;
   final VoidCallback onReviewsClick;
+  final VoidCallback onGalleryClick;
   final VoidCallback onSweetNoteClick;
   final VoidCallback onContactClick;
 
@@ -24,6 +25,7 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
     required this.onCustomCakesClick,
     required this.onDailyBatchesClick,
     required this.onReviewsClick,
+    required this.onGalleryClick,
     required this.onSweetNoteClick,
     required this.onContactClick,
   });
@@ -138,7 +140,7 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
 
-          // Center Navigation: Shown Only on Desktop
+          // Center Navigation: Shown Only on Desktop (Includes Gallery)
           if (!isMobile)
             Row(
               children: [
@@ -146,6 +148,7 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
                 _navLink('Custom Cakes', onCustomCakesClick),
                 _navLink('Daily Batches', onDailyBatchesClick),
                 _navLink('Reviews', onReviewsClick),
+                _navLink('Gallery', onGalleryClick),
                 _navLink('Sweet Note', onSweetNoteClick),
                 _navLink('Contact', onContactClick),
               ],

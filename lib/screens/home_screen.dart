@@ -14,6 +14,7 @@ import '../widgets/mobile_nav_drawer.dart';
 import '../widgets/product_card.dart';
 import '../widgets/reviews_slideshow.dart';
 import '../widgets/order_tracker_modal.dart';
+import '../widgets/oven_gallery_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _menuKey = GlobalKey();
   final GlobalKey _reviewsKey = GlobalKey();
+  final GlobalKey _galleryKey = GlobalKey();
   final GlobalKey _sweetNoteKey = GlobalKey();
   final GlobalKey _footerKey = GlobalKey();
 
@@ -121,6 +123,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _onReviewsClick() {
     _scrollToKey(_reviewsKey, alignment: 0.0);
+  }
+
+  void _onGalleryClick() {
+    _scrollToKey(_galleryKey, alignment: 0.0);
   }
 
   void _onSweetNoteClick() {
@@ -241,7 +247,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         final bool acceptCustomCakes =
             settingsData['acceptCustomCakes'] ?? true;
 
-        // Pulling dynamic announcement values from Firestore database settings
         final String announcement1 =
             settingsData['announcement1']?.toString() ??
             settingsData['announcementText']?.toString() ??
@@ -261,6 +266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onCustomCakesClick: _onCustomCakesClick,
             onDailyBatchesClick: _onDailyBatchesClick,
             onReviewsClick: _onReviewsClick,
+            onGalleryClick: _onGalleryClick,
             onSweetNoteClick: _onSweetNoteClick,
             onContactClick: _onContactClick,
             onOpenAuth: _openAuthModal,
@@ -288,6 +294,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onCustomCakesClick: _onCustomCakesClick,
             onDailyBatchesClick: _onDailyBatchesClick,
             onReviewsClick: _onReviewsClick,
+            onGalleryClick: _onGalleryClick,
             onSweetNoteClick: _onSweetNoteClick,
             onContactClick: _onContactClick,
           ),
@@ -312,7 +319,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               controller: _scrollController,
               child: Column(
                 children: [
-                  // Dynamic Marquee Ticker with 3 continuous slots
                   Container(
                     width: double.infinity,
                     height: 36,
@@ -360,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     alignment: Alignment.center,
                     child: const ReviewsSlideshow(),
                   ),
+                  OvenGallerySection(key: _galleryKey), // <--- Assigned _galleryKey here properly
                   ContactSection(key: _sweetNoteKey),
                   Footer(key: _footerKey),
                 ],

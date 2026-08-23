@@ -5,6 +5,7 @@ class MobileNavDrawer extends StatelessWidget {
   final VoidCallback onCustomCakesClick;
   final VoidCallback onDailyBatchesClick;
   final VoidCallback onReviewsClick;
+  final VoidCallback onGalleryClick;
   final VoidCallback onSweetNoteClick;
   final VoidCallback onContactClick;
   final VoidCallback onOpenAuth;
@@ -17,6 +18,7 @@ class MobileNavDrawer extends StatelessWidget {
     required this.onCustomCakesClick,
     required this.onDailyBatchesClick,
     required this.onReviewsClick,
+    required this.onGalleryClick,
     required this.onSweetNoteClick,
     required this.onContactClick,
     required this.onOpenAuth,
@@ -121,6 +123,14 @@ class MobileNavDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       onReviewsClick();
+                    },
+                  ),
+                  _drawerItem(
+                    icon: Icons.collections_outlined,
+                    title: 'Gallery',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onGalleryClick();
                     },
                   ),
                   _drawerItem(
