@@ -22,7 +22,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
@@ -43,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String? _currentUser;
 
-  // Strict visual ordering map (Belgian Choco Chip at 5, Lavender Noir Velvet at 10)
   static const Map<String, int> _productOrderMap = {
     'Biscoff Nocciola Swirl': 1,
     'Snicker-Doodle Hug': 2,
@@ -58,10 +57,29 @@ class _HomeScreenState extends State<HomeScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        debugPrint(
+          'Android browser tab resumed: Re-establishing Firestore connection streams.',
+        );
+      });
+    }
   }
 
   double get _cartTotal => _cart.fold(0.0, (sum, item) => sum + item.price);
@@ -219,22 +237,20 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, settingsSnapshot) {
         final settingsData = settingsSnapshot.data?.data() ?? {};
 
-        // 1. Live Shop Controls
         final bool isStoreOpen = settingsData['isStoreOpen'] ?? true;
         final bool acceptCustomCakes =
             settingsData['acceptCustomCakes'] ?? true;
 
-        // 2. Real-Time Admin Announcements (Reading directly from Firestore)
+        // Pulling dynamic announcement values from Firestore database settings
         final String announcement1 =
             settingsData['announcement1']?.toString() ??
             settingsData['announcementText']?.toString() ??
-            '🔥 Fresh Morning Drop at 9:00 AM • Free delivery on orders over ₱1,000!';
+            '';
         final String announcement2 =
-            settingsData['announcement2']?.toString() ??
-            'Handcrafted small-batch cookies & fudgy brownies baked fresh daily at 9:00 AM';
+            settingsData['announcement2']?.toString() ?? '';
         final String announcement3 =
             settingsData['announcement3']?.toString() ??
-            'Enjoy free insulated doorstep delivery on all orders over ₱1,000';
+            '🎂 Custom cakes require a 2-week reservation notice in advance!';
 
         return Scaffold(
           key: _scaffoldKey,
@@ -296,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: _scrollController,
               child: Column(
                 children: [
-                  // Real-Time Animated Marquee Ribbon
+                  // Dynamic Marquee Ticker with 3 continuous slots
                   Container(
                     width: double.infinity,
                     height: 36,
@@ -309,8 +325,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       velocity: 38.0,
                     ),
                   ),
-
-                  // Storefront Orders Paused Alert Banner
                   if (!isStoreOpen)
                     Container(
                       width: double.infinity,
@@ -330,7 +344,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-
                   HeroBanner(
                     key: _heroKey,
                     onExploreMenu: _onMenuClick,
@@ -478,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             _selectedCategory == 'daily_batches'
-                ? 'Today\'s Daily Oven Drops'
+                ? "Today's Daily Oven Drops"
                 : 'Explore Our Oven Creations',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -558,7 +571,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 rawList = List.from(mockProducts);
               }
 
-              // Strict Sort Order
               rawList.sort((a, b) {
                 final int orderA = _productOrderMap[a.name] ?? a.order;
                 final int orderB = _productOrderMap[b.name] ?? b.order;
@@ -640,7 +652,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Seamless Dynamic Ticker Reading Straight from Firestore
 class _MarqueeTicker extends StatefulWidget {
   final String announcement1;
   final String announcement2;
@@ -705,15 +716,30 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> tickerItems = [
-      {'icon': '✨', 'title': 'STORE NOTICE', 'body': widget.announcement1},
-      {'icon': '🥐', 'title': 'DAILY OVEN DROP', 'body': widget.announcement2},
-      {
-        'icon': '📦',
-        'title': 'COMPLIMENTARY DELIVERY',
+    final List<Map<String, String>> tickerItems = [];
+    if (widget.announcement1.isNotEmpty) {
+      tickerItems.add({
+        'icon': '✨',
+        'title': 'STORE NOTICE',
+        'body': widget.announcement1,
+      });
+    }
+    if (widget.announcement2.isNotEmpty) {
+      tickerItems.add({
+        'icon': '🥐',
+        'title': 'DAILY OVEN DROP',
+        'body': widget.announcement2,
+      });
+    }
+    if (widget.announcement3.isNotEmpty) {
+      tickerItems.add({
+        'icon': '🎂',
+        'title': 'SPECIAL NOTICE',
         'body': widget.announcement3,
-      },
-    ];
+      });
+    }
+
+    if (tickerItems.isEmpty) return const SizedBox.shrink();
 
     return SingleChildScrollView(
       controller: _scrollController,

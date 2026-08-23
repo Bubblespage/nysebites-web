@@ -18,13 +18,16 @@ class CustomCakeModal extends StatefulWidget {
 }
 
 class _CustomCakeModalState extends State<CustomCakeModal> {
-  String _selectedSize = '6" Mini Tier (4-6 pax)';
-  double _sizePriceModifier = 0.0;
+  bool get _isStandardCake =>
+      widget.baseProduct.name.contains('Pure Decadence');
+  bool get _isOneTierCake => widget.baseProduct.name.contains('Vanilla Sky');
 
-  String _selectedBase = 'Classic Red Velvet';
-  String _selectedFrosting = 'Whipped Cream Cheese';
+  late String _selectedSize;
+  late Map<String, double> _sizeOptions;
 
-  final List<String> _selectedToppings = [];
+  String _selectedBase = 'Chocolate';
+  String _selectedFrosting = 'Chocolate';
+
   final TextEditingController _pipingMessageController =
       TextEditingController();
   final TextEditingController _customNotesController = TextEditingController();
@@ -32,51 +35,44 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
   Uint8List? _preferredImageBytes;
   String? _preferredImageName;
 
-  final Map<String, double> _sizeOptions = {
-    '6" Mini Tier (4-6 pax)': 0.0,
-    '8" Standard Celebration (8-12 pax)': 350.0,
-    '2-Tier Petite Tower (15-20 pax)': 800.0,
-  };
-
-  final List<String> _baseOptions = [
-    'Classic Red Velvet',
-    'Rich Belgian Chocolate Fudge',
-    'Spiced Carrot Walnut',
-    'Vanilla Butter Sponge',
-  ];
-
-  final List<String> _frostingOptions = [
-    'Whipped Cream Cheese',
-    'Dark Cocoa Ganache',
-    'Salted Caramel Buttercream',
-    'Oat Milk Vegan Frosting',
-  ];
-
-  final Map<String, double> _toppingsOptions = {
-    '24K Edible Gold Flakes': 80.0,
-    'Fresh Seasonal Berries': 120.0,
-    'Crushed Lotus Biscoff': 60.0,
-    'Toasted Almond Slices': 50.0,
-    'Molten Chocolate Drip': 70.0,
-  };
-
-  double get _calculatedTotal {
-    double total = widget.baseProduct.price + _sizePriceModifier;
-    for (final topping in _selectedToppings) {
-      total += _toppingsOptions[topping] ?? 0.0;
+  @override
+  void initState() {
+    super.initState();
+    if (_isStandardCake) {
+      _sizeOptions = {
+        '6" x 2" Inches': 800.0,
+        '6" x 4" Inches': 1000.0,
+        '8" x 2" Inches': 1000.0,
+        '8" x 4" Inches': 1200.0,
+      };
+    } else if (_isOneTierCake) {
+      _sizeOptions = {
+        '6" x 2" Inches (1 Layer)': 1450.0,
+        '6" x 4" Inches (1 Layer)': 1650.0,
+        '8" x 2" Inches (1 Layer)': 1650.0,
+        '8" x 4" Inches (1 Layer)': 1850.0,
+      };
+    } else {
+      // Lavender Noir (2 Tier)
+      _sizeOptions = {
+        '6" x 2" Inches (2 Layers)': 2500.0,
+        '6" x 4" Inches (2 Layers)': 3000.0,
+      };
     }
-    return total;
+    _selectedSize = _sizeOptions.keys.first;
   }
+
+  double get _calculatedTotal => _sizeOptions[_selectedSize] ?? 800.0;
+
+  final List<String> _baseOptions = ['Chocolate', 'Vanilla', 'Ube'];
+  final List<String> _frostingOptions = ['Chocolate', 'Vanilla'];
 
   void _handleAddCustomCake() {
     final customDescription = StringBuffer();
     customDescription.write(
-      'Tier: $_selectedSize • Base: $_selectedBase • Frosting: $_selectedFrosting',
+      'Dimensions: $_selectedSize • Base: $_selectedBase • Icing: $_selectedFrosting (Included)',
     );
 
-    if (_selectedToppings.isNotEmpty) {
-      customDescription.write(' • Toppings: ${_selectedToppings.join(", ")}');
-    }
     if (_pipingMessageController.text.trim().isNotEmpty) {
       customDescription.write(
         ' • Piping: "${_pipingMessageController.text.trim()}"',
@@ -87,13 +83,10 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         ' • Notes: ${_customNotesController.text.trim()}',
       );
     }
-    if (_preferredImageName != null) {
-      customDescription.write(' • Reference Attached: $_preferredImageName');
-    }
 
     final customizedCake = Product(
       id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
-      name: 'Custom ${widget.baseProduct.name}',
+      name: widget.baseProduct.name,
       category: 'cakes',
       price: _calculatedTotal,
       description: customDescription.toString(),
@@ -149,7 +142,6 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
           ),
           child: Column(
             children: [
-              // Header Preview
               Stack(
                 children: [
                   ClipRRect(
@@ -201,7 +193,9 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                        'Customizing: ${widget.baseProduct.name}',
+                        _isStandardCake
+                            ? 'Configuring Standard Cake'
+                            : 'Customized: ${widget.baseProduct.name}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -212,16 +206,14 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                   ),
                 ],
               ),
-
-              // Customization Form Body
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1. Size
-                      _sectionTitle('1. Choose Cake Size & Servings'),
+                      if (!_isStandardCake)
+                      _sectionTitle('1. Cake Size & Dimensions'),
                       const SizedBox(height: 10),
                       ..._sizeOptions.entries.map((entry) {
                         final isSelected = _selectedSize == entry.key;
@@ -245,10 +237,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                             activeColor: const Color(0xFF8E4A23),
                             onChanged: (val) {
                               if (val != null) {
-                                setState(() {
-                                  _selectedSize = val;
-                                  _sizePriceModifier = entry.value;
-                                });
+                                setState(() => _selectedSize = val);
                               }
                             },
                             title: Text(
@@ -259,9 +248,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                               ),
                             ),
                             secondary: Text(
-                              entry.value == 0.0
-                                  ? 'Included'
-                                  : '+₱${entry.value.toStringAsFixed(0)}',
+                              '₱${entry.value.toStringAsFixed(0)}',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: isSelected
@@ -274,9 +261,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         );
                       }),
                       const SizedBox(height: 18),
-
-                      // 2. Base
-                      _sectionTitle('2. Sponge Cake Base'),
+                      _sectionTitle('2. Cake Base'),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
@@ -305,9 +290,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         }).toList(),
                       ),
                       const SizedBox(height: 18),
-
-                      // 3. Frosting
-                      _sectionTitle('3. Frosting & Filling Style'),
+                      _sectionTitle('3. Flavor Icing'),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
@@ -336,78 +319,16 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         }).toList(),
                       ),
                       const SizedBox(height: 18),
-
-                      // 4. Toppings
-                      _sectionTitle('4. Premium Finishes & Toppings'),
-                      const SizedBox(height: 10),
-                      ..._toppingsOptions.entries.map((topping) {
-                        final isChecked = _selectedToppings.contains(
-                          topping.key,
-                        );
-                        return CheckboxListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          activeColor: const Color(0xFF8E4A23),
-                          title: Text(
-                            topping.key,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          secondary: Text(
-                            '+₱${topping.value.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.5,
-                              color: Color(0xFF8E4A23),
-                            ),
-                          ),
-                          value: isChecked,
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedToppings.add(topping.key);
-                              } else {
-                                _selectedToppings.remove(topping.key);
-                              }
-                            });
-                          },
-                        );
-                      }),
-                      const SizedBox(height: 18),
-
-                      // 5. Inscription
-                      _sectionTitle('5. Cake Piping Message / Inscription'),
+                      _sectionTitle('4. Cake Piping Message / Inscription'),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _pipingMessageController,
                         maxLength: 35,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF2E1B10),
-                        ),
                         decoration: InputDecoration(
-                          hintText: 'e.g. Happy 21st Birthday Shaina! 🎂',
-                          hintStyle: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9E8E84),
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.border_color_outlined,
-                            color: Color(0xFF8E4A23),
-                            size: 18,
-                          ),
+                          hintText: 'e.g. Happy Birthday Shaina! 🎂',
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEFE4D6),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
                               color: Color(0xFFEFE4D6),
@@ -416,44 +337,17 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         ),
                       ),
                       const SizedBox(height: 14),
-
-                      // 6. Notes
-                      _sectionTitle(
-                        '6. Special Baking Instructions / Custom Notes',
-                      ),
+                      _sectionTitle('5. Special Baking Instructions'),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _customNotesController,
                         maxLines: 3,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF2E1B10),
-                        ),
                         decoration: InputDecoration(
                           hintText:
-                              'e.g. Less sweet frosting, vintage heart border, add 2 candles...',
-                          hintStyle: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9E8E84),
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.edit_note,
-                            color: Color(0xFF8E4A23),
-                            size: 20,
-                          ),
+                              'e.g. Less sweet frosting, color theme preferences...',
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEFE4D6),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
                               color: Color(0xFFEFE4D6),
@@ -462,19 +356,24 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         ),
                       ),
                       const SizedBox(height: 18),
-
-                      // 7. Reference Image Attachment (Positioned Below Section 6)
                       _sectionTitle(
-                        '7. Preferred Cake Reference Image (Optional)',
+                        '6. Preferred Cake Reference Image (Optional)',
                       ),
                       const SizedBox(height: 8),
                       _buildImagePickerControl(),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Note: Custom cakes require a 2-week reservation notice before delivery/pickup.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF8E4A23),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-
-              // Bottom Action Bar
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -526,7 +425,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                       onPressed: _handleAddCustomCake,
                       icon: const Icon(Icons.add_shopping_cart, size: 16),
                       label: const Text(
-                        'Add Custom Cake to Tray',
+                        'Add Cake to Tray',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -565,7 +464,6 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             color: _preferredImageBytes != null
                 ? const Color(0xFF8E4A23)
                 : const Color(0xFFE5D5C5),
-            width: _preferredImageBytes != null ? 1.5 : 1.0,
           ),
         ),
         child: Row(
@@ -591,22 +489,9 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
               child: Text(
                 _preferredImageName ??
                     'Upload sample cake photo from gallery...',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: _preferredImageName != null
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: const Color(0xFF5A4438),
-                ),
+                style: const TextStyle(fontSize: 13, color: Color(0xFF5A4438)),
                 overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Icon(
-              _preferredImageBytes != null
-                  ? Icons.check_circle
-                  : Icons.upload_outlined,
-              color: const Color(0xFF8E4A23),
-              size: 20,
             ),
           ],
         ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../admin_modals.dart';
 
 class LiveOrdersTab extends StatelessWidget {
   final List<Map<String, dynamic>> orders;
   final bool isDesktop;
   final String searchQuery;
-  final String currentRole; // 'Super Admin', 'Baker Admin', or 'Order Dispatcher'
+  final String
+  currentRole; // 'Super Admin', 'Baker Admin', or 'Order Dispatcher'
   final Function(String id, String newStatus, String newLabel) onUpdateStatus;
 
   const LiveOrdersTab({
@@ -23,6 +25,38 @@ class LiveOrdersTab extends StatelessWidget {
   static const Color textMuted = Color(0xFF6E5D53);
   static const Color borderLight = Color(0xFFEFE3D5);
   static const Color wellBg = Color(0xFFF4EDE6);
+
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+    if (timestamp is Timestamp) {
+      final dt = timestamp.toDate();
+      const months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final monthName = (dt.month >= 1 && dt.month <= 12)
+          ? months[dt.month]
+          : '${dt.month}';
+      final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final period = dt.hour >= 12 ? 'PM' : 'AM';
+
+      // Using spaces and a dash instead of slashes or bullets to prevent font missing-glyph boxes
+      return '$monthName ${dt.day} ${dt.year} - $hour:$minute $period';
+    }
+    return timestamp.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +132,6 @@ class LiveOrdersTab extends StatelessWidget {
   Widget _buildDesktopTable(BuildContext context) {
     return Column(
       children: [
-        // Grid Table Header
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: const BoxDecoration(
@@ -110,42 +143,87 @@ class LiveOrdersTab extends StatelessWidget {
           ),
           child: const Row(
             children: [
-              SizedBox(width: 100, child: Text('ORDER ID', style: _headerStyle)),
+              SizedBox(
+                width: 110,
+                child: Text('ORDER ID', style: _headerStyle),
+              ),
               SizedBox(width: 14),
-              SizedBox(width: 155, child: Text('CUSTOMER', style: _headerStyle)),
+              SizedBox(
+                width: 155,
+                child: Text('CUSTOMER', style: _headerStyle),
+              ),
               SizedBox(width: 16),
-              Expanded(child: Text('ITEMIZED DETAILS & SPECS', style: _headerStyle)),
+              Expanded(
+                child: Text('ITEMIZED DETAILS & SPECS', style: _headerStyle),
+              ),
               SizedBox(width: 16),
-              SizedBox(width: 90, child: Text('AMOUNT', style: _headerStyle, textAlign: TextAlign.right)),
+              SizedBox(
+                width: 90,
+                child: Text(
+                  'AMOUNT',
+                  style: _headerStyle,
+                  textAlign: TextAlign.right,
+                ),
+              ),
               SizedBox(width: 16),
-              SizedBox(width: 145, child: Text('STATUS', style: _headerStyle, textAlign: TextAlign.center)),
+              SizedBox(
+                width: 145,
+                child: Text(
+                  'STATUS',
+                  style: _headerStyle,
+                  textAlign: TextAlign.center,
+                ),
+              ),
               SizedBox(width: 12),
-              SizedBox(width: 155, child: Text('ACTIONS', style: _headerStyle, textAlign: TextAlign.center)),
+              SizedBox(
+                width: 155,
+                child: Text(
+                  'ACTIONS',
+                  style: _headerStyle,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
           ),
         ),
-        // Grid Rows
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: orders.length,
-          separatorBuilder: (_, __) => const Divider(color: borderLight, height: 1),
+          separatorBuilder: (_, __) =>
+              const Divider(color: borderLight, height: 1),
           itemBuilder: (context, i) {
             final order = orders[i];
+            final formattedDate = _formatTimestamp(order['createdAt']);
+
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 100,
-                    child: Text(
-                      order['id'] ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: darkEspresso,
-                        fontSize: 12.5,
-                      ),
+                    width: 110,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          order['id'] ?? '',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: darkEspresso,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          formattedDate,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -167,10 +245,15 @@ class LiveOrdersTab extends StatelessWidget {
                         ),
                         Text(
                           order['contact'] ?? '',
-                          style: const TextStyle(fontSize: 11, color: textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: textMuted,
+                          ),
                         ),
                         const SizedBox(height: 4),
-                        _buildPaymentBadge(order['payment'] ?? 'Cash on Delivery'),
+                        _buildPaymentBadge(
+                          order['payment'] ?? 'Cash on Delivery',
+                        ),
                       ],
                     ),
                   ),
@@ -192,9 +275,13 @@ class LiveOrdersTab extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           order['specs'] ?? '',
-                          style: const TextStyle(fontSize: 11, color: textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: textMuted,
+                          ),
                         ),
-                        if (order['note'] != null && order['note'].toString().isNotEmpty)
+                        if (order['note'] != null &&
+                            order['note'].toString().isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 3),
                             child: Text(
@@ -241,10 +328,19 @@ class LiveOrdersTab extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.receipt_outlined, size: 18, color: textDark),
+                          icon: const Icon(
+                            Icons.receipt_outlined,
+                            size: 18,
+                            color: textDark,
+                          ),
                           tooltip: 'Print Kitchen Slip',
                           visualDensity: VisualDensity.compact,
-                          onPressed: () => AdminModals.showPrintSlipDialog(context, order),
+                          onPressed: () {
+                            // Inject timestamp into print data map for physical receipts
+                            final printData = Map<String, dynamic>.from(order);
+                            printData['printDate'] = formattedDate;
+                            AdminModals.showPrintSlipDialog(context, printData);
+                          },
                         ),
                         const SizedBox(width: 4),
                         _buildPrimaryStepButton(context, order),
@@ -275,6 +371,8 @@ class LiveOrdersTab extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, i) {
         final order = orders[i];
+        final formattedDate = _formatTimestamp(order['createdAt']);
+
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -285,17 +383,25 @@ class LiveOrdersTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Info: ID & Total
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    order['id'] ?? '',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: darkEspresso,
-                      fontSize: 13,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order['id'] ?? '',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: darkEspresso,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(fontSize: 10, color: textMuted),
+                      ),
+                    ],
                   ),
                   Text(
                     order['total'] ?? '₱0.00',
@@ -308,14 +414,17 @@ class LiveOrdersTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              // Customer and Payment Badge
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
                       '${order['customer'] ?? 'Online Guest'} • ${order['contact'] ?? ''}',
-                      style: const TextStyle(fontSize: 11.5, color: textMuted, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -324,7 +433,6 @@ class LiveOrdersTab extends StatelessWidget {
                 ],
               ),
               const Divider(color: borderLight, height: 16),
-              // Items Details
               Text(
                 order['item'] ?? '',
                 style: const TextStyle(
@@ -350,7 +458,6 @@ class LiveOrdersTab extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 12),
-              // Responsive Actions & Status Wrap
               Wrap(
                 alignment: WrapAlignment.spaceBetween,
                 crossAxisAlignment: WrapCrossAlignment.center,
@@ -365,9 +472,17 @@ class LiveOrdersTab extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.receipt_outlined, size: 18, color: textDark),
+                        icon: const Icon(
+                          Icons.receipt_outlined,
+                          size: 18,
+                          color: textDark,
+                        ),
                         visualDensity: VisualDensity.compact,
-                        onPressed: () => AdminModals.showPrintSlipDialog(context, order),
+                        onPressed: () {
+                          final printData = Map<String, dynamic>.from(order);
+                          printData['printDate'] = formattedDate;
+                          AdminModals.showPrintSlipDialog(context, printData);
+                        },
                       ),
                       const SizedBox(width: 4),
                       _buildPrimaryStepButton(context, order),
@@ -382,7 +497,6 @@ class LiveOrdersTab extends StatelessWidget {
     );
   }
 
-  // Color-coded payment method badge (GCash, QRPh, COD only)
   Widget _buildPaymentBadge(String payment) {
     final cleanPay = payment.trim();
     Color bg = const Color(0xFFECEFF1);
@@ -391,7 +505,9 @@ class LiveOrdersTab extends StatelessWidget {
     if (cleanPay.contains('GCash')) {
       bg = const Color(0xFFE8F0FE);
       fg = const Color(0xFF1967D2);
-    } else if (cleanPay.contains('QRPh') || cleanPay.contains('MariBank') || cleanPay.contains('SeaBank')) {
+    } else if (cleanPay.contains('QRPh') ||
+        cleanPay.contains('MariBank') ||
+        cleanPay.contains('SeaBank')) {
       bg = const Color(0xFFE6F4EA);
       fg = const Color(0xFF137333);
     } else if (cleanPay.contains('Delivery') || cleanPay.contains('COD')) {
@@ -421,7 +537,6 @@ class LiveOrdersTab extends StatelessWidget {
     final bool isCustom = order['isCustom'] == true;
     final bool isRider = currentRole == 'Order Dispatcher';
 
-    // RIDER / DISPATCHER ACTIONS
     if (isRider) {
       if (status == 'pending_ewallet' ||
           status == 'pending_cod' ||
@@ -517,7 +632,6 @@ class LiveOrdersTab extends StatelessWidget {
       );
     }
 
-    // BAKERY ADMIN / SUPER ADMIN ACTIONS
     if (status == 'pending_ewallet') {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(

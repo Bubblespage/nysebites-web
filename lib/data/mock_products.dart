@@ -5,13 +5,13 @@ final List<Product> mockProducts = [
   const Product(
     id: 1,
     order: 1,
-    name: 'Biscoff Nocciola Swirl',
+    name: 'Twix Chocolate',
     category: 'cookies',
     price: 260.0,
-    priceBox6: 375.0,
+    priceBox6: 390.0,
     servingSize: 'Box of 4',
     description:
-        'Golden cookie filled with spiced Lotus Biscoff cookie butter spread and swirled with rich Nutella hazelnut cocoa.',
+        'Golden cookie filled with spiced caramel and milk chocolate inspired by classic Twix chocolate bars.',
     imgSrc: 'assets/images/biscoff.jpg',
     icon: '🍯',
   ),
@@ -20,8 +20,8 @@ final List<Product> mockProducts = [
     order: 2,
     name: 'Snicker-Doodle Hug',
     category: 'cookies',
-    price: 240.0,
-    priceBox6: 350.0,
+    price: 260.0,
+    priceBox6: 390.0,
     servingSize: 'Box of 4',
     description:
         'Soft-baked cookie studded with roasted peanuts, gooey nougat caramel pockets, and creamy melted milk chocolate.',
@@ -33,8 +33,8 @@ final List<Product> mockProducts = [
     order: 3,
     name: 'Dark Chocolate Noir',
     category: 'cookies',
-    price: 220.0,
-    priceBox6: 320.0,
+    price: 260.0,
+    priceBox6: 390.0,
     servingSize: 'Box of 4',
     description:
         'Intense 70% dark Belgian cocoa dough packed with molten dark chocolate morsels and finished with flaky sea salt.',
@@ -44,13 +44,13 @@ final List<Product> mockProducts = [
   const Product(
     id: 4,
     order: 4,
-    name: 'Red Velvet Kiss Blossom',
+    name: 'KitKat Chocolate',
     category: 'cookies',
-    price: 230.0,
-    priceBox6: 330.0,
+    price: 260.0,
+    priceBox6: 390.0,
     servingSize: 'Box of 4',
     description:
-        'Vibrant crimson cocoa cookie with a gooey cream cheese molten center and studded with premium white chocolate chips.',
+        'Crispy wafer-infused cocoa cookie with a smooth milk chocolate shell and creamy center.',
     imgSrc: 'assets/images/redvelvet.jpg',
     icon: '❤️',
   ),
@@ -59,8 +59,8 @@ final List<Product> mockProducts = [
     order: 5,
     name: 'Belgian Choco Chip',
     category: 'cookies',
-    price: 200.0,
-    priceBox6: 290.0,
+    price: 260.0,
+    priceBox6: 390.0,
     servingSize: 'Box of 4',
     description:
         'Our signature browned-butter cookie with golden, chewy edges and loaded with molten semi-sweet chocolate pools.',
@@ -74,7 +74,7 @@ final List<Product> mockProducts = [
     order: 6,
     name: "Hershey's Almond Cloud Squares",
     category: 'brownies',
-    price: 380.0,
+    price: 360.0,
     servingSize: 'Box of 8 pcs',
     description:
         'Ultra-fudgy dark cocoa brownie squares topped with crunchy roasted whole almonds and a smooth Hershey’s chocolate drizzle.',
@@ -86,7 +86,7 @@ final List<Product> mockProducts = [
     order: 7,
     name: 'Dark Kissed Melt Bites',
     category: 'brownies',
-    price: 390.0,
+    price: 360.0,
     servingSize: 'Box of 8 pcs',
     description:
         'Decadent, crinkle-top double fudge brownie squares baked with rich Hershey’s Special Dark Kisses melted throughout.',
@@ -98,12 +98,12 @@ final List<Product> mockProducts = [
   const Product(
     id: 8,
     order: 8,
-    name: 'Pure Decadence Cocoa Fudge',
+    name: 'Pure Decadance Cocoa Fudge',
     category: 'cakes',
-    price: 850.0,
+    price: 800.0, // Standard cake base starting price
     servingSize: null,
     description:
-        'All-chocolate indulgence with deep cocoa sponge layers, rich dark fudge filling, and vintage piped chocolate buttercream borders.',
+        'Choose dimensions, choice of chocolate, vanilla, and icing styles.',
     imgSrc: 'assets/images/cake4.jpg',
     icon: '🎂',
   ),
@@ -112,10 +112,10 @@ final List<Product> mockProducts = [
     order: 9,
     name: 'Vanilla Sky Cerulean Dream',
     category: 'cakes',
-    price: 880.0,
+    price: 1450.0, // 1 Tier starting price
     servingSize: null,
     description:
-        'Playful sky-blue celebration cake featuring handcrafted 3D edible fondant character toppers, cloud piping, and vanilla buttercream swirls.',
+        'Customized 1-tier celebration cake featuring 3D design elements and custom printable flavor bases.',
     imgSrc: 'assets/images/cake2_.jpg',
     icon: '🩵',
   ),
@@ -124,10 +124,10 @@ final List<Product> mockProducts = [
     order: 10,
     name: 'Lavender Noir Velvet',
     category: 'cakes',
-    price: 950.0,
+    price: 2500.0, // 2 Tier starting price
     servingSize: null,
     description:
-        'Stunning 3D sculpted doll celebration cake with dramatic tiered cascading purple buttercream ruffles and floral petal piping.',
+        'Customized 2-tier celebration cake with dramatic tiered cascading buttercream ruffles (Requires 2 weeks reservation notice).',
     imgSrc: 'assets/images/cake1.jpg',
     icon: '💜',
   ),

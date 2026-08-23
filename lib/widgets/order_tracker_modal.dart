@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class OrderTrackerModal extends StatelessWidget {
+class OrderTrackerModal extends StatefulWidget {
   final String orderNumber;
   final int itemCount;
   final double totalAmount;
@@ -14,6 +14,25 @@ class OrderTrackerModal extends StatelessWidget {
     required this.totalAmount,
     required this.placedAt,
   });
+
+  @override
+  State<OrderTrackerModal> createState() => _OrderTrackerModalState();
+}
+
+class _OrderTrackerModalState extends State<OrderTrackerModal> {
+  Key _streamKey = UniqueKey();
+
+  void _manualRefresh() {
+    setState(() {
+      _streamKey = UniqueKey();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Refreshing kitchen tracking stream...'),
+        duration: Duration(milliseconds: 900),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +55,11 @@ class OrderTrackerModal extends StatelessWidget {
               ),
             ],
           ),
-          // Directly listen to the document path using orderNumber as the Document ID
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            key: _streamKey,
             stream: FirebaseFirestore.instance
                 .collection('orders')
-                .doc(orderNumber)
+                .doc(widget.orderNumber)
                 .snapshots(),
             builder: (context, snapshot) {
               Map<String, dynamic> data = {};
@@ -57,15 +76,21 @@ class OrderTrackerModal extends StatelessWidget {
                   .trim();
               final String statusLabel =
                   (data['statusLabel'] ?? 'Order Sent to Kitchen').toString();
-              final String payment = (data['payment'] ?? 'Cash on Delivery')
-                  .toString();
+
+              // Robust multi-key payment lookup to accurately display GCash, QRPh, or COD
+              final String payment =
+                  (data['payment'] ??
+                          data['paymentMethod'] ??
+                          data['method'] ??
+                          'Cash on Delivery')
+                      .toString();
+
               final String riderName =
                   (data['riderName'] ?? 'Assigning kitchen rider...')
                       .toString();
 
               final cleanStatus = status.replaceAll(' ', '_');
 
-              // Pipeline flags
               const bool isSent = true;
               final bool isBaking =
                   cleanStatus == 'baking' ||
@@ -82,7 +107,6 @@ class OrderTrackerModal extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -90,7 +114,7 @@ class OrderTrackerModal extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              orderNumber,
+                              widget.orderNumber,
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
@@ -109,18 +133,29 @@ class OrderTrackerModal extends StatelessWidget {
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            color: Color(0xFF756256),
-                          ),
-                          onPressed: () => Navigator.pop(context),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.refresh,
+                                color: Color(0xFF8E4A23),
+                                size: 20,
+                              ),
+                              tooltip: 'Force Sync Stream',
+                              onPressed: _manualRefresh,
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Color(0xFF756256),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    // Status Pill
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -152,8 +187,6 @@ class OrderTrackerModal extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Timeline Container
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
@@ -194,13 +227,11 @@ class OrderTrackerModal extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 18),
-
-                    // Summary Footer
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$itemCount items • PHP ${totalAmount.toStringAsFixed(2)}',
+                          '${widget.itemCount} items • PHP ${widget.totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12.5,
@@ -285,4 +316,3 @@ class OrderTrackerModal extends StatelessWidget {
     );
   }
 }
-

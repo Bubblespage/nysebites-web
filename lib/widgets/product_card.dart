@@ -22,8 +22,11 @@ class _ProductCardState extends State<ProductCard> {
   int _selectedCookieBoxSize = 4; // 4 or 6
 
   double get _currentPrice {
-    if (widget.product.category == 'cookies' && _selectedCookieBoxSize == 6) {
-      return widget.product.priceBox6 ?? widget.product.price;
+    if (widget.product.category == 'cookies') {
+      if (_selectedCookieBoxSize == 6) {
+        return widget.product.priceBox6 ?? 390.0;
+      }
+      return 260.0; // Box of 4 fixed price
     }
     return widget.product.price;
   }
@@ -77,7 +80,6 @@ class _ProductCardState extends State<ProductCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Header
             Stack(
               children: [
                 ClipRRect(
@@ -87,47 +89,22 @@ class _ProductCardState extends State<ProductCard> {
                   child: SizedBox(
                     height: isNarrowCard ? 110 : 180,
                     width: double.infinity,
-                    child: ColorFiltered(
-                      colorFilter: const ColorFilter.matrix([
-                        1.12,
-                        0,
-                        0,
-                        0,
-                        -8,
-                        0,
-                        1.12,
-                        0,
-                        0,
-                        -8,
-                        0,
-                        0,
-                        1.12,
-                        0,
-                        -8,
-                        0,
-                        0,
-                        0,
-                        1,
-                        0,
-                      ]),
-                      child: widget.product.imgSrc.startsWith('http')
-                          ? Image.network(
-                              widget.product.imgSrc,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildFallbackImage(),
-                            )
-                          : Image.asset(
-                              widget.product.imgSrc,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildFallbackImage(),
-                            ),
-                    ),
+                    child: widget.product.imgSrc.startsWith('http')
+                        ? Image.network(
+                            widget.product.imgSrc,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildFallbackImage(),
+                          )
+                        : (widget.product.imgSrc.isNotEmpty
+                              ? Image.asset(
+                                  widget.product.imgSrc,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _buildFallbackImage(),
+                                )
+                              : _buildFallbackImage()),
                   ),
                 ),
-
-                // Category Tag
                 Positioned(
                   top: 10,
                   left: 10,
@@ -151,8 +128,6 @@ class _ProductCardState extends State<ProductCard> {
                     ),
                   ),
                 ),
-
-                // Customizable Badge for Cakes
                 if (isCake)
                   Positioned(
                     top: 10,
@@ -189,8 +164,6 @@ class _ProductCardState extends State<ProductCard> {
                   ),
               ],
             ),
-
-            // Card Body
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -224,6 +197,7 @@ class _ProductCardState extends State<ProductCard> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        // Only show box size chips if it is a cookie (Removed from cakes)
                         if (!isNarrowCard && isCookie) ...[
                           const SizedBox(height: 8),
                           Row(
@@ -236,8 +210,6 @@ class _ProductCardState extends State<ProductCard> {
                         ],
                       ],
                     ),
-
-                    // Price & Action Button
                     if (isNarrowCard)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

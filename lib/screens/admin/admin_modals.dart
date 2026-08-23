@@ -43,6 +43,9 @@ class AdminModals {
         order['productName']?.toString() ??
         'Bakery Item';
 
+    // Ensure any stray unicode bullets are replaced with a safe hyphen
+    final String printDate = (order['printDate']?.toString() ?? 'Recent Order')
+        .replaceAll('•', '-');
     final bool isCustom =
         order['isCustom'] == true ||
         item.toLowerCase().contains('custom') ||
@@ -119,6 +122,13 @@ class AdminModals {
                     fontSize: 8,
                     fontWeight: pw.FontWeight.bold,
                   ),
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.Text(
+                  printDate,
+                  style: const pw.TextStyle(fontSize: 7.5),
                 ),
               ),
               pw.SizedBox(height: 8),
@@ -301,6 +311,8 @@ class AdminModals {
         order['productName']?.toString() ??
         'Bakery Item';
 
+    final String printDate = order['printDate']?.toString() ?? 'Recent Order';
+
     final bool isCustom =
         order['isCustom'] == true ||
         item.toLowerCase().contains('custom') ||
@@ -376,6 +388,15 @@ class AdminModals {
                           fontWeight: FontWeight.bold,
                           color: brandCocoa,
                           letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        printDate,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -531,7 +552,7 @@ class AdminModals {
                           final pdfDoc = await _generateKitchenSlipPdf(order);
                           await Printing.sharePdf(
                             bytes: await pdfDoc.save(),
-                            filename: 'Kitchen_Slip_${orderId}.pdf',
+                            filename: 'Kitchen_Slip_$orderId.pdf',
                           );
                         },
                         icon: const Icon(

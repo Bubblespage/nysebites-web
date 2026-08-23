@@ -10,7 +10,8 @@ class CartDrawer extends StatefulWidget {
   final Function(Product) onRemoveSingleItem;
   final Function(Product) onRemoveAllOfProduct;
   final VoidCallback onClearCart;
-  final void Function(String orderId, int itemCount, double totalAmount) onOrderPlaced;
+  final void Function(String orderId, int itemCount, double totalAmount)
+  onOrderPlaced;
   final String? currentUser;
 
   const CartDrawer({
@@ -72,17 +73,13 @@ class _CartDrawerState extends State<CartDrawer> {
         : 420.0;
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('settings').doc('storefront').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('settings')
+          .doc('storefront')
+          .snapshots(),
       builder: (context, snapshot) {
         final settings = snapshot.data?.data() ?? {};
         final bool isStoreOpen = settings['isStoreOpen'] ?? true;
-        final double freeDeliveryThreshold =
-            (settings['freeDeliveryMin'] ?? 1000.0).toDouble();
-
-        final double amountToFreeDelivery = freeDeliveryThreshold - widget.totalPrice;
-        final bool hasFreeDelivery = amountToFreeDelivery <= 0;
-        final double freeDeliveryProgress =
-            (widget.totalPrice / freeDeliveryThreshold).clamp(0.0, 1.0);
 
         return Drawer(
           width: drawerWidth,
@@ -92,7 +89,10 @@ class _CartDrawerState extends State<CartDrawer> {
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   decoration: const BoxDecoration(
                     border: Border(bottom: BorderSide(color: borderLight)),
                   ),
@@ -108,7 +108,9 @@ class _CartDrawerState extends State<CartDrawer> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF3E7DC),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFE5D5C5)),
+                              border: Border.all(
+                                color: const Color(0xFFE5D5C5),
+                              ),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(6),
@@ -143,53 +145,6 @@ class _CartDrawerState extends State<CartDrawer> {
                   ),
                 ),
 
-                // Free Delivery Progress Meter
-                if (widget.cartItems.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    color: const Color(0xFFFAF2E9),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              hasFreeDelivery ? Icons.check_circle : Icons.local_shipping_outlined,
-                              size: 16,
-                              color: hasFreeDelivery ? const Color(0xFF2E7D32) : brandCocoa,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                hasFreeDelivery
-                                    ? '🎉 You unlocked FREE doorstep delivery!'
-                                    : 'Add ₱${amountToFreeDelivery.toStringAsFixed(2)} more for FREE Delivery!',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: hasFreeDelivery ? const Color(0xFF2E7D32) : darkEspresso,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: freeDeliveryProgress,
-                            minHeight: 5,
-                            backgroundColor: const Color(0xFFE8DACB),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              hasFreeDelivery ? const Color(0xFF2E7D32) : brandCocoa,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                 // Cart Item List
                 Expanded(
                   child: grouped.isEmpty
@@ -204,7 +159,9 @@ class _CartDrawerState extends State<CartDrawer> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF3E7DC),
                                   borderRadius: BorderRadius.circular(36),
-                                  border: Border.all(color: const Color(0xFFE5D5C5)),
+                                  border: Border.all(
+                                    color: const Color(0xFFE5D5C5),
+                                  ),
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(30),
@@ -231,7 +188,10 @@ class _CartDrawerState extends State<CartDrawer> {
                               const SizedBox(height: 4),
                               const Text(
                                 'Add freshly baked cookies and custom cakes!',
-                                style: TextStyle(fontSize: 12, color: textMuted),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
                               ),
                             ],
                           ),
@@ -269,7 +229,8 @@ class _CartDrawerState extends State<CartDrawer> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         product.name,
@@ -294,17 +255,23 @@ class _CartDrawerState extends State<CartDrawer> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: const Color(0xFFE0D3C4)),
+                                    border: Border.all(
+                                      color: const Color(0xFFE0D3C4),
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       InkWell(
-                                        onTap: () => widget.onRemoveSingleItem(product),
+                                        onTap: () =>
+                                            widget.onRemoveSingleItem(product),
                                         borderRadius: BorderRadius.circular(14),
                                         child: Padding(
                                           padding: const EdgeInsets.all(4),
@@ -313,12 +280,16 @@ class _CartDrawerState extends State<CartDrawer> {
                                                 ? Icons.delete_outline_rounded
                                                 : Icons.remove,
                                             size: 16,
-                                            color: quantity == 1 ? Colors.redAccent : darkEspresso,
+                                            color: quantity == 1
+                                                ? Colors.redAccent
+                                                : darkEspresso,
                                           ),
                                         ),
                                       ),
                                       Container(
-                                        constraints: const BoxConstraints(minWidth: 26),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 26,
+                                        ),
                                         alignment: Alignment.center,
                                         child: Text(
                                           '$quantity',
@@ -330,7 +301,8 @@ class _CartDrawerState extends State<CartDrawer> {
                                         ),
                                       ),
                                       InkWell(
-                                        onTap: () => widget.onAddToCart(product),
+                                        onTap: () =>
+                                            widget.onAddToCart(product),
                                         borderRadius: BorderRadius.circular(14),
                                         child: const Padding(
                                           padding: EdgeInsets.all(4),
@@ -386,7 +358,9 @@ class _CartDrawerState extends State<CartDrawer> {
                         height: 48,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isStoreOpen ? brandCocoa : Colors.grey,
+                            backgroundColor: isStoreOpen
+                                ? brandCocoa
+                                : Colors.grey,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),

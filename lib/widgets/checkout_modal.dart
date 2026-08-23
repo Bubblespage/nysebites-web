@@ -35,8 +35,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _refNumberController = TextEditingController();
 
-  String _selectedPaymentMethod = 'GCash';
-  bool _isStandardDelivery = true;
+  final String _selectedPaymentMethod = 'GCash';
+  bool _isGrabCarStandard = true;
   final double _packagingFee = 15.0;
   bool _isSubmitting = false;
 
@@ -91,13 +91,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
         .map((e) => '${e.value}x ${e.key}')
         .join(', ');
 
-    String status = 'pending_cod';
-    String statusLabel = '📋 Confirm COD';
-
-    if (_selectedPaymentMethod != 'Cash on Delivery') {
-      status = 'pending_ewallet';
-      statusLabel = '⏳ Verify $_selectedPaymentMethod';
-    }
+    String status = 'pending_ewallet';
+    String statusLabel = '⏳ Verify GCash';
 
     final bool hasCustomCake = widget.cartItems.any(
       (item) => item.category.toLowerCase() == 'cakes',
@@ -107,9 +102,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
       statusLabel = '🎂 Needs Spec Review';
     }
 
-    final String deliverySpeedLabel = _isStandardDelivery
-        ? 'Standard Delivery (25-35 mins)'
-        : 'Scheduled Fresh Batch';
+    final String deliverySpeedLabel = _isGrabCarStandard
+        ? 'GrabCar Standard Delivery (25-35 mins)'
+        : 'GrabCar Priority Express';
 
     final String rawPhone = _phoneController.text.trim();
     final String completePhone = rawPhone.startsWith('+63')
@@ -119,6 +114,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
     try {
       await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
         'id': orderId,
+        'orderNumber': orderId,
         'customer': _fullNameController.text.trim().isEmpty
             ? (widget.currentUser ?? 'Online Guest')
             : _fullNameController.text.trim(),
@@ -138,7 +134,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
         'packagingFee': _packagingFee,
         'status': status,
         'statusLabel': statusLabel,
-        'payment': _selectedPaymentMethod,
+        'payment': 'GCash',
+        'paymentMethod': 'GCash',
+        'deliveryMethod': 'GrabCar',
         'isCustom': hasCustomCake,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -148,7 +146,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
         orderId,
         widget.cartItems.length,
         calculatedGrandTotal,
-        _selectedPaymentMethod,
+        'GCash',
       );
       Navigator.pop(context);
     } catch (e) {
@@ -204,48 +202,25 @@ class _CheckoutModalState extends State<CheckoutModal> {
               final data = snapshot.data?.data() ?? {};
 
               final bool isStoreOpen = data['isStoreOpen'] ?? true;
-              final bool enableCod = data['enableCod'] ?? true;
-              final bool enableEwallet = data['enableEwallet'] ?? true;
-
               final String gcashQr =
                   data['gcashQrUrl'] ?? 'assets/images/gcash_qr.png';
-              final String qrphQr =
-                  data['qrphQrUrl'] ?? 'assets/images/qrph_qr.png';
 
               final double standardDeliveryFee =
                   (data['standardDeliveryFee'] ?? data['deliveryFee'] ?? 80.0)
                       .toDouble();
               final double scheduledDeliveryFee =
                   (data['scheduledDeliveryFee'] ?? 70.0).toDouble();
-              final double freeDeliveryThreshold =
-                  (data['freeDeliveryMin'] ?? 1000.0).toDouble();
 
-              final bool isFreeDelivery =
-                  widget.totalAmount >= freeDeliveryThreshold;
-
-              final double selectedBaseFee = _isStandardDelivery
+              final double effectiveDeliveryFee = _isGrabCarStandard
                   ? standardDeliveryFee
                   : scheduledDeliveryFee;
-
-              final double effectiveDeliveryFee = isFreeDelivery
-                  ? 0.0
-                  : selectedBaseFee;
 
               final double grandTotal =
                   widget.totalAmount + effectiveDeliveryFee + _packagingFee;
 
-              if (!enableEwallet &&
-                  _selectedPaymentMethod != 'Cash on Delivery') {
-                _selectedPaymentMethod = 'Cash on Delivery';
-              } else if (!enableCod &&
-                  _selectedPaymentMethod == 'Cash on Delivery') {
-                _selectedPaymentMethod = 'GCash';
-              }
-
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -263,7 +238,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
-                                Icons.delivery_dining_outlined,
+                                Icons.local_taxi_outlined,
                                 color: Color(0xFF8E4A23),
                                 size: 20,
                               ),
@@ -292,37 +267,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   ),
                   const Divider(color: Color(0xFFEFE4D6), height: 1),
 
-                  if (!isStoreOpen)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 16,
-                      ),
-                      color: const Color(0xFFFDE8E8),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.lock_clock,
-                            size: 16,
-                            color: Color(0xFFC62828),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Bakery orders are currently paused by the kitchen admin.',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFC62828),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Form Body
                   Expanded(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.all(isSmallScreen ? 16 : 22),
@@ -333,8 +277,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           children: [
                             _sectionLabel('CONTACT & DELIVERY DETAILS'),
                             const SizedBox(height: 10),
-
-                            // Recipient Name
                             TextFormField(
                               controller: _fullNameController,
                               style: const TextStyle(
@@ -359,20 +301,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     color: Color(0xFFEFE4D6),
                                   ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
                               ),
                               validator: (v) => (v == null || v.trim().isEmpty)
                                   ? 'Please enter recipient name'
                                   : null,
                             ),
                             const SizedBox(height: 12),
-
-                            // Phone
                             TextFormField(
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
@@ -418,12 +352,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     color: Color(0xFFEFE4D6),
                                   ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
                               ),
                               validator: (v) {
                                 if (v == null || v.trim().isEmpty)
@@ -435,8 +363,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               },
                             ),
                             const SizedBox(height: 12),
-
-                            // Address
                             TextFormField(
                               controller: _addressController,
                               maxLines: 2,
@@ -463,12 +389,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     color: Color(0xFFEFE4D6),
                                   ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
                               ),
                               validator: (v) => (v == null || v.trim().isEmpty)
                                   ? 'Please enter your full delivery address'
@@ -476,227 +396,180 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Delivery Speed Responsive Layout
-                            _sectionLabel('DELIVERY SPEED'),
+                            _sectionLabel('GRABCAR DELIVERY SPEED'),
                             const SizedBox(height: 8),
-                            LayoutBuilder(
-                              builder: (context, boxConstraints) {
-                                final bool stackCards =
-                                    boxConstraints.maxWidth < 360;
-
-                                if (stackCards) {
-                                  return Column(
-                                    children: [
-                                      _deliveryOptionCard(
-                                        title: 'Standard Delivery (25-35 mins)',
-                                        priceText: isFreeDelivery
-                                            ? 'FREE'
-                                            : '₱${standardDeliveryFee.toStringAsFixed(2)}',
-                                        isSelected: _isStandardDelivery,
-                                        isFree: isFreeDelivery,
-                                        onTap: () => setState(
-                                          () => _isStandardDelivery = true,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      _deliveryOptionCard(
-                                        title: 'Scheduled Fresh Batch',
-                                        priceText: isFreeDelivery
-                                            ? 'FREE'
-                                            : '₱${scheduledDeliveryFee.toStringAsFixed(2)}',
-                                        isSelected: !_isStandardDelivery,
-                                        isFree: isFreeDelivery,
-                                        onTap: () => setState(
-                                          () => _isStandardDelivery = false,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }
-
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      child: _deliveryOptionCard(
-                                        title: 'Standard Delivery (25-35 mins)',
-                                        priceText: isFreeDelivery
-                                            ? 'FREE'
-                                            : '₱${standardDeliveryFee.toStringAsFixed(2)}',
-                                        isSelected: _isStandardDelivery,
-                                        isFree: isFreeDelivery,
-                                        onTap: () => setState(
-                                          () => _isStandardDelivery = true,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _deliveryOptionCard(
-                                        title: 'Scheduled Fresh Batch',
-                                        priceText: isFreeDelivery
-                                            ? 'FREE'
-                                            : '₱${scheduledDeliveryFee.toStringAsFixed(2)}',
-                                        isSelected: !_isStandardDelivery,
-                                        isFree: isFreeDelivery,
-                                        onTap: () => setState(
-                                          () => _isStandardDelivery = false,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
+                            Column(
+                              children: [
+                                _deliveryOptionCard(
+                                  icon: Icons.local_taxi,
+                                  title: 'GrabCar Standard Delivery',
+                                  subtitle: 'Direct dispatch (25-35 mins)',
+                                  priceText:
+                                      '₱${standardDeliveryFee.toStringAsFixed(2)}',
+                                  isSelected: _isGrabCarStandard,
+                                  onTap: () =>
+                                      setState(() => _isGrabCarStandard = true),
+                                ),
+                                const SizedBox(height: 8),
+                                _deliveryOptionCard(
+                                  icon: Icons.bolt,
+                                  title: 'GrabCar Priority Express',
+                                  subtitle:
+                                      'Dedicated rider straight to doorstep',
+                                  priceText:
+                                      '₱${scheduledDeliveryFee.toStringAsFixed(2)}',
+                                  isSelected: !_isGrabCarStandard,
+                                  onTap: () => setState(
+                                    () => _isGrabCarStandard = false,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 20),
 
                             _sectionLabel('PAYMENT METHOD'),
                             const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                if (enableEwallet) ...[
-                                  _paymentChip(
-                                    'GCash',
-                                    Icons.account_balance_wallet_outlined,
-                                  ),
-                                  _paymentChip(
-                                    'QRPh',
-                                    Icons.qr_code_scanner_outlined,
-                                  ),
-                                ],
-                                if (enableCod)
-                                  _paymentChip(
-                                    'Cash on Delivery',
-                                    Icons.payments_outlined,
-                                  ),
-                              ],
-                            ),
-
-                            // QR Image Card
-                            if (_selectedPaymentMethod !=
-                                'Cash on Delivery') ...[
-                              const SizedBox(height: 14),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFAF2E9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0xFFE8D0C3),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF8E4A23),
-                                            borderRadius: BorderRadius.circular(
-                                              7,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.qr_code_scanner,
-                                            color: Colors.white,
-                                            size: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Official $_selectedPaymentMethod Merchant QR',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF2E1B10),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: const Color(0xFFE5D5C5),
-                                        ),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: SizedBox(
-                                          width: 140,
-                                          height: 140,
-                                          child: _buildQrImage(
-                                            _selectedPaymentMethod == 'GCash'
-                                                ? gcashQr
-                                                : qrphQr,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      _selectedPaymentMethod == 'GCash'
-                                          ? 'Scan with GCash app • Total: ₱${grandTotal.toStringAsFixed(2)}'
-                                          : 'Scan with MariBank, SeaBank, or any QRPh app (₱${grandTotal.toStringAsFixed(2)})',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF756256),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextFormField(
-                                      controller: _refNumberController,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      decoration: InputDecoration(
-                                        labelText:
-                                            'Payment Reference No. (Optional)',
-                                        hintText: 'e.g. 1029384756',
-                                        prefixIcon: const Icon(
-                                          Icons.receipt_long,
-                                          size: 16,
-                                          color: Color(0xFF8E4A23),
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.white,
-                                        isDense: true,
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFEFE4D6),
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFEFE4D6),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF8E4A23),
+                                  width: 1.5,
                                 ),
                               ),
-                            ],
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.account_balance_wallet_outlined,
+                                    size: 18,
+                                    color: Color(0xFF8E4A23),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'GCash (Online Payment Only)',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Color(0xFF2E1B10),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
 
-                            const SizedBox(height: 18),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFAF2E9),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFFE8D0C3),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF8E4A23),
+                                          borderRadius: BorderRadius.circular(
+                                            7,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.qr_code_scanner,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text(
+                                          'Official GCash Merchant QR',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF2E1B10),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(0xFFE5D5C5),
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: SizedBox(
+                                        width: 140,
+                                        height: 140,
+                                        child: _buildQrImage(gcashQr),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Scan with GCash app • Total: ₱${grandTotal.toStringAsFixed(2)}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF756256),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _refNumberController,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText:
+                                          'GCash Payment Reference No. *',
+                                      hintText: 'e.g. 1029384756',
+                                      prefixIcon: const Icon(
+                                        Icons.receipt_long,
+                                        size: 16,
+                                        color: Color(0xFF8E4A23),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      isDense: true,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEFE4D6),
+                                        ),
+                                      ),
+                                    ),
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Please enter GCash reference number'
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
 
+                            // Rider / Bake Notes
                             _sectionLabel('RIDER / BAKE NOTES'),
                             const SizedBox(height: 8),
                             TextFormField(
@@ -707,7 +580,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               ),
                               decoration: InputDecoration(
                                 hintText:
-                                    'e.g. Leave at guardhouse, ring doorbell...',
+                                    'e.g. Leave with GrabCar driver, call upon arrival...',
                                 hintStyle: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF9E8E84),
@@ -724,16 +597,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     color: Color(0xFFEFE4D6),
                                   ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
                               ),
                             ),
                             const SizedBox(height: 20),
 
+                            // Payment Breakdown
                             _sectionLabel('PAYMENT BREAKDOWN'),
                             const SizedBox(height: 8),
                             Container(
@@ -753,10 +621,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ),
                                   const SizedBox(height: 6),
                                   _receiptRow(
-                                    'Delivery Fee',
-                                    isFreeDelivery
-                                        ? 'FREE (₱0.00)'
-                                        : '₱${effectiveDeliveryFee.toStringAsFixed(2)}',
+                                    'GrabCar Delivery Fee',
+                                    '₱${effectiveDeliveryFee.toStringAsFixed(2)}',
                                   ),
                                   const SizedBox(height: 6),
                                   _receiptRow(
@@ -811,80 +677,76 @@ class _CheckoutModalState extends State<CheckoutModal> {
                         bottom: Radius.circular(23),
                       ),
                     ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        runSpacing: 10,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Paying with $_selectedPaymentMethod',
-                                style: const TextStyle(
-                                  fontSize: 10.5,
-                                  color: Color(0xFF756256),
-                                  fontWeight: FontWeight.w600,
-                                ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Paying via GCash',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: Color(0xFF756256),
+                                fontWeight: FontWeight.w600,
                               ),
-                              Text(
-                                '₱${grandTotal.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF8E4A23),
-                                ),
-                              ),
-                            ],
-                          ),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8E4A23),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
                             ),
-                            onPressed: (_isSubmitting || !isStoreOpen)
-                                ? null
-                                : () => _handlePlaceOrder(
-                                    activeDeliveryFee: effectiveDeliveryFee,
-                                    calculatedGrandTotal: grandTotal,
-                                    isStoreOpen: isStoreOpen,
-                                  ),
-                            icon: _isSubmitting
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.check_circle_outline,
-                                    size: 16,
-                                  ),
-                            label: Text(
-                              _isSubmitting
-                                  ? 'Placing Order...'
-                                  : 'Place Sweet Order',
+                            Text(
+                              '₱${grandTotal.toStringAsFixed(2)}',
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF8E4A23),
                               ),
                             ),
+                          ],
+                        ),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8E4A23),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
                           ),
-                        ],
-                      ),
+                          onPressed: (_isSubmitting || !isStoreOpen)
+                              ? null
+                              : () => _handlePlaceOrder(
+                                  activeDeliveryFee: effectiveDeliveryFee,
+                                  calculatedGrandTotal: grandTotal,
+                                  isStoreOpen: isStoreOpen,
+                                ),
+                          icon: _isSubmitting
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.check_circle_outline,
+                                  size: 16,
+                                ),
+                          label: Text(
+                            _isSubmitting
+                                ? 'Placing Order...'
+                                : 'Place Sweet Order',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -947,20 +809,21 @@ class _CheckoutModalState extends State<CheckoutModal> {
   }
 
   Widget _deliveryOptionCard({
+    required IconData icon,
     required String title,
+    required String subtitle,
     required String priceText,
     required bool isSelected,
-    required bool isFree,
     required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFFAF2E9) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF8E4A23)
@@ -968,63 +831,58 @@ class _CheckoutModalState extends State<CheckoutModal> {
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2E1B10),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF8E4A23)
+                    : const Color(0xFFF3E7DC),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: isSelected ? Colors.white : const Color(0xFF8E4A23),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2E1B10),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF756256),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
             Text(
               priceText,
-              style: TextStyle(
-                fontSize: 11.5,
-                color: isFree
-                    ? const Color(0xFF2E7D32)
-                    : const Color(0xFF8E4A23),
-                fontWeight: FontWeight.w800,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: Color(0xFF8E4A23),
+                fontWeight: FontWeight.w900,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _paymentChip(String labelName, IconData icon) {
-    // Map short label back to your full logic string if needed, or keep it clean
-    final bool isSelected = _selectedPaymentMethod.startsWith(labelName);
-
-    return ChoiceChip(
-      avatar: Icon(
-        icon,
-        size: 14,
-        color: isSelected ? Colors.white : const Color(0xFF8E4A23),
-      ),
-      label: Text(labelName),
-      selected: isSelected,
-      selectedColor: const Color(0xFF8E4A23),
-      backgroundColor: Colors.white,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : const Color(0xFF2E1B10),
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-        fontSize: 11,
-      ),
-      onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            // If they select QRPh, set it cleanly
-            _selectedPaymentMethod = labelName == 'QRPh'
-                ? 'QRPh (MariBank/SeaBank)'
-                : labelName;
-          });
-        }
-      },
     );
   }
 

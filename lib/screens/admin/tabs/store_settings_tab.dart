@@ -23,28 +23,16 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
 
   bool _isStoreOpen = true;
   bool _acceptCustomCakes = true;
-  bool _enableCod = true;
-  bool _enableEwallet = true;
 
   final TextEditingController _announcement1Controller = TextEditingController();
   final TextEditingController _announcement2Controller = TextEditingController();
   final TextEditingController _announcement3Controller = TextEditingController();
-
   final TextEditingController _gcashQrController = TextEditingController();
-  final TextEditingController _qrphQrController = TextEditingController();
-
-  final TextEditingController _standardDeliveryFeeController = TextEditingController();
-  final TextEditingController _scheduledDeliveryFeeController = TextEditingController();
-  final TextEditingController _freeDeliveryMinController = TextEditingController();
 
   final FocusNode _announcement1Focus = FocusNode();
   final FocusNode _announcement2Focus = FocusNode();
   final FocusNode _announcement3Focus = FocusNode();
   final FocusNode _gcashQrFocus = FocusNode();
-  final FocusNode _qrphQrFocus = FocusNode();
-  final FocusNode _standardDeliveryFeeFocus = FocusNode();
-  final FocusNode _scheduledDeliveryFeeFocus = FocusNode();
-  final FocusNode _freeDeliveryMinFocus = FocusNode();
 
   Future<void> _saveSettings() async {
     setState(() => _isSaving = true);
@@ -53,18 +41,13 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
       final payload = {
         'isStoreOpen': _isStoreOpen,
         'acceptCustomCakes': _acceptCustomCakes,
-        'enableCod': _enableCod,
-        'enableEwallet': _enableEwallet,
+        'enableCod': false,
+        'enableEwallet': true,
         'announcement1': _announcement1Controller.text.trim(),
         'announcement2': _announcement2Controller.text.trim(),
         'announcement3': _announcement3Controller.text.trim(),
         'announcementText': _announcement1Controller.text.trim(),
         'gcashQrUrl': _gcashQrController.text.trim(),
-        'qrphQrUrl': _qrphQrController.text.trim(),
-        'standardDeliveryFee': double.tryParse(_standardDeliveryFeeController.text.trim()) ?? 80.0,
-        'scheduledDeliveryFee': double.tryParse(_scheduledDeliveryFeeController.text.trim()) ?? 70.0,
-        'deliveryFee': double.tryParse(_standardDeliveryFeeController.text.trim()) ?? 80.0,
-        'freeDeliveryMin': double.tryParse(_freeDeliveryMinController.text.trim()) ?? 1000.0,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -74,7 +57,7 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFF2E7D32),
-          content: Text('✨ Storefront settings and QR channels published live!'),
+          content: Text('✨ Storefront settings and 3 announcement slots published live!'),
         ),
       );
     } catch (e) {
@@ -96,19 +79,11 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
     _announcement2Controller.dispose();
     _announcement3Controller.dispose();
     _gcashQrController.dispose();
-    _qrphQrController.dispose();
-    _standardDeliveryFeeController.dispose();
-    _scheduledDeliveryFeeController.dispose();
-    _freeDeliveryMinController.dispose();
 
     _announcement1Focus.dispose();
     _announcement2Focus.dispose();
     _announcement3Focus.dispose();
     _gcashQrFocus.dispose();
-    _qrphQrFocus.dispose();
-    _standardDeliveryFeeFocus.dispose();
-    _scheduledDeliveryFeeFocus.dispose();
-    _freeDeliveryMinFocus.dispose();
     super.dispose();
   }
 
@@ -123,8 +98,6 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
           if (!_initialized) {
             _isStoreOpen = data['isStoreOpen'] ?? true;
             _acceptCustomCakes = data['acceptCustomCakes'] ?? true;
-            _enableCod = data['enableCod'] ?? true;
-            _enableEwallet = data['enableEwallet'] ?? true;
 
             _announcement1Controller.text = data['announcement1']?.toString() ??
                 data['announcementText']?.toString() ??
@@ -132,14 +105,9 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
             _announcement2Controller.text = data['announcement2']?.toString() ??
                 'Handcrafted small-batch cookies & fudgy brownies baked fresh daily at 9:00 AM';
             _announcement3Controller.text = data['announcement3']?.toString() ??
-                'Enjoy free insulated doorstep delivery on all orders over ₱1,000';
+                '🎂 Custom cakes require a 2-week reservation notice in advance!';
 
             _gcashQrController.text = data['gcashQrUrl']?.toString() ?? 'assets/images/gcash_qr.png';
-            _qrphQrController.text = data['qrphQrUrl']?.toString() ?? 'assets/images/qrph_qr.png';
-            
-            _standardDeliveryFeeController.text = (data['standardDeliveryFee'] ?? data['deliveryFee'] ?? 80.00).toString();
-            _scheduledDeliveryFeeController.text = (data['scheduledDeliveryFee'] ?? 70.00).toString();
-            _freeDeliveryMinController.text = (data['freeDeliveryMin'] ?? 1000.00).toString();
             _initialized = true;
           } else {
             if (!_announcement1Focus.hasFocus) {
@@ -154,31 +122,12 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
             if (!_gcashQrFocus.hasFocus) {
               _gcashQrController.text = data['gcashQrUrl']?.toString() ?? _gcashQrController.text;
             }
-            if (!_qrphQrFocus.hasFocus) {
-              _qrphQrController.text = data['qrphQrUrl']?.toString() ?? _qrphQrController.text;
-            }
-            if (!_standardDeliveryFeeFocus.hasFocus) {
-              _standardDeliveryFeeController.text =
-                  (data['standardDeliveryFee'] ?? _standardDeliveryFeeController.text).toString();
-            }
-            if (!_scheduledDeliveryFeeFocus.hasFocus) {
-              _scheduledDeliveryFeeController.text =
-                  (data['scheduledDeliveryFee'] ?? _scheduledDeliveryFeeController.text).toString();
-            }
-            if (!_freeDeliveryMinFocus.hasFocus) {
-              _freeDeliveryMinController.text =
-                  (data['freeDeliveryMin'] ?? _freeDeliveryMinController.text).toString();
-            }
           }
         } else if (!_initialized) {
           _announcement1Controller.text = '🔥 Fresh Afternoon Drop ready at 3:00 PM • Order warm from oven!';
           _announcement2Controller.text = 'Handcrafted small-batch cookies & fudgy brownies baked fresh daily at 9:00 AM';
-          _announcement3Controller.text = 'Enjoy free insulated doorstep delivery on all orders over ₱1,000';
+          _announcement3Controller.text = '🎂 Custom cakes require a 2-week reservation notice in advance!';
           _gcashQrController.text = 'assets/images/gcash_qr.png';
-          _qrphQrController.text = 'assets/images/qrph_qr.png';
-          _standardDeliveryFeeController.text = '80.00';
-          _scheduledDeliveryFeeController.text = '70.00';
-          _freeDeliveryMinController.text = '1000.00';
           _initialized = true;
         }
 
@@ -206,7 +155,7 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
                             ),
                             const SizedBox(height: 3),
                             const Text(
-                              'Global shop controls, payment QR paths, and customer alerts.',
+                              'Global shop controls, GCash merchant QR, and customer alerts.',
                               style: TextStyle(fontSize: 12, color: textMuted),
                             ),
                             const SizedBox(height: 12),
@@ -256,7 +205,7 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
                                 ),
                                 SizedBox(height: 3),
                                 Text(
-                                  'Global shop controls, payment QR paths, and customer alerts.',
+                                  'Global shop controls, GCash merchant QR, and customer alerts.',
                                   style: TextStyle(fontSize: 12, color: textMuted),
                                 ),
                               ],
@@ -341,8 +290,8 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
                         controller: _announcement3Controller,
                         focusNode: _announcement3Focus,
                         decoration: const InputDecoration(
-                          labelText: 'Slot 3: Complimentary Delivery Highlight',
-                          prefixIcon: Icon(Icons.local_shipping_outlined, size: 18),
+                          labelText: 'Slot 3: Special Notice / Reservation Reminder',
+                          prefixIcon: Icon(Icons.cake_outlined, size: 18),
                           border: OutlineInputBorder(),
                           isDense: true,
                         ),
@@ -351,208 +300,21 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Section 3: QR Image Settings
+                  // Section 3: GCash QR Settings Only
                   _buildCard(
-                    title: 'Merchant QR Image Settings (GCash & QRPh)',
+                    title: 'Merchant QR Image Settings (GCash Only)',
                     children: [
-                      isMobile
-                          ? Column(
-                              children: [
-                                TextField(
-                                  controller: _gcashQrController,
-                                  focusNode: _gcashQrFocus,
-                                  decoration: const InputDecoration(
-                                    labelText: 'GCash QR Asset / URL',
-                                    hintText: 'assets/images/gcash_qr.png',
-                                    prefixIcon: Icon(Icons.qr_code_scanner, size: 18),
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _qrphQrController,
-                                  focusNode: _qrphQrFocus,
-                                  decoration: const InputDecoration(
-                                    labelText: 'QRPh Asset / URL',
-                                    hintText: 'assets/images/qrph_qr.png',
-                                    prefixIcon: Icon(Icons.account_balance, size: 18),
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _gcashQrController,
-                                    focusNode: _gcashQrFocus,
-                                    decoration: const InputDecoration(
-                                      labelText: 'GCash QR Asset / URL',
-                                      hintText: 'assets/images/gcash_qr.png',
-                                      prefixIcon: Icon(Icons.qr_code_scanner, size: 18),
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _qrphQrController,
-                                    focusNode: _qrphQrFocus,
-                                    decoration: const InputDecoration(
-                                      labelText: 'QRPh Asset / URL',
-                                      hintText: 'assets/images/qrph_qr.png',
-                                      prefixIcon: Icon(Icons.account_balance, size: 18),
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                      const SizedBox(height: 16),
-                      isMobile
-                          ? Column(
-                              children: [
-                                _buildSwitchTile(
-                                  'Enable Cash on Delivery (COD)',
-                                  'Rider collects cash upon doorstep delivery',
-                                  _enableCod,
-                                  (v) => setState(() => _enableCod = v),
-                                ),
-                                const Divider(color: borderLight, height: 16),
-                                _buildSwitchTile(
-                                  'Enable GCash & QRPh',
-                                  'Accept verified GCash and QRPh scans',
-                                  _enableEwallet,
-                                  (v) => setState(() => _enableEwallet = v),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                Expanded(
-                                  child: _buildSwitchTile(
-                                    'Enable Cash on Delivery (COD)',
-                                    'Rider collects cash upon doorstep delivery',
-                                    _enableCod,
-                                    (v) => setState(() => _enableCod = v),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: _buildSwitchTile(
-                                    'Enable GCash & QRPh',
-                                    'Accept verified GCash and QRPh scans',
-                                    _enableEwallet,
-                                    (v) => setState(() => _enableEwallet = v),
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section 4: Dual Delivery Speed Rates
-                  _buildCard(
-                    title: 'Fulfillment & Delivery Fees',
-                    children: [
-                      isMobile
-                          ? Column(
-                              children: [
-                                TextField(
-                                  controller: _standardDeliveryFeeController,
-                                  focusNode: _standardDeliveryFeeFocus,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Standard / Express Fee (₱)',
-                                    helperText: 'On-demand express (25-35 mins)',
-                                    prefixIcon: Icon(Icons.bolt, size: 18),
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _scheduledDeliveryFeeController,
-                                  focusNode: _scheduledDeliveryFeeFocus,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Scheduled Batch Fee (₱)',
-                                    helperText: 'Consolidated batch drop route',
-                                    prefixIcon: Icon(Icons.schedule, size: 18),
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller: _freeDeliveryMinController,
-                                  focusNode: _freeDeliveryMinFocus,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Free Delivery Threshold (₱)',
-                                    helperText: 'Threshold for ₱0 delivery',
-                                    prefixIcon: Icon(Icons.savings_outlined, size: 18),
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _standardDeliveryFeeController,
-                                    focusNode: _standardDeliveryFeeFocus,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Standard / Express Fee (₱)',
-                                      helperText: 'On-demand express (25-35 mins)',
-                                      prefixIcon: Icon(Icons.bolt, size: 18),
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _scheduledDeliveryFeeController,
-                                    focusNode: _scheduledDeliveryFeeFocus,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Scheduled Batch Fee (₱)',
-                                      helperText: 'Consolidated batch drop route',
-                                      prefixIcon: Icon(Icons.schedule, size: 18),
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _freeDeliveryMinController,
-                                    focusNode: _freeDeliveryMinFocus,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Free Delivery Threshold (₱)',
-                                      helperText: 'Threshold for ₱0 delivery',
-                                      prefixIcon: Icon(Icons.savings_outlined, size: 18),
-                                      border: OutlineInputBorder(),
-                                      isDense: true,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                      TextField(
+                        controller: _gcashQrController,
+                        focusNode: _gcashQrFocus,
+                        decoration: const InputDecoration(
+                          labelText: 'GCash QR Asset / URL',
+                          hintText: 'assets/images/gcash_qr.png',
+                          prefixIcon: Icon(Icons.qr_code_scanner, size: 18),
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 30),
