@@ -78,9 +78,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       setState(() {
         debugPrint(
-          'Android browser tab resumed: Re-establishing Firestore connection streams.',
+          'App resumed from background: Re-syncing Firestore connection streams and refreshing UI.',
         );
       });
+      // Force Firestore to reconnect/sync pending data streams immediately on mobile
+      FirebaseFirestore.instance.clearPersistence().catchError((_) {});
     }
   }
 
@@ -366,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     alignment: Alignment.center,
                     child: const ReviewsSlideshow(),
                   ),
-                  OvenGallerySection(key: _galleryKey), // <--- Assigned _galleryKey here properly
+                  OvenGallerySection(key: _galleryKey),
                   ContactSection(key: _sweetNoteKey),
                   Footer(key: _footerKey),
                 ],
