@@ -104,7 +104,7 @@ final List<Product> mockProducts = [
     servingSize: null,
     description:
         'Choose dimensions, choice of chocolate, vanilla, and icing styles.',
-    imgSrc: 'assets/images/cake4.jpg',
+    imgSrc: 'assets/images/cake12.jpg',
     icon: '🎂',
   ),
   const Product(
@@ -116,7 +116,7 @@ final List<Product> mockProducts = [
     servingSize: null,
     description:
         'Customized 1-tier celebration cake featuring 3D design elements and custom printable flavor bases.',
-    imgSrc: 'assets/images/cake2_.jpg',
+    imgSrc: 'assets/images/cake3_.jpg',
     icon: '🩵',
   ),
   const Product(
@@ -128,7 +128,7 @@ final List<Product> mockProducts = [
     servingSize: null,
     description:
         'Customized 2-tier celebration cake with dramatic tiered cascading buttercream ruffles (Requires 2 weeks reservation notice).',
-    imgSrc: 'assets/images/cake1.jpg',
+    imgSrc: 'assets/images/cake2.jpg',
     icon: '💜',
   ),
 ];

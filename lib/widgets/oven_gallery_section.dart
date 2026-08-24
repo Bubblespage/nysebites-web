@@ -13,97 +13,139 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
 
   final List<Map<String, String>> _galleryPosts = [
     {
-      'image': 'assets/images/cake16.jpg',
+      'image': 'assets/images/cake1.jpg',
       'caption':
           'Custom superhero & kitty themed two-tier birthday masterpiece! 🦸‍♀️🐱✨',
       'likes': '448',
       'comments': '14',
     },
     {
-      'image': 'assets/images/cake19.jpg',
+      'image': 'assets/images/cake2.jpg',
       'caption':
           'Delicate white and gold christening cake with blessed details. 🕊️✨',
       'likes': '512',
       'comments': '29',
     },
     {
-      'image': 'assets/images/cake8.jpg',
+      'image': 'assets/images/cake3.jpg',
       'caption':
           'Adorable Stitch & Cinnamoroll blue pastel celebration cake! 💙🧁',
       'likes': '820',
       'comments': '18',
     },
     {
-      'image': 'assets/images/cake15.jpg',
+      'image': 'assets/images/cake14.jpg',
       'caption':
           'Custom truck topper birthday cake with vibrant red & gold frosting. 🚛🔥',
       'likes': '630',
       'comments': '41',
     },
     {
-      'image': 'assets/images/cake7.jpg',
+      'image': 'assets/images/cake21.jpg',
       'caption': 'Action-packed Paw Patrol themed two-tone birthday cake! 🐾🐶',
       'likes': '890',
       'comments': '52',
     },
     {
-      'image': 'assets/images/cake18.jpg',
+      'image': 'assets/images/cake7.jpg',
       'caption':
           'Sweet baby blue christening cake with custom topper & golden stars. ⭐👶',
       'likes': '675',
       'comments': '9',
     },
     {
-      'image': 'assets/images/cake17.jpg',
+      'image': 'assets/images/cake8.jpg',
       'caption':
           'Two-tier pastel pink Peppa Pig birthday wonderland cake! 🐷💖',
       'likes': '710',
       'comments': '33',
     },
     {
-      'image': 'assets/images/cake5.jpg',
+      'image': 'assets/images/cake9.jpg',
       'caption':
           'Vibrant pink Happy Birthday topper with gorgeous buttercream rose swirls. 🌹✨',
       'likes': '940',
       'comments': '65',
     },
     {
-      'image': 'assets/images/cake12.jpg',
+      'image': 'assets/images/cake10.jpg',
       'caption':
           'Magical Vulpix Pokémon ice-blue snowflake frosted masterpiece. ❄️🦊',
       'likes': '455',
       'comments': '21',
     },
     {
-      'image': 'assets/images/cake14.jpg',
+      'image': 'assets/images/cake11.jpg',
       'caption':
           'Edgy black and pink Kuromi celebration cake with sweet macarons! 🖤🩷',
       'likes': '620',
       'comments': '38',
     },
     {
-      'image': 'assets/images/cake10.jpg',
+      'image': 'assets/images/cake12.jpg',
       'caption':
           'Stunning pink and black Kuromi custom lettering birthday cake. 🎀🍰',
       'likes': '389',
       'comments': '12',
     },
     {
-      'image': 'assets/images/cake11.jpg',
+      'image': 'assets/images/cake13.jpg',
       'caption':
           'Enchanting Harry Potter themed cake complete with sorting hat & wand! ⚡🧙‍♂️',
       'likes': '830',
       'comments': '47',
     },
     {
-      'image': 'assets/images/cake9.jpg',
+      'image': 'assets/images/cake5.jpg',
       'caption':
           'Decadent chocolate drip cake topped with mini liquor bottle & truffles. 🍫🍾',
       'likes': '515',
       'comments': '24',
     },
     {
+      'image': 'assets/images/cake15.jpg',
+      'caption':
+          'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
+      'likes': '799',
+      'comments': '59',
+    },
+    {
+      'image': 'assets/images/cake16.jpg',
+      'caption':
+          'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
+      'likes': '799',
+      'comments': '59',
+    },
+    {
+      'image': 'assets/images/cake17.jpg',
+      'caption':
+          'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
+      'likes': '799',
+      'comments': '59',
+    },
+    {
+      'image': 'assets/images/cake18.jpg',
+      'caption':
+          'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
+      'likes': '799',
+      'comments': '59',
+    },
+    {
+      'image': 'assets/images/cake19.jpg',
+      'caption':
+          'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
+      'likes': '799',
+      'comments': '59',
+    },
+    {
       'image': 'assets/images/cake20.jpg',
+      'caption':
+          'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
+      'likes': '799',
+      'comments': '59',
+    },
+    {
+      'image': 'assets/images/cake6.jpg',
       'caption':
           'Lush green vintage piped cake adorned with delicate white daisies. 🌼🌿',
       'likes': '799',
