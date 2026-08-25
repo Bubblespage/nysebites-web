@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import '../admin_modals.dart';
 
 class CustomCakeDeskTab extends StatefulWidget {
   final List<Map<String, dynamic>> customCakes;
-  final Function(String id, String newStatus, String newLabel) onUpdateStatus;
+  final Function(String id, String newStatus, String newLabel, [Map<String, dynamic>? extraData]) onUpdateStatus;
   final Function(String id) onRejectSpec;
 
   const CustomCakeDeskTab({
@@ -52,10 +55,27 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
           s == 'delivered' ||
           s == 'completed' ||
           s.contains('completed') ||
-          s == 'rejected';
+          s == 'rejected' ||
+          s == 'spec_rejected' ||
+          s == 'quote_received' ||
+          s == 'ready_to_bake';
     }).toList();
 
     final currentList = _selectedSubTab == 0 ? pendingSpecs : cakeHistory;
+
+    currentList.sort((a, b) {
+      final aDate = a['createdAt'];
+      final bDate = b['createdAt'];
+      
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1; // nulls at the bottom
+      if (bDate == null) return -1;
+      
+      if (aDate is Timestamp && bDate is Timestamp) {
+        return bDate.compareTo(aDate); // latest at top
+      }
+      return 0;
+    });
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -207,6 +227,8 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                           ? cake['note'].toString()
                           : 'No custom dedication requested');
 
+                  final String? refImageBase64 = cake['referenceImageBase64']?.toString();
+
                   final String status = (cake['status'] ?? '').toString();
                   final String statusLabel =
                       (cake['statusLabel'] ?? 'Completed Delivery').toString();
@@ -335,6 +357,77 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                           ),
                         ),
 
+                        // Preferred Reference Image
+                        if (refImageBase64 != null && refImageBase64.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: wellBg,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('🖼️', style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Customer Reference Image',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11.5,
+                                          color: textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (ctx) => Dialog(
+                                              backgroundColor: Colors.transparent,
+                                              insetPadding: const EdgeInsets.all(16),
+                                              child: Stack(
+                                                alignment: Alignment.topRight,
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    child: Image.memory(
+                                                      base64Decode(refImageBase64),
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                                    onPressed: () => Navigator.pop(ctx),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.memory(
+                                            base64Decode(refImageBase64),
+                                            width: 140,
+                                            height: 140,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
                         // Actions for Pending Items
                         if (isPending) ...[
                           const SizedBox(height: 14),
@@ -362,14 +455,32 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
-                                onPressed: () => widget.onUpdateStatus(
-                                  orderId,
-                                  'baking',
-                                  '🍪 Baking & Packing',
+                                onPressed: () => AdminModals.showCustomCakeInspectionDrawer(
+                                  context,
+                                  cake,
+                                  (basePrice, addonPrice) {
+                                    final double total = basePrice + addonPrice;
+                                    final double downPayment = total / 2;
+                                    final double balance = total - downPayment;
+                                    
+                                    widget.onUpdateStatus(
+                                      orderId, 
+                                      'quote_received', 
+                                      '📝 Quote & Contract Sent',
+                                      {
+                                        'baseCakePrice': basePrice,
+                                        'customAddonPrice': addonPrice,
+                                        'downPayment': downPayment,
+                                        'balance': balance,
+                                        'total': '₱${total.toStringAsFixed(2)}',
+                                      }
+                                    );
+                                  },
+                                  () => widget.onRejectSpec(orderId),
                                 ),
-                                icon: const Icon(Icons.check, size: 15, color: Colors.white),
+                                icon: const Icon(Icons.cake_outlined, size: 15, color: Colors.white),
                                 label: const Text(
-                                  'Approve & Bake',
+                                  'Inspect Spec',
                                   style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                                 ),
                               ),

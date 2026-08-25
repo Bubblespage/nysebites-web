@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 import '../models/product.dart';
 
 class CheckoutModal extends StatefulWidget {
@@ -111,6 +112,14 @@ class _CheckoutModalState extends State<CheckoutModal> {
         ? rawPhone
         : '+63 $rawPhone';
 
+    String? referenceImageBase64;
+    for (final item in widget.cartItems) {
+      if (item.customImageBytes != null) {
+        referenceImageBase64 = base64Encode(item.customImageBytes!);
+        break;
+      }
+    }
+
     try {
       await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
         'id': orderId,
@@ -140,6 +149,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
         'deliveryMethod': 'GrabCar',
         'isCustom': hasCustomCake,
         'createdAt': FieldValue.serverTimestamp(),
+        'referenceImageBase64': referenceImageBase64,
       });
 
       if (!mounted) return;

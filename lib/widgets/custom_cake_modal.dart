@@ -93,6 +93,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
       description: customDescription.toString(),
       imgSrc: widget.baseProduct.imgSrc,
       icon: '🎂',
+      customImageBytes: _preferredImageBytes,
     );
 
     widget.onAddCustomCake(customizedCake);

@@ -743,6 +743,30 @@ class LiveOrdersTab extends StatelessWidget {
       );
     }
 
+    if (status == 'quote_received') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFC27803),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(105, 30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        onPressed: () => AdminModals.showPaymentVerificationModal(
+          context,
+          order,
+          () => onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven'),
+        ),
+        child: const Text(
+          'Verify GCash',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
     if (status == 'ready_to_bake') {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(

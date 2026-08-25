@@ -23,7 +23,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _orderStream;
   bool _isManualRefresh = false;
 
-  final TextEditingController _downPaymentRefController = TextEditingController();
+  final TextEditingController _downPaymentRefController =
+      TextEditingController();
   final TextEditingController _balanceRefController = TextEditingController();
 
   String? _localStatus;
@@ -54,7 +55,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
       _isManualRefresh = true;
       _initStream();
     });
-    
+
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _isManualRefresh = false);
     });
@@ -96,28 +97,63 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 // Fallthrough to use last known data instead of returning an error screen
               }
 
-              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData && !_isManualRefresh) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData &&
+                  !_isManualRefresh) {
                 return const SizedBox(
                   height: 250,
                   child: Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF8E4A23),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF8E4A23)),
                   ),
                 );
               }
 
               Map<String, dynamic> data = {};
-              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+              if (snapshot.hasData &&
+                  snapshot.data != null &&
+                  snapshot.data!.exists) {
                 data = snapshot.data!.data() ?? {};
               }
 
-              final String status = _localStatus ?? (data['status'] ?? 'pending_cod')
+              String dbStatus = (data['status'] ?? 'pending_cod')
                   .toString()
                   .toLowerCase()
                   .trim();
-              final String statusLabel = _localStatusLabel ??
+              String dbStatusLabel =
                   (data['statusLabel'] ?? 'Order Sent to Kitchen').toString();
+
+              int getStatusRank(String s) {
+                switch (s) {
+                  case 'pending_spec_review':
+                    return 0;
+                  case 'quote_received':
+                    return 1;
+                  case 'contract_signed':
+                    return 2;
+                  case 'ready_to_bake':
+                    return 3;
+                  case 'baking':
+                  case 'preparing':
+                  case 'in_kitchen':
+                    return 4;
+                  case 'delivering':
+                    return 5;
+                  case 'delivered':
+                    return 6;
+                  default:
+                    return -1;
+                }
+              }
+
+              String status = dbStatus;
+              String statusLabel = dbStatusLabel;
+
+              if (_localStatus != null) {
+                if (getStatusRank(_localStatus!) > getStatusRank(dbStatus)) {
+                  status = _localStatus!;
+                  statusLabel = _localStatusLabel ?? dbStatusLabel;
+                }
+              }
 
               final String payment =
                   (data['payment'] ??
@@ -224,9 +260,18 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFEFE4D6)),
                       ),
-                      child: isCustom 
-                          ? _buildCustomTrackerFlow(data, cleanStatus, payment, riderName)
-                          : _buildStandardTrackerFlow(cleanStatus, payment, riderName),
+                      child: isCustom
+                          ? _buildCustomTrackerFlow(
+                              data,
+                              cleanStatus,
+                              payment,
+                              riderName,
+                            )
+                          : _buildStandardTrackerFlow(
+                              cleanStatus,
+                              payment,
+                              riderName,
+                            ),
                     ),
                     const SizedBox(height: 18),
                     Row(
@@ -318,7 +363,11 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     );
   }
 
-  Widget _buildStandardTrackerFlow(String cleanStatus, String payment, String riderName) {
+  Widget _buildStandardTrackerFlow(
+    String cleanStatus,
+    String payment,
+    String riderName,
+  ) {
     const bool isSent = true;
     final bool isBaking =
         cleanStatus == 'baking' ||
@@ -341,7 +390,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         _buildStepConnector(isBaking),
         _buildTrackingStep(
           Icons.cookie_outlined,
-          'Baking & Packing',
+          'Baking & Preparation',
           'Artisanal batch inside the deck oven',
           isBaking,
         ),
@@ -363,27 +412,59 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     );
   }
 
-  Widget _buildCustomTrackerFlow(Map<String, dynamic> data, String cleanStatus, String payment, String riderName) {
+  Widget _buildCustomTrackerFlow(
+    Map<String, dynamic> data,
+    String cleanStatus,
+    String payment,
+    String riderName,
+  ) {
     // Determine milestone booleans
-    final bool isQuote = cleanStatus == 'quote_received' || cleanStatus == 'contract_signed' || cleanStatus == 'ready_to_bake' || cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
-    final bool isContract = cleanStatus == 'contract_signed' || cleanStatus == 'ready_to_bake' || cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
-    final bool isDownPayment = cleanStatus == 'ready_to_bake' || cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
-    final bool isBaking = cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
-    final bool isDelivering = cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isQuote =
+        cleanStatus == 'quote_received' ||
+        cleanStatus == 'contract_signed' ||
+        cleanStatus == 'ready_to_bake' ||
+        cleanStatus == 'baking' ||
+        cleanStatus == 'delivering' ||
+        cleanStatus == 'delivered';
+    final bool isContract =
+        cleanStatus == 'contract_signed' ||
+        cleanStatus == 'ready_to_bake' ||
+        cleanStatus == 'baking' ||
+        cleanStatus == 'delivering' ||
+        cleanStatus == 'delivered';
+    final bool isDownPayment =
+        cleanStatus == 'ready_to_bake' ||
+        cleanStatus == 'baking' ||
+        cleanStatus == 'delivering' ||
+        cleanStatus == 'delivered';
+    final bool isBaking =
+        cleanStatus == 'baking' ||
+        cleanStatus == 'delivering' ||
+        cleanStatus == 'delivered';
+    final bool isDelivering =
+        cleanStatus == 'delivering' || cleanStatus == 'delivered';
     final bool isDelivered = cleanStatus == 'delivered';
 
-    final double baseCakePrice = double.tryParse((data['baseCakePrice'] ?? 6500.0).toString()) ?? 6500.0;
-    final double customAddonPrice = double.tryParse((data['customAddonPrice'] ?? 300.0).toString()) ?? 300.0;
+    final double baseCakePrice =
+        double.tryParse((data['baseCakePrice'] ?? 6500.0).toString()) ?? 6500.0;
+    final double customAddonPrice =
+        double.tryParse((data['customAddonPrice'] ?? 300.0).toString()) ??
+        300.0;
     final double total = baseCakePrice + customAddonPrice;
-    final double downPayment = double.tryParse((data['downPayment'] ?? (total / 2)).toString()) ?? (total / 2);
-    final double balance = double.tryParse((data['balance'] ?? (total / 2)).toString()) ?? (total / 2);
+    final double downPayment =
+        double.tryParse((data['downPayment'] ?? (total / 2)).toString()) ??
+        (total / 2);
+    final double balance =
+        double.tryParse((data['balance'] ?? (total / 2)).toString()) ??
+        (total / 2);
 
     return Column(
       children: [
         _buildActionableStep(
           icon: Icons.receipt_long_outlined,
           title: 'Inquiry Sent / Received',
-          subtitle: 'We are reviewing your custom cake request and will prepare an itemized quote shortly. Hang tight!',
+          subtitle:
+              'We are reviewing your custom cake request and will prepare an itemized quote shortly. Hang tight!',
           isDone: true,
           isActive: cleanStatus == 'pending_spec_review',
         ),
@@ -394,53 +475,126 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
           subtitle: 'Reviewing the itemized quote before contract signing.',
           isDone: isQuote,
           isActive: cleanStatus == 'quote_received',
-          child: cleanStatus == 'quote_received' ? Container(
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAF2E9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8D5C4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Itemized Pricing Breakdown:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const SizedBox(height: 6),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Base Design', style: TextStyle(fontSize: 11)), Text('₱${baseCakePrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11))]),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Custom Materials & Add-ons', style: TextStyle(fontSize: 11)), Text('₱${customAddonPrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11))]),
-                const Divider(color: Color(0xFFE8D5C4)),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)), Text('₱${total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11))]),
-                const SizedBox(height: 12),
-                const Text('Payment Terms:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const SizedBox(height: 6),
-                Text('Down Payment Due Now: ₱${downPayment.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11)),
-                Text('Balance Due: ₱${balance.toStringAsFixed(2)} (Due 2 weeks before delivery)', style: const TextStyle(fontSize: 11)),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8E4A23), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    onPressed: () async {
-                      setState(() {
-                        _localStatus = 'contract_signed';
-                        _localStatusLabel = '✅ Contract Signed';
-                      });
-                      try {
-                        await FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).set({
-                          'status': 'contract_signed',
-                          'statusLabel': '✅ Contract Signed',
-                        }, SetOptions(merge: true));
-                      } catch (e) {
-                        debugPrint('Optimistic update failed: $e');
-                      }
-                    },
-                    child: const Text('Accept Quote & Sign Digital Contract'),
+          child: cleanStatus == 'quote_received'
+              ? Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF2E9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8D5C4)),
                   ),
-                ),
-              ],
-            ),
-          ) : null,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Itemized Pricing Breakdown:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Base Design',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          Text(
+                            '₱${baseCakePrice.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Custom Materials & Add-ons',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          Text(
+                            '₱${customAddonPrice.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                      const Divider(color: Color(0xFFE8D5C4)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Price',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                          Text(
+                            '₱${total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Payment Terms:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Down Payment Due Now: ₱${downPayment.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      Text(
+                        'Balance Due: ₱${balance.toStringAsFixed(2)} (Due 2 weeks before delivery)',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8E4A23),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () async {
+                            setState(() {
+                              _localStatus = 'contract_signed';
+                              _localStatusLabel = '✅ Contract Signed';
+                            });
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('orders')
+                                  .doc(widget.orderNumber)
+                                  .set({
+                                    'status': 'contract_signed',
+                                    'statusLabel': '✅ Contract Signed',
+                                  }, SetOptions(merge: true));
+                            } catch (e) {
+                              debugPrint('Optimistic update failed: $e');
+                            }
+                          },
+                          child: const Text(
+                            'Accept Quote & Sign Digital Contract',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : null,
         ),
         _buildStepConnector(isContract),
         _buildActionableStep(
@@ -449,89 +603,134 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
           subtitle: 'Digital contract signed and agreed upon.',
           isDone: isContract,
           isActive: cleanStatus == 'contract_signed',
-          child: cleanStatus == 'contract_signed' ? Container(
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAF2E9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8D5C4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Payment Selection: GCash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const SizedBox(height: 6),
-                const Text('Scan the QR code to securely pay the down payment and secure your delivery slot.', style: TextStyle(fontSize: 11)),
-                const SizedBox(height: 12),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF007DFE).withValues(alpha: 0.3)),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.qr_code_2, size: 64, color: Color(0xFF007DFE)),
-                        const SizedBox(height: 8),
-                        Text('₱${downPayment.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF007DFE))),
-                      ],
-                    ),
+          child: cleanStatus == 'contract_signed'
+              ? Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF2E9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8D5C4)),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _downPaymentRefController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter 13-digit Reference No.',
-                    hintStyle: const TextStyle(fontSize: 11),
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE8D5C4)),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Payment Selection: GCash',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Scan the QR code to securely pay the down payment and secure your delivery slot.',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(
+                                0xFF007DFE,
+                              ).withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.qr_code_2,
+                                size: 64,
+                                color: Color(0xFF007DFE),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '₱${downPayment.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF007DFE),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _downPaymentRefController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter 13-digit Reference No.',
+                          hintStyle: const TextStyle(fontSize: 11),
+                          isDense: true,
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE8D5C4),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF007DFE),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () async {
+                            if (_downPaymentRefController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please enter reference number',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            setState(() {
+                              _localStatus = 'ready_to_bake';
+                              _localStatusLabel = '💰 Down Payment Paid';
+                            });
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('orders')
+                                  .doc(widget.orderNumber)
+                                  .set({
+                                    'downPaymentReference':
+                                        _downPaymentRefController.text.trim(),
+                                    'status': 'ready_to_bake',
+                                    'statusLabel': '💰 Down Payment Paid',
+                                  }, SetOptions(merge: true));
+                            } catch (e) {
+                              debugPrint('Optimistic update failed: $e');
+                            }
+                          },
+                          child: const Text('Submit Payment Reference'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    onPressed: () async {
-                      if (_downPaymentRefController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter reference number')));
-                        return;
-                      }
-                      setState(() {
-                        _localStatus = 'ready_to_bake';
-                        _localStatusLabel = '💰 Down Payment Paid';
-                      });
-                      try {
-                        await FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).set({
-                          'downPaymentReference': _downPaymentRefController.text.trim(),
-                          'status': 'ready_to_bake',
-                          'statusLabel': '💰 Down Payment Paid',
-                        }, SetOptions(merge: true));
-                      } catch (e) {
-                        debugPrint('Optimistic update failed: $e');
-                      }
-                    },
-                    child: const Text('Submit Payment Reference'),
-                  ),
-                ),
-              ],
-            ),
-          ) : null,
+                )
+              : null,
         ),
         _buildStepConnector(isDownPayment),
         _buildActionableStep(
           icon: Icons.payments_outlined,
           title: 'Down Payment Paid',
-          subtitle: 'Down payment received. We have secured your baking slot and are preparing for your sweet celebration!',
+          subtitle:
+              'Down payment received. We have secured your baking slot and are preparing for your sweet celebration!',
           isDone: isDownPayment,
           isActive: cleanStatus == 'ready_to_bake',
         ),
@@ -539,106 +738,162 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         _buildActionableStep(
           icon: Icons.cookie_outlined,
           title: 'Baking & Preparation',
-          subtitle: 'Your custom cake is currently being baked fresh and hand-decorated by our expert bakers.',
+          subtitle:
+              'Your custom cake is currently being baked fresh and hand-decorated by our expert bakers.',
           isDone: isBaking,
           isActive: cleanStatus == 'baking',
-          child: cleanStatus == 'baking' ? Container(
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAF2E9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8D5C4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Scan to pay final balance:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const SizedBox(height: 12),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF007DFE).withValues(alpha: 0.3)),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.qr_code_2, size: 64, color: Color(0xFF007DFE)),
-                        const SizedBox(height: 8),
-                        Text('₱${balance.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF007DFE))),
-                      ],
-                    ),
+          child: cleanStatus == 'baking'
+              ? Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF2E9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8D5C4)),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _balanceRefController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter 13-digit Reference No.',
-                    hintStyle: const TextStyle(fontSize: 11),
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE8D5C4)),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Scan to pay final balance:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(
+                                0xFF007DFE,
+                              ).withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.qr_code_2,
+                                size: 64,
+                                color: Color(0xFF007DFE),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '₱${balance.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF007DFE),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _balanceRefController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter 13-digit Reference No.',
+                          hintStyle: const TextStyle(fontSize: 11),
+                          isDense: true,
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE8D5C4),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF007DFE),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () async {
+                            if (_balanceRefController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please enter reference number',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            setState(() {
+                              _localStatus = 'delivering';
+                              _localStatusLabel = '🚗 Out for Delivery';
+                            });
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('orders')
+                                  .doc(widget.orderNumber)
+                                  .set({
+                                    'balanceReference': _balanceRefController
+                                        .text
+                                        .trim(),
+                                    'status': 'delivering',
+                                    'statusLabel': '🚗 Out for Delivery',
+                                  }, SetOptions(merge: true));
+                            } catch (e) {
+                              debugPrint('Optimistic update failed: $e');
+                            }
+                          },
+                          child: const Text('Submit Payment Reference'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    onPressed: () async {
-                      if (_balanceRefController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter reference number')));
-                        return;
-                      }
-                      setState(() {
-                        _localStatus = 'delivering';
-                        _localStatusLabel = '🚗 Out for Delivery';
-                      });
-                      try {
-                        await FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).set({
-                          'balanceReference': _balanceRefController.text.trim(),
-                          'status': 'delivering',
-                          'statusLabel': '🚗 Out for Delivery',
-                        }, SetOptions(merge: true));
-                      } catch (e) {
-                        debugPrint('Optimistic update failed: $e');
-                      }
-                    },
-                    child: const Text('Submit Payment Reference'),
-                  ),
-                ),
-              ],
-            ),
-          ) : null,
+                )
+              : null,
         ),
         _buildStepConnector(isDelivering),
         _buildActionableStep(
           icon: Icons.local_taxi_outlined,
           title: 'Out for Delivery',
-          subtitle: 'Your custom cake is safely packed and out for delivery straight to your doorstep!',
+          subtitle:
+              'Your custom cake is safely packed and out for delivery straight to your doorstep!',
           isDone: isDelivering,
           isActive: cleanStatus == 'delivering',
-          child: cleanStatus == 'delivering' ? Container(
-            margin: const EdgeInsets.only(top: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF8E4A23)), foregroundColor: const Color(0xFF8E4A23), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contacting rider...')));
-                },
-                icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
-                label: const Text('Contact Delivery Rider / Kitchen Admin'),
-              ),
-            ),
-          ) : null,
+          child: cleanStatus == 'delivering'
+              ? Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF8E4A23)),
+                        foregroundColor: const Color(0xFF8E4A23),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Contacting rider...')),
+                        );
+                      },
+                      icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+                      label: const Text(
+                        'Contact Delivery Rider / Kitchen Admin',
+                      ),
+                    ),
+                  ),
+                )
+              : null,
         ),
         _buildStepConnector(isDelivered),
         _buildActionableStep(
@@ -686,7 +941,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: isDone ? const Color(0xFF2E1B10) : const Color(0xFF9E8E84),
+                  color: isDone
+                      ? const Color(0xFF2E1B10)
+                      : const Color(0xFF9E8E84),
                 ),
               ),
               Text(

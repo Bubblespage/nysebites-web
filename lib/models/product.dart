@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class Product {
   final dynamic id;
   final String name;
@@ -11,6 +13,7 @@ class Product {
   final int stock;
   final bool active;
   final int order;
+  final Uint8List? customImageBytes;
 
   const Product({
     required this.id,
@@ -25,6 +28,7 @@ class Product {
     this.stock = 20,
     this.active = true,
     this.order = 99,
+    this.customImageBytes,
   });
 
   factory Product.fromMap(String id, Map<String, dynamic> data) {

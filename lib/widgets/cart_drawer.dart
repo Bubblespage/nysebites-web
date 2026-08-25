@@ -242,6 +242,18 @@ class _CartDrawerState extends State<CartDrawer> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      if (product.description.isNotEmpty && product.category.toLowerCase() == 'cakes') ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          product.description,
+                                          style: const TextStyle(
+                                            fontSize: 10.5,
+                                            color: textMuted,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                       const SizedBox(height: 3),
                                       Text(
                                         '₱${itemTotal.toStringAsFixed(2)}',
