@@ -20,12 +20,32 @@ class OrderTrackerModal extends StatefulWidget {
 }
 
 class _OrderTrackerModalState extends State<OrderTrackerModal> {
-  Key _streamKey = UniqueKey();
+  late Stream<DocumentSnapshot<Map<String, dynamic>>> _orderStream;
+  bool _isManualRefresh = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initStream();
+  }
+
+  void _initStream() {
+    _orderStream = FirebaseFirestore.instance
+        .collection('orders')
+        .doc(widget.orderNumber)
+        .snapshots();
+  }
 
   void _manualRefresh() {
     setState(() {
-      _streamKey = UniqueKey();
+      _isManualRefresh = true;
+      _initStream();
     });
+    
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) setState(() => _isManualRefresh = false);
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Syncing live kitchen pipeline...'),
@@ -56,17 +76,25 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             ],
           ),
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            key: _streamKey,
-            stream: FirebaseFirestore.instance
-                .collection('orders')
-                .doc(widget.orderNumber)
-                .snapshots(),
+            stream: _orderStream,
             builder: (context, snapshot) {
-              Map<String, dynamic> data = {};
+              if (snapshot.hasError) {
+                return Center(child: Text('Stream Error: ${snapshot.error}'));
+              }
 
-              if (snapshot.hasData &&
-                  snapshot.data != null &&
-                  snapshot.data!.exists) {
+              if (snapshot.connectionState == ConnectionState.waiting || _isManualRefresh) {
+                return const SizedBox(
+                  height: 250,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF8E4A23),
+                    ),
+                  ),
+                );
+              }
+
+              Map<String, dynamic> data = {};
+              if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
                 data = snapshot.data!.data() ?? {};
               }
 
@@ -88,20 +116,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   (data['riderName'] ?? 'Assigning GrabCar driver...')
                       .toString();
 
+              final bool isCustom = data['isCustom'] ?? false;
               final cleanStatus = status.replaceAll(' ', '_');
-
-              const bool isSent = true;
-              final bool isBaking =
-                  cleanStatus == 'baking' ||
-                  cleanStatus == 'ready_to_bake' ||
-                  cleanStatus == 'preparing' ||
-                  cleanStatus == 'in_kitchen' ||
-                  cleanStatus == 'pending_spec_review' ||
-                  cleanStatus == 'delivering' ||
-                  cleanStatus == 'delivered';
-              final bool isDelivering =
-                  cleanStatus == 'delivering' || cleanStatus == 'delivered';
-              final bool isDelivered = cleanStatus == 'delivered';
 
               return SingleChildScrollView(
                 child: Column(
@@ -194,37 +210,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFEFE4D6)),
                       ),
-                      child: Column(
-                        children: [
-                          _buildTrackingStep(
-                            Icons.receipt_long_outlined,
-                            'Order Received',
-                            'Paid via $payment • Queue confirmed',
-                            isSent,
-                          ),
-                          _buildStepConnector(isBaking),
-                          _buildTrackingStep(
-                            Icons.cookie_outlined,
-                            'Baking & Packing',
-                            'Artisanal batch inside the deck oven',
-                            isBaking,
-                          ),
-                          _buildStepConnector(isDelivering),
-                          _buildTrackingStep(
-                            Icons.local_taxi_outlined,
-                            'Out for Delivery',
-                            riderName,
-                            isDelivering,
-                          ),
-                          _buildStepConnector(isDelivered),
-                          _buildTrackingStep(
-                            Icons.home_outlined,
-                            'Delivered & Enjoyed',
-                            'Fresh bakes received',
-                            isDelivered,
-                          ),
-                        ],
-                      ),
+                      child: isCustom 
+                          ? _buildCustomTrackerFlow(data, cleanStatus, payment, riderName)
+                          : _buildStandardTrackerFlow(cleanStatus, payment, riderName),
                     ),
                     const SizedBox(height: 18),
                     Row(
@@ -309,6 +297,273 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 subtitle,
                 style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
               ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStandardTrackerFlow(String cleanStatus, String payment, String riderName) {
+    const bool isSent = true;
+    final bool isBaking =
+        cleanStatus == 'baking' ||
+        cleanStatus == 'preparing' ||
+        cleanStatus == 'in_kitchen' ||
+        cleanStatus == 'delivering' ||
+        cleanStatus == 'delivered';
+    final bool isDelivering =
+        cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isDelivered = cleanStatus == 'delivered';
+
+    return Column(
+      children: [
+        _buildTrackingStep(
+          Icons.receipt_long_outlined,
+          'Order Received',
+          'Paid via $payment • Queue confirmed',
+          isSent,
+        ),
+        _buildStepConnector(isBaking),
+        _buildTrackingStep(
+          Icons.cookie_outlined,
+          'Baking & Packing',
+          'Artisanal batch inside the deck oven',
+          isBaking,
+        ),
+        _buildStepConnector(isDelivering),
+        _buildTrackingStep(
+          Icons.local_taxi_outlined,
+          'Out for Delivery',
+          riderName,
+          isDelivering,
+        ),
+        _buildStepConnector(isDelivered),
+        _buildTrackingStep(
+          Icons.home_outlined,
+          'Delivered & Enjoyed',
+          'Fresh bakes received',
+          isDelivered,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCustomTrackerFlow(Map<String, dynamic> data, String cleanStatus, String payment, String riderName) {
+    // Determine milestone booleans
+    final bool isQuote = cleanStatus == 'quote_received' || cleanStatus == 'contract_signed' || cleanStatus == 'ready_to_bake' || cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isContract = cleanStatus == 'contract_signed' || cleanStatus == 'ready_to_bake' || cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isDownPayment = cleanStatus == 'ready_to_bake' || cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isBaking = cleanStatus == 'baking' || cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isDelivering = cleanStatus == 'delivering' || cleanStatus == 'delivered';
+    final bool isDelivered = cleanStatus == 'delivered';
+
+    final double baseCakePrice = double.tryParse((data['baseCakePrice'] ?? 6500.0).toString()) ?? 6500.0;
+    final double customAddonPrice = double.tryParse((data['customAddonPrice'] ?? 300.0).toString()) ?? 300.0;
+    final double total = baseCakePrice + customAddonPrice;
+    final double downPayment = double.tryParse((data['downPayment'] ?? (total / 2)).toString()) ?? (total / 2);
+    final double balance = double.tryParse((data['balance'] ?? (total / 2)).toString()) ?? (total / 2);
+
+    return Column(
+      children: [
+        _buildActionableStep(
+          icon: Icons.receipt_long_outlined,
+          title: 'Inquiry Sent / Received',
+          subtitle: 'We are reviewing your custom cake request and will prepare an itemized quote shortly. Hang tight!',
+          isDone: true,
+          isActive: cleanStatus == 'pending_spec_review',
+        ),
+        _buildStepConnector(isQuote),
+        _buildActionableStep(
+          icon: Icons.request_quote_outlined,
+          title: 'Quote Received',
+          subtitle: 'Reviewing the itemized quote before contract signing.',
+          isDone: isQuote,
+          isActive: cleanStatus == 'quote_received',
+          child: cleanStatus == 'quote_received' ? Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF2E9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE8D5C4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Itemized Pricing Breakdown:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 6),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Base Design', style: TextStyle(fontSize: 11)), Text('₱${baseCakePrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11))]),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Custom Materials & Add-ons', style: TextStyle(fontSize: 11)), Text('₱${customAddonPrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11))]),
+                const Divider(color: Color(0xFFE8D5C4)),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)), Text('₱${total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11))]),
+                const SizedBox(height: 12),
+                const Text('Payment Terms:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 6),
+                Text('Down Payment Due Now: ₱${downPayment.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11)),
+                Text('Balance Due: ₱${balance.toStringAsFixed(2)} (Due 2 weeks before delivery)', style: const TextStyle(fontSize: 11)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8E4A23), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    onPressed: () {
+                      FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).update({
+                        'status': 'contract_signed',
+                        'statusLabel': '✅ Contract Signed',
+                      });
+                    },
+                    child: const Text('Accept Quote & Sign Digital Contract'),
+                  ),
+                ),
+              ],
+            ),
+          ) : null,
+        ),
+        _buildStepConnector(isContract),
+        _buildActionableStep(
+          icon: Icons.draw_outlined,
+          title: 'Contract Signed',
+          subtitle: 'Digital contract signed and agreed upon.',
+          isDone: isContract,
+          isActive: cleanStatus == 'contract_signed',
+          child: cleanStatus == 'contract_signed' ? Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF2E9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE8D5C4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Payment Selection:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 6),
+                const Text('GCash (Exclusive digital wallet payment option)', style: TextStyle(fontSize: 11)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    onPressed: () {
+                      FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).update({
+                        'status': 'ready_to_bake',
+                        'statusLabel': '💰 Down Payment Paid',
+                      });
+                    },
+                    child: Text('Pay Down Payment (₱${downPayment.toStringAsFixed(2)})'),
+                  ),
+                ),
+              ],
+            ),
+          ) : null,
+        ),
+        _buildStepConnector(isDownPayment),
+        _buildActionableStep(
+          icon: Icons.payments_outlined,
+          title: 'Down Payment Paid',
+          subtitle: 'Down payment received. We have secured your baking slot and are preparing for your sweet celebration!',
+          isDone: isDownPayment,
+          isActive: cleanStatus == 'ready_to_bake',
+        ),
+        _buildStepConnector(isBaking),
+        _buildActionableStep(
+          icon: Icons.cookie_outlined,
+          title: 'Baking & Preparation',
+          subtitle: 'Your custom cake is currently being baked fresh and hand-decorated by our expert bakers.',
+          isDone: isBaking,
+          isActive: cleanStatus == 'baking',
+          child: cleanStatus == 'baking' ? Container(
+            margin: const EdgeInsets.only(top: 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Balance paid successfully!')));
+                },
+                child: Text('Pay Final Balance (₱${balance.toStringAsFixed(2)}) via GCash'),
+              ),
+            ),
+          ) : null,
+        ),
+        _buildStepConnector(isDelivering),
+        _buildActionableStep(
+          icon: Icons.local_taxi_outlined,
+          title: 'Out for Delivery',
+          subtitle: 'Your custom cake is safely packed and out for delivery straight to your doorstep!',
+          isDone: isDelivering,
+          isActive: cleanStatus == 'delivering',
+          child: cleanStatus == 'delivering' ? Container(
+            margin: const EdgeInsets.only(top: 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF8E4A23)), foregroundColor: const Color(0xFF8E4A23), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contacting rider...')));
+                },
+                icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+                label: const Text('Contact Delivery Rider / Kitchen Admin'),
+              ),
+            ),
+          ) : null,
+        ),
+        _buildStepConnector(isDelivered),
+        _buildActionableStep(
+          icon: Icons.home_outlined,
+          title: 'Balance Paid & Delivered',
+          subtitle: 'Fresh bakes received. Thank you for celebrating with us!',
+          isDone: isDelivered,
+          isActive: cleanStatus == 'delivered',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionableStep({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isDone,
+    required bool isActive,
+    Widget? child,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isDone ? const Color(0xFF8E4A23) : const Color(0xFFF0E5DA),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isDone ? Colors.white : const Color(0xFF9E8E84),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: isDone ? const Color(0xFF2E1B10) : const Color(0xFF9E8E84),
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
+              ),
+              if (child != null) child,
             ],
           ),
         ),

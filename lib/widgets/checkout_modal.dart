@@ -130,6 +130,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
             : _noteController.text.trim(),
         'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
         'subtotal': widget.totalAmount,
+        'baseCakePrice': hasCustomCake ? widget.totalAmount : null,
         'deliveryFee': activeDeliveryFee,
         'packagingFee': _packagingFee,
         'status': status,

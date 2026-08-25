@@ -149,17 +149,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     String id,
     String newStatus,
     String newLabel,
+    [Map<String, dynamic>? extraData]
   ) async {
     try {
+      final updatePayload = {
+        'status': newStatus,
+        'statusLabel': newLabel,
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (extraData != null) ...extraData,
+      };
+
       final docRef = _firestore.collection('orders').doc(id);
       final docSnap = await docRef.get();
 
       if (docSnap.exists) {
-        await docRef.update({
-          'status': newStatus,
-          'statusLabel': newLabel,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        await docRef.update(updatePayload);
       } else {
         final queryById = await _firestore
             .collection('orders')
@@ -168,11 +172,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             .get();
 
         if (queryById.docs.isNotEmpty) {
-          await queryById.docs.first.reference.update({
-            'status': newStatus,
-            'statusLabel': newLabel,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+          await queryById.docs.first.reference.update(updatePayload);
         } else {
           final queryByOrderNum = await _firestore
               .collection('orders')
@@ -181,11 +181,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               .get();
 
           if (queryByOrderNum.docs.isNotEmpty) {
-            await queryByOrderNum.docs.first.reference.update({
-              'status': newStatus,
-              'statusLabel': newLabel,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+            await queryByOrderNum.docs.first.reference.update(updatePayload);
           }
         }
       }

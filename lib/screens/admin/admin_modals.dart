@@ -949,7 +949,7 @@ class AdminModals {
   static void showCustomCakeInspectionDrawer(
     BuildContext context,
     Map<String, dynamic> order,
-    VoidCallback onApprove,
+    Function(double) onApprove,
     VoidCallback onReject,
   ) {
     final String item = order['item'] ?? 'Custom Artisan Cake';
@@ -960,6 +960,8 @@ class AdminModals {
     final List toppings = (order['toppings'] is Iterable)
         ? (order['toppings'] as Iterable).toList()
         : [];
+
+    final TextEditingController addonController = TextEditingController(text: '300');
 
     showDialog(
       context: context,
@@ -1022,6 +1024,28 @@ class AdminModals {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            const Text(
+              'Custom Materials & Add-ons Price (₱):',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: brandCocoa,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: addonController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                isDense: true,
+                prefixText: '₱ ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: borderLight),
+                ),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -1044,11 +1068,12 @@ class AdminModals {
               ),
             ),
             onPressed: () {
+              final double addon = double.tryParse(addonController.text) ?? 300.0;
               Navigator.pop(ctx);
-              onApprove();
+              onApprove(addon);
             },
             child: const Text(
-              'Approve & Bake',
+              'Send Quote & Contract',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),

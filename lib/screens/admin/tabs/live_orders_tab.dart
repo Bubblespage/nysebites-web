@@ -8,7 +8,7 @@ class LiveOrdersTab extends StatelessWidget {
   final String searchQuery;
   final String
   currentRole; // 'Super Admin', 'Baker Admin', or 'Order Dispatcher'
-  final Function(String id, String newStatus, String newLabel) onUpdateStatus;
+  final Function(String id, String newStatus, String newLabel, [Map<String, dynamic>? extraData]) onUpdateStatus;
 
   const LiveOrdersTab({
     super.key,
@@ -711,7 +711,24 @@ class LiveOrdersTab extends StatelessWidget {
         onPressed: () => AdminModals.showCustomCakeInspectionDrawer(
           context,
           order,
-          () => onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Packing'),
+          (addonPrice) {
+            final double basePrice = double.tryParse((order['baseCakePrice'] ?? order['subtotal'] ?? 6500.0).toString()) ?? 6500.0;
+            final double total = basePrice + addonPrice;
+            final double downPayment = total / 2;
+            final double balance = total - downPayment;
+            
+            onUpdateStatus(
+              targetDocId, 
+              'quote_received', 
+              '📝 Quote & Contract Sent',
+              {
+                'customAddonPrice': addonPrice,
+                'downPayment': downPayment,
+                'balance': balance,
+                'total': '₱${total.toStringAsFixed(2)}',
+              }
+            );
+          },
           () => onUpdateStatus(targetDocId, 'spec_rejected', '❌ Spec Rejected'),
         ),
         icon: const Icon(Icons.cake_outlined, size: 13, color: Colors.white),
