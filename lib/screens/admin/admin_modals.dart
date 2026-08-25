@@ -949,7 +949,7 @@ class AdminModals {
   static void showCustomCakeInspectionDrawer(
     BuildContext context,
     Map<String, dynamic> order,
-    Function(double) onApprove,
+    Function(double, double) onApprove,
     VoidCallback onReject,
   ) {
     final String item = order['item'] ?? 'Custom Artisan Cake';
@@ -960,7 +960,9 @@ class AdminModals {
     final List toppings = (order['toppings'] is Iterable)
         ? (order['toppings'] as Iterable).toList()
         : [];
-
+        
+    final double initialBase = double.tryParse((order['baseCakePrice'] ?? order['subtotal'] ?? 0.0).toString()) ?? 0.0;
+    final TextEditingController baseController = TextEditingController(text: initialBase > 0 ? initialBase.toStringAsFixed(0) : '');
     final TextEditingController addonController = TextEditingController(text: '300');
 
     showDialog(
@@ -1026,6 +1028,28 @@ class AdminModals {
             ),
             const SizedBox(height: 16),
             const Text(
+              'Base Price (₱):',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: brandCocoa,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: baseController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                isDense: true,
+                prefixText: '₱ ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: borderLight),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
               'Custom Materials & Add-ons Price (₱):',
               style: TextStyle(
                 fontSize: 12,
@@ -1068,9 +1092,10 @@ class AdminModals {
               ),
             ),
             onPressed: () {
+              final double base = double.tryParse(baseController.text) ?? initialBase;
               final double addon = double.tryParse(addonController.text) ?? 300.0;
               Navigator.pop(ctx);
-              onApprove(addon);
+              onApprove(base, addon);
             },
             child: const Text(
               'Send Quote & Contract',

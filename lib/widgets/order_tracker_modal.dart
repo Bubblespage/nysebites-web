@@ -23,10 +23,23 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _orderStream;
   bool _isManualRefresh = false;
 
+  final TextEditingController _downPaymentRefController = TextEditingController();
+  final TextEditingController _balanceRefController = TextEditingController();
+
+  String? _localStatus;
+  String? _localStatusLabel;
+
   @override
   void initState() {
     super.initState();
     _initStream();
+  }
+
+  @override
+  void dispose() {
+    _downPaymentRefController.dispose();
+    _balanceRefController.dispose();
+    super.dispose();
   }
 
   void _initStream() {
@@ -79,10 +92,11 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             stream: _orderStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Stream Error: ${snapshot.error}'));
+                debugPrint('Stream Error: ${snapshot.error}');
+                // Fallthrough to use last known data instead of returning an error screen
               }
 
-              if (snapshot.connectionState == ConnectionState.waiting || _isManualRefresh) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData && !_isManualRefresh) {
                 return const SizedBox(
                   height: 250,
                   child: Center(
@@ -98,11 +112,11 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 data = snapshot.data!.data() ?? {};
               }
 
-              final String status = (data['status'] ?? 'pending_cod')
+              final String status = _localStatus ?? (data['status'] ?? 'pending_cod')
                   .toString()
                   .toLowerCase()
                   .trim();
-              final String statusLabel =
+              final String statusLabel = _localStatusLabel ??
                   (data['statusLabel'] ?? 'Order Sent to Kitchen').toString();
 
               final String payment =
@@ -407,11 +421,19 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8E4A23), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    onPressed: () {
-                      FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).update({
-                        'status': 'contract_signed',
-                        'statusLabel': '✅ Contract Signed',
+                    onPressed: () async {
+                      setState(() {
+                        _localStatus = 'contract_signed';
+                        _localStatusLabel = '✅ Contract Signed';
                       });
+                      try {
+                        await FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).set({
+                          'status': 'contract_signed',
+                          'statusLabel': '✅ Contract Signed',
+                        }, SetOptions(merge: true));
+                      } catch (e) {
+                        debugPrint('Optimistic update failed: $e');
+                      }
                     },
                     child: const Text('Accept Quote & Sign Digital Contract'),
                   ),
@@ -438,21 +460,67 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Payment Selection:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const Text('Payment Selection: GCash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 const SizedBox(height: 6),
-                const Text('GCash (Exclusive digital wallet payment option)', style: TextStyle(fontSize: 11)),
+                const Text('Scan the QR code to securely pay the down payment and secure your delivery slot.', style: TextStyle(fontSize: 11)),
+                const SizedBox(height: 12),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF007DFE).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.qr_code_2, size: 64, color: Color(0xFF007DFE)),
+                        const SizedBox(height: 8),
+                        Text('₱${downPayment.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF007DFE))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _downPaymentRefController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter 13-digit Reference No.',
+                    hintStyle: const TextStyle(fontSize: 11),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE8D5C4)),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    onPressed: () {
-                      FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).update({
-                        'status': 'ready_to_bake',
-                        'statusLabel': '💰 Down Payment Paid',
+                    onPressed: () async {
+                      if (_downPaymentRefController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter reference number')));
+                        return;
+                      }
+                      setState(() {
+                        _localStatus = 'ready_to_bake';
+                        _localStatusLabel = '💰 Down Payment Paid';
                       });
+                      try {
+                        await FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).set({
+                          'downPaymentReference': _downPaymentRefController.text.trim(),
+                          'status': 'ready_to_bake',
+                          'statusLabel': '💰 Down Payment Paid',
+                        }, SetOptions(merge: true));
+                      } catch (e) {
+                        debugPrint('Optimistic update failed: $e');
+                      }
                     },
-                    child: Text('Pay Down Payment (₱${downPayment.toStringAsFixed(2)})'),
+                    child: const Text('Submit Payment Reference'),
                   ),
                 ),
               ],
@@ -476,15 +544,77 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
           isActive: cleanStatus == 'baking',
           child: cleanStatus == 'baking' ? Container(
             margin: const EdgeInsets.only(top: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Balance paid successfully!')));
-                },
-                child: Text('Pay Final Balance (₱${balance.toStringAsFixed(2)}) via GCash'),
-              ),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF2E9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE8D5C4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Scan to pay final balance:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 12),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF007DFE).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.qr_code_2, size: 64, color: Color(0xFF007DFE)),
+                        const SizedBox(height: 8),
+                        Text('₱${balance.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF007DFE))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _balanceRefController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter 13-digit Reference No.',
+                    hintStyle: const TextStyle(fontSize: 11),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE8D5C4)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007DFE), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    onPressed: () async {
+                      if (_balanceRefController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter reference number')));
+                        return;
+                      }
+                      setState(() {
+                        _localStatus = 'delivering';
+                        _localStatusLabel = '🚗 Out for Delivery';
+                      });
+                      try {
+                        await FirebaseFirestore.instance.collection('orders').doc(widget.orderNumber).set({
+                          'balanceReference': _balanceRefController.text.trim(),
+                          'status': 'delivering',
+                          'statusLabel': '🚗 Out for Delivery',
+                        }, SetOptions(merge: true));
+                      } catch (e) {
+                        debugPrint('Optimistic update failed: $e');
+                      }
+                    },
+                    child: const Text('Submit Payment Reference'),
+                  ),
+                ),
+              ],
             ),
           ) : null,
         ),

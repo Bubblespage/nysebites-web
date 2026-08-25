@@ -711,8 +711,7 @@ class LiveOrdersTab extends StatelessWidget {
         onPressed: () => AdminModals.showCustomCakeInspectionDrawer(
           context,
           order,
-          (addonPrice) {
-            final double basePrice = double.tryParse((order['baseCakePrice'] ?? order['subtotal'] ?? 6500.0).toString()) ?? 6500.0;
+          (basePrice, addonPrice) {
             final double total = basePrice + addonPrice;
             final double downPayment = total / 2;
             final double balance = total - downPayment;
@@ -722,6 +721,7 @@ class LiveOrdersTab extends StatelessWidget {
               'quote_received', 
               '📝 Quote & Contract Sent',
               {
+                'baseCakePrice': basePrice,
                 'customAddonPrice': addonPrice,
                 'downPayment': downPayment,
                 'balance': balance,
