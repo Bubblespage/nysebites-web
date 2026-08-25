@@ -172,7 +172,7 @@ class _AuthModalState extends State<AuthModal> {
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDFBF7),
+            color: const Color(0xFFFAFAFA),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFEFE4D6)),
             boxShadow: const [

@@ -16,12 +16,12 @@ class SecurityPermissionsTab extends StatefulWidget {
 }
 
 class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
-  static const Color wellBg = Color(0xFFF4EDE6);
+  static const Color brandCocoa = Color(0xFF3E2723);
+  static const Color darkEspresso = Color(0xFF1F1209);
+  static const Color textDark = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF6B7280);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color wellBg = Color(0xFFF3F4F6);
 
   final CollectionReference<Map<String, dynamic>> _usersCollection =
       FirebaseFirestore.instance.collection('users');
@@ -58,7 +58,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setModalState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFFFDFBF7),
+            backgroundColor: const Color(0xFFFAFAFA),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -233,7 +233,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setModalState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFFFDFBF7),
+            backgroundColor: const Color(0xFFFAFAFA),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -366,7 +366,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: const Color(0xFFFAFAFA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Revoke Account Access?',
@@ -444,7 +444,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                 border: Border.all(color: borderLight),
                 boxShadow: [
                   BoxShadow(
-                    color: darkEspresso.withOpacity(0.03),
+                    color: const Color(0xFF8B7355).withOpacity(0.08),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),

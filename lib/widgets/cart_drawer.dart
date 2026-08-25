@@ -31,7 +31,7 @@ class CartDrawer extends StatefulWidget {
 }
 
 class _CartDrawerState extends State<CartDrawer> {
-  static const Color brandCocoa = Color(0xFF8E4A23);
+  static const Color brandCocoa = Color(0xFF3E2723);
   static const Color darkEspresso = Color(0xFF2E1B10);
   static const Color borderLight = Color(0xFFEFE4D6);
   static const Color textMuted = Color(0xFF756256);
@@ -83,7 +83,7 @@ class _CartDrawerState extends State<CartDrawer> {
 
         return Drawer(
           width: drawerWidth,
-          backgroundColor: const Color(0xFFFDFBF7),
+          backgroundColor: const Color(0xFFFAFAFA),
           child: SafeArea(
             child: Column(
               children: [

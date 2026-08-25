@@ -29,7 +29,7 @@ class MobileNavDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFFFDFBF7),
+      backgroundColor: const Color(0xFFFAFAFA),
       child: SafeArea(
         child: Column(
           children: [

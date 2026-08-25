@@ -20,12 +20,12 @@ class CustomCakeDeskTab extends StatefulWidget {
 }
 
 class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
-  static const Color wellBg = Color(0xFFF4EDE6);
+  static const Color brandCocoa = Color(0xFF3E2723);
+  static const Color darkEspresso = Color(0xFF1F1209);
+  static const Color textDark = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF6B7280);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color wellBg = Color(0xFFF3F4F6);
 
   int _selectedSubTab = 0; // 0 = Pending Specs, 1 = Cake History
 
@@ -569,6 +569,86 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
       child: Text(
         label,
         style: TextStyle(color: fg, fontWeight: FontWeight.bold, fontSize: 10.5),
+      ),
+    );
+  }
+}
+class StaggeredSlideIn extends StatefulWidget {
+  final Widget child;
+  final int index;
+  const StaggeredSlideIn({super.key, required this.child, required this.index});
+  @override
+  State<StaggeredSlideIn> createState() => _StaggeredSlideInState();
+}
+
+class _StaggeredSlideInState extends State<StaggeredSlideIn> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _offsetAnim;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    _offsetAnim = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _fadeAnim = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    
+    Future.delayed(Duration(milliseconds: 50 * widget.index), () {
+      if (mounted) _controller.forward();
+    });
+  }
+  
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: SlideTransition(
+        position: _offsetAnim,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class HoverElevate extends StatefulWidget {
+  final Widget child;
+  const HoverElevate({super.key, required this.child});
+  @override
+  State<HoverElevate> createState() => _HoverElevateState();
+}
+
+class _HoverElevateState extends State<HoverElevate> {
+  bool _isHovering = false;
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, _isHovering ? -4 : 0, 0),
+        decoration: BoxDecoration(
+          boxShadow: _isHovering
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF8B7355).withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
+                  )
+                ]
+              : [],
+        ),
+        child: widget.child,
       ),
     );
   }

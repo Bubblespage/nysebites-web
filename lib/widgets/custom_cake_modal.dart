@@ -140,7 +140,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFDFBF7),
+            color: const Color(0xFFFAFAFA),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFEFE4D6)),
             boxShadow: [
@@ -278,6 +278,37 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             ),
           ),
 
+        // Expand image button on mobile banner
+        if (!isSplit)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _showFullScreenImage(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.zoom_out_map, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text('View Full', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         // Bottom text info over image
         Positioned(
           bottom: 20,
@@ -362,6 +393,49 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (BuildContext context, _, __) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Stack(
+              children: [
+                Center(
+                  child: InteractiveViewer(
+                    panEnabled: true,
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: widget.baseProduct.imgSrc.startsWith('http')
+                        ? Image.network(widget.baseProduct.imgSrc)
+                        : (widget.baseProduct.imgSrc.isNotEmpty
+                            ? Image.asset(widget.baseProduct.imgSrc)
+                            : _buildFallbackShowcase()),
+                  ),
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 10,
+                  right: 20,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

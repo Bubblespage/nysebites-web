@@ -54,7 +54,7 @@ class Footer extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFFDFBF7),
+              color: const Color(0xFFFAFAFA),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: const Color(0xFFE5D5C5), width: 1.5),
               boxShadow: const [

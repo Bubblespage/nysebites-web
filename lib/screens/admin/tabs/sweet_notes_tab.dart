@@ -6,10 +6,10 @@ class SweetNotesTab extends StatelessWidget {
 
   const SweetNotesTab({super.key, required this.sweetNotes});
 
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
+  static const Color brandCocoa = Color(0xFF3E2723);
+  static const Color textDark = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF6B7280);
+  static const Color borderLight = Color(0xFFE5E7EB);
 
   String _formatDate(dynamic timestamp) {
     if (timestamp is Timestamp) {

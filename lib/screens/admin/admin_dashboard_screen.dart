@@ -25,13 +25,13 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color creamCanvas = Color(0xFFF5EBE1);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
-  static const Color wellBg = Color(0xFFF4EDE6);
+  static const Color brandCocoa = Color(0xFF3E2723);
+  static const Color darkEspresso = Color(0xFF1F1209);
+  static const Color creamCanvas = Color(0xFFFAFAFA);
+  static const Color textDark = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF6B7280);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color wellBg = Color(0xFFF3F4F6);
 
   int _selectedNavIndex = 0;
   String _searchQuery = '';
@@ -289,9 +289,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         final bool isDesktop = constraints.maxWidth >= 900;
         final bool isSmallMobile = constraints.maxWidth < 450;
 
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: creamCanvas,
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0.0, 0.25, 0.55, 0.85, 1.0],
+              colors: [
+                Color(0xFFFAF2E9),
+                Color(0xFFFBF6F0),
+                Color(0xFFF8EFE4),
+                Color(0xFFF5E9DB),
+                Color(0xFFEFE2D2),
+              ],
+            ),
+          ),
+          child: Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: Colors.transparent,
           drawer: isDesktop
               ? null
               : Drawer(
@@ -327,6 +342,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ),
               ),
             ],
+          ),
           ),
         );
       },

@@ -5,12 +5,12 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 class AdminModals {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
-  static const Color wellBg = Color(0xFFF4EDE6);
+  static const Color brandCocoa = Color(0xFF3E2723);
+  static const Color darkEspresso = Color(0xFF1F1209);
+  static const Color textDark = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF6B7280);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color wellBg = Color(0xFFF3F4F6);
 
   static String _cleanPdfCurrency(dynamic val) {
     if (val == null) return 'Php 0.00';
@@ -625,7 +625,7 @@ class AdminModals {
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFFFDFBF7),
+          backgroundColor: const Color(0xFFFAFAFA),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -895,7 +895,7 @@ class AdminModals {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: const Color(0xFFFAFAFA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Row(
           children: [
@@ -969,7 +969,7 @@ class AdminModals {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: const Color(0xFFFAFAFA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Row(
           children: [
@@ -1189,7 +1189,7 @@ class AdminModals {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: const Color(0xFFFAFAFA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Row(
           children: [

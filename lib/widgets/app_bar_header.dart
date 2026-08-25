@@ -40,7 +40,7 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFFDFBF7),
+        color: Color(0xFFFAFAFA),
         border: Border(bottom: BorderSide(color: Color(0xFFEFE4D6))),
         boxShadow: [
           BoxShadow(

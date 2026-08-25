@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:ui';
 import 'admin_dashboard_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -11,12 +12,12 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  // Storefront Palette
-  static const Color primaryDark = Color(0xFF2B170E);
-  static const Color brandCocoa = Color(0xFF8E4A23);
-  static const Color textMuted = Color(0xFF756256);
-  static const Color borderLight = Color(0xFFEFE4D6);
-  static const Color cardBg = Colors.white;
+  // Premium Palette
+  static const Color primaryDark = Color(0xFF111827); // Rich dark text
+  static const Color brandCocoa = Color(0xFF3E2723); // Deep Espresso
+  static const Color textMuted = Color(0xFF6B7280); // Gray muted text
+  static const Color borderLight = Color(0xFFE5E7EB); // Soft gray border
+  static const Color cardBg = Color(0xFFFAFAFA); // Crisp off-white
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -50,11 +51,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
 
     try {
-      final UserCredential credential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
       final String uid = credential.user!.uid;
 
@@ -98,7 +96,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         if (e.code == 'user-not-found' ||
             e.code == 'invalid-credential' ||
             e.code == 'wrong-password') {
-          _errorMessage = 'Invalid staff credentials. Please check your passcode.';
+          _errorMessage =
+              'Invalid staff credentials. Please check your passcode.';
         } else if (e.code == 'user-disabled') {
           _errorMessage = 'This staff account has been deactivated.';
         } else {
@@ -117,428 +116,406 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final double screenWidth = mediaQuery.size.width;
+    final bool isDesktop = screenWidth >= 900;
     final bool isSmallMobile = screenWidth < 400;
 
     return Scaffold(
-      body: Stack(
+      backgroundColor: cardBg,
+      body: Row(
         children: [
-          // 1. Layered Storefront Background Gradient
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.0, 0.25, 0.55, 0.85, 1.0],
-                colors: [
-                  Color(0xFFFAF2E9),
-                  Color(0xFFFBF6F0),
-                  Color(0xFFF8EFE4),
-                  Color(0xFFF5E9DB),
-                  Color(0xFFEFE2D2),
-                ],
-              ),
-            ),
-          ),
-
-          // 2. Ambient Warm Glow Orbs
-          Positioned(
-            top: -60,
-            right: -60,
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    brandCocoa.withOpacity(0.12),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 360,
-              height: 360,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    primaryDark.withOpacity(0.08),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // 3. Responsive Login Card
-          Center(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: isSmallMobile ? 16 : 24,
-                vertical: 24,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 440,
+          // Left Side: The Image Banner (Only visible on Desktop/Tablet)
+          if (isDesktop)
+            Expanded(
+              flex: 5,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: brandCocoa,
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/premium_baked_goods.jpg'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 child: Container(
-                  width: double.infinity,
+                  // Dark overlay for contrast
                   decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: borderLight, width: 1.5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(60, 34, 22, 0.10),
-                        blurRadius: 30,
-                        offset: Offset(0, 14),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(60),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Premium, Handcrafted\nBaked Goods.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 42,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Welcome to the Nyse Bites internal management portal.\nAuthenticate to access live orders, custom cake reviews, and bakery stock.',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isSmallMobile ? 20 : 32,
-                    vertical: isSmallMobile ? 28 : 36,
+                ),
+              ),
+            ),
+
+          // Right Side: The Clean Login Form
+          Expanded(
+            flex: 6,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [0.0, 0.25, 0.55, 0.85, 1.0],
+                  colors: [
+                    Color(0xFFFAF2E9),
+                    Color(0xFFFBF6F0),
+                    Color(0xFFF8EFE4),
+                    Color(0xFFF5E9DB),
+                    Color(0xFFEFE2D2),
+                  ],
+                ),
+              ),
+              child: Stack(
+                children: [
+                // Mobile Background Image (Optional, if we want to show it on mobile)
+                if (!isDesktop)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: brandCocoa,
+                        image: DecorationImage(
+                          image: AssetImage(
+                            'assets/images/premium_baked_goods.jpg',
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: Container(
+                        color: Colors.black.withOpacity(
+                          0.65,
+                        ), // Heavy dark overlay for mobile text contrast
+                      ),
+                    ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Storefront Logo Lockup
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: isSmallMobile ? 48 : 56,
-                              height: isSmallMobile ? 48 : 56,
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8F0E5),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: const Color(0xFFEADCCF),
-                                  width: 2.5,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.asset(
-                                  'assets/images/logo.jpg',
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Text('🍪', style: TextStyle(fontSize: 22)),
+
+                // Form Container
+                Center(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallMobile ? 24 : (isDesktop ? 60 : 40),
+                      vertical: 40,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Container(
+                        // On mobile, give it a glass effect card to pop off the background image. On desktop, it's just part of the clean background.
+                        decoration: isDesktop
+                            ? null
+                            : BoxDecoration(
+                                color: Colors.white.withOpacity(0.92),
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 40,
+                                    offset: const Offset(0, 10),
                                   ),
-                                ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Flexible(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 0 : 24,
+                          ),
+                          child: BackdropFilter(
+                            filter: isDesktop
+                                ? ImageFilter.blur(sigmaX: 0, sigmaY: 0)
+                                : ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Padding(
+                              padding: EdgeInsets.all(
+                                isDesktop ? 0 : (isSmallMobile ? 24 : 32),
+                              ),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      style: TextStyle(
-                                        fontFamily: 'sans-serif',
-                                        fontSize: isSmallMobile ? 22 : 25,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: -0.3,
-                                        height: 1.0,
+                                  // Brand Header
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: isSmallMobile ? 42 : 48,
+                                        height: isSmallMobile ? 42 : 48,
+                                        padding: const EdgeInsets.all(3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF8F0E5),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: const Color(0xFFEADCCF),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.asset(
+                                            'assets/images/logo.jpg',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
                                       ),
-                                      children: const [
-                                        TextSpan(
-                                          text: 'NYSE ',
-                                          style: TextStyle(color: primaryDark),
-                                        ),
-                                        TextSpan(
-                                          text: 'BITES.',
-                                          style: TextStyle(color: brandCocoa),
-                                        ),
-                                      ],
+                                      const SizedBox(width: 12),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'NYSE BITES.',
+                                            style: TextStyle(
+                                              fontFamily: 'sans-serif',
+                                              fontSize: isSmallMobile ? 24 : 28,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: -0.5,
+                                              height: 1.0,
+                                              color: brandCocoa,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'STAFF PORTAL',
+                                            style: TextStyle(
+                                              fontFamily: 'sans-serif',
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: textMuted,
+                                              letterSpacing: 2.0,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 48),
+
+                                  // Email Input
+                                  const Text(
+                                    'Email Address',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: primaryDark,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'COOKIES • BROWNIES • CAKES',
+                                  TextField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: primaryDark,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'name@nysebites.com',
+                                      hintStyle: TextStyle(
+                                        fontSize: 14,
+                                        color: textMuted.withOpacity(0.6),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                      enabledBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: borderLight,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      focusedBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: brandCocoa,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 28),
+
+                                  // Passcode Input
+                                  const Text(
+                                    'Passcode',
                                     style: TextStyle(
-                                      fontFamily: 'sans-serif',
-                                      fontSize: isSmallMobile ? 8.5 : 9.5,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: textMuted,
-                                      letterSpacing: 1.2,
-                                      height: 1.0,
+                                      color: primaryDark,
+                                    ),
+                                  ),
+                                  TextField(
+                                    controller: _passwordController,
+                                    obscureText: _obscure,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: primaryDark,
+                                    ),
+                                    onSubmitted: (_) => _handleLogin(),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter your passcode',
+                                      hintStyle: TextStyle(
+                                        fontSize: 14,
+                                        color: textMuted.withOpacity(0.6),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                      enabledBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: borderLight,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      focusedBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: brandCocoa,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscure
+                                              ? Icons.visibility_outlined
+                                              : Icons.visibility_off_outlined,
+                                          size: 18,
+                                          color: textMuted,
+                                        ),
+                                        onPressed: () => setState(
+                                          () => _obscure = !_obscure,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  if (_errorMessage != null) ...[
+                                    const SizedBox(height: 20),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF2F2),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: const Color(0xFFFCA5A5),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.error_outline_rounded,
+                                            size: 16,
+                                            color: Color(0xFFDC2626),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              _errorMessage!,
+                                              style: const TextStyle(
+                                                color: Color(0xFFB91C1C),
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+
+                                  const SizedBox(height: 40),
+
+                                  // Submit Button
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: brandCocoa,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 18,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    onPressed: _isLoading ? null : _handleLogin,
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Sign In',
+                                            style: TextStyle(
+                                              fontSize: 14.5,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  // Return to Storefront
+                                  Center(
+                                    child: TextButton.icon(
+                                      onPressed: () => Navigator.of(
+                                        context,
+                                      ).pushReplacementNamed('/'),
+                                      icon: const Icon(
+                                        Icons.arrow_back_rounded,
+                                        size: 16,
+                                        color: textMuted,
+                                      ),
+                                      label: const Text(
+                                        'Return to Storefront',
+                                        style: TextStyle(
+                                          color: textMuted,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Staff Portal Pill Badge
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: brandCocoa.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: brandCocoa.withOpacity(0.25),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.lock_outline,
-                                size: 13,
-                                color: brandCocoa,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'STAFF PORTAL',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: brandCocoa,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      const Text(
-                        'Enter your credentials to access the kitchen desk.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: textMuted,
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Staff Email Input
-                      const Text(
-                        'Staff Email',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: primaryDark,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(fontSize: 13.5, color: primaryDark),
-                        decoration: InputDecoration(
-                          hintText: 'name@nysebites.com',
-                          hintStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFFB0A39B),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          prefixIcon: const Icon(
-                            Icons.alternate_email_rounded,
-                            size: 18,
-                            color: brandCocoa,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 13,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(color: borderLight),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(color: borderLight),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(
-                              color: brandCocoa,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Passcode Input
-                      const Text(
-                        'Passcode',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: primaryDark,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: _obscure,
-                        style: const TextStyle(fontSize: 13.5, color: primaryDark),
-                        onSubmitted: (_) => _handleLogin(),
-                        decoration: InputDecoration(
-                          hintText: 'Enter your passcode',
-                          hintStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFFB0A39B),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          prefixIcon: const Icon(
-                            Icons.lock_outline_rounded,
-                            size: 18,
-                            color: brandCocoa,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscure
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              size: 18,
-                              color: textMuted,
-                            ),
-                            onPressed: () => setState(() => _obscure = !_obscure),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 13,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(color: borderLight),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(color: borderLight),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(
-                              color: brandCocoa,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Error Box
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 14),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEBEE),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFFFCDD2)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.error_outline_rounded,
-                                size: 16,
-                                color: Color(0xFFD32F2F),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: const TextStyle(
-                                    color: Color(0xFFD32F2F),
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 22),
-
-                      // Submit Button
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandCocoa,
-                          foregroundColor: Colors.white,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: _isLoading ? null : _handleLogin,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Return to Storefront
-                      Center(
-                        child: TextButton.icon(
-                          onPressed: () =>
-                              Navigator.of(context).pushReplacementNamed('/'),
-                          icon: const Icon(
-                            Icons.arrow_back_rounded,
-                            size: 14,
-                            color: textMuted,
-                          ),
-                          label: const Text(
-                            'Return to Storefront',
-                            style: TextStyle(
-                              color: textMuted,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
+            ),
             ),
           ),
         ],

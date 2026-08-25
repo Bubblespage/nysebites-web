@@ -72,7 +72,7 @@ class LiveOrdersTab extends StatelessWidget {
             border: Border.all(color: borderLight),
             boxShadow: [
               BoxShadow(
-                color: darkEspresso.withOpacity(0.03),
+                color: const Color(0xFF8B7355).withOpacity(0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -196,7 +196,8 @@ class LiveOrdersTab extends StatelessWidget {
             final order = orders[i];
             final formattedDate = _formatTimestamp(order['createdAt']);
 
-            return Container(
+            return HoverElevate(
+              child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -349,6 +350,7 @@ class LiveOrdersTab extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             );
           },
         ),
@@ -373,7 +375,9 @@ class LiveOrdersTab extends StatelessWidget {
         final order = orders[i];
         final formattedDate = _formatTimestamp(order['createdAt']);
 
-        return Container(
+        return HoverElevate(
+          isMobile: true,
+          child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: wellBg.withOpacity(0.55),
@@ -492,6 +496,7 @@ class LiveOrdersTab extends StatelessWidget {
               ),
             ],
           ),
+        ),
         );
       },
     );
@@ -994,6 +999,47 @@ class LiveOrdersTab extends StatelessWidget {
           const SizedBox(height: 2),
           Text(sub, style: const TextStyle(fontSize: 10.5, color: textMuted)),
         ],
+      ),
+    );
+  }
+}
+
+class HoverElevate extends StatefulWidget {
+  final Widget child;
+  final bool isMobile;
+  const HoverElevate({super.key, required this.child, this.isMobile = false});
+
+  @override
+  State<HoverElevate> createState() => _HoverElevateState();
+}
+
+class _HoverElevateState extends State<HoverElevate> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, _isHovering ? -2 : 0, 0),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: widget.isMobile ? BorderRadius.circular(14) : BorderRadius.zero,
+          boxShadow: _isHovering
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF8B7355).withOpacity(0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
+        ),
+        child: widget.child,
       ),
     );
   }

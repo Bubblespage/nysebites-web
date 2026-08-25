@@ -22,12 +22,12 @@ class BatchDropsMenuTab extends StatefulWidget {
 }
 
 class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color textDark = Color(0xFF3A2312);
+  static const Color brandCocoa = Color(0xFF3E2723);
+  static const Color darkEspresso = Color(0xFF1F1209);
+  static const Color textDark = Color(0xFF111827);
   static const Color textMuted = Color(0xFF7A6559);
   static const Color borderLight = Color(0xFFEFE4D6);
-  static const Color creamCard = Color(0xFFFDFBF7);
+  static const Color creamCard = Color(0xFFFAFAFA);
   static const Color warmBlush = Color(0xFFFBEBE4);
 
   String _activeCategory = 'All';
@@ -102,7 +102,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                 border: Border.all(color: borderLight, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: darkEspresso.withOpacity(0.04),
+                    color: const Color(0xFF8B7355).withOpacity(0.08),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
@@ -435,7 +435,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: creamCard,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: borderLight),
                           ),

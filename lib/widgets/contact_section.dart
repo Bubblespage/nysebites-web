@@ -29,7 +29,7 @@ class _ContactSectionState extends State<ContactSection> {
           width: 420,
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDFBF7),
+            color: const Color(0xFFFAFAFA),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFEFE4D6)),
             boxShadow: const [
@@ -449,7 +449,7 @@ class _ContactSectionState extends State<ContactSection> {
       hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9E8E84)),
       prefixIcon: Icon(icon, color: const Color(0xFF8E4A23), size: 18),
       filled: true,
-      fillColor: const Color(0xFFFDFBF7),
+      fillColor: const Color(0xFFFAFAFA),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

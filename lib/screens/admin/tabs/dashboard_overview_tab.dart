@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardOverviewTab extends StatefulWidget {
@@ -150,6 +151,187 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                   cardWidth,
                 ),
               ],
+            ),
+            const SizedBox(height: 20),
+
+            // Section 1.5: Revenue Trend Chart
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: borderLight),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('📈', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Revenue Trend',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: Color(0xFF3E2723),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4EDE6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Last ${widget.orders.length} Orders',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8C4A27),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Cumulative revenue from completed deliveries over time',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF6E5D53)),
+                  ),
+                  const SizedBox(height: 20),
+                  Builder(builder: (context) {
+                    // Build cumulative revenue spots from completed orders
+                    final completed = widget.orders.where((o) {
+                      final s = (o['status'] ?? '').toString().toLowerCase();
+                      return s == 'delivered' || s == 'completed' || s.contains('completed');
+                    }).toList();
+
+                    if (completed.isEmpty) {
+                      return Container(
+                        height: 160,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4EDE6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'No completed orders yet — revenue will appear here once deliveries are done.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF6E5D53)),
+                        ),
+                      );
+                    }
+
+                    // Build line spots: each order is a point, x = index, y = cumulative revenue
+                    double cumulative = 0.0;
+                    final spots = completed.asMap().entries.map((e) {
+                      final val = e.value['total'] ?? e.value['totalAmount'] ?? e.value['subtotal'];
+                      double amt = 0.0;
+                      if (val is num) amt = val.toDouble();
+                      if (val is String) amt = double.tryParse(val.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+                      cumulative += amt;
+                      return FlSpot(e.key.toDouble(), cumulative);
+                    }).toList();
+
+                    final maxY = cumulative > 0 ? (cumulative * 1.2).ceilToDouble() : 1000.0;
+
+                    return SizedBox(
+                      height: 180,
+                      child: LineChart(
+                        LineChartData(
+                          minX: 0,
+                          maxX: (spots.length - 1).toDouble().clamp(1, double.infinity),
+                          minY: 0,
+                          maxY: maxY,
+                          lineTouchData: LineTouchData(
+                            enabled: true,
+                            touchTooltipData: LineTouchTooltipData(
+                              getTooltipItems: (spots) => spots.map((s) {
+                                return LineTooltipItem(
+                                  '₱${s.y.toStringAsFixed(2)}',
+                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                            horizontalInterval: maxY / 4,
+                            getDrawingHorizontalLine: (_) => const FlLine(
+                              color: Color(0xFFEFE3D5),
+                              strokeWidth: 1,
+                              dashArray: [4, 4],
+                            ),
+                          ),
+                          titlesData: FlTitlesData(
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 50,
+                                interval: maxY / 4,
+                                getTitlesWidget: (v, _) => Text(
+                                  '₱${v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}k' : v.toStringAsFixed(0)}',
+                                  style: const TextStyle(fontSize: 9.5, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 22,
+                                getTitlesWidget: (v, _) {
+                                  final idx = v.toInt();
+                                  if (idx < 0 || idx >= completed.length) return const SizedBox.shrink();
+                                  // show every nth label to avoid crowding
+                                  final step = (completed.length / 4).ceil().clamp(1, 999);
+                                  if (idx % step != 0 && idx != completed.length - 1) return const SizedBox.shrink();
+                                  return Text('${idx + 1}', style: const TextStyle(fontSize: 9.5, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600));
+                                },
+                              ),
+                            ),
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: spots,
+                              isCurved: true,
+                              color: const Color(0xFF8C4A27),
+                              barWidth: 2.5,
+                              isStrokeCapRound: true,
+                              dotData: FlDotData(
+                                show: spots.length <= 10,
+                                getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                                  radius: 4,
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                  strokeColor: const Color(0xFF8C4A27),
+                                ),
+                              ),
+                              belowBarData: BarAreaData(
+                                show: true,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF8C4A27).withOpacity(0.18),
+                                    const Color(0xFF8C4A27).withOpacity(0.0),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -317,57 +499,110 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                     )
                   else
                     ...bakingOrders.map((o) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF8B7355).withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: wellBg,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text('⏲️', style: TextStyle(fontSize: 15)),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    o['item']?.toString() ?? 'Artisan Bakery Batch',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12.5,
-                                      color: textDark,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF2E9),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  Text(
-                                    'Order ${o['id'] ?? o['docId']} • ${o['customer'] ?? 'Guest'}',
-                                    style: const TextStyle(fontSize: 11, color: textMuted),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF3E0),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'Baking',
-                                style: TextStyle(
-                                  color: Color(0xFFE65100),
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
+                                  child: const Text('🔥', style: TextStyle(fontSize: 18)),
                                 ),
-                              ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        o['item']?.toString() ?? 'Artisan Bakery Batch',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 14,
+                                          color: Color(0xFF1F1209),
+                                          letterSpacing: -0.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Order ${o['id'] ?? o['docId']} • ${o['customer'] ?? 'Guest'}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B7280),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF8EE),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'Baking',
+                                    style: TextStyle(
+                                      color: Color(0xFFB45309),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            // Modern Pipeline Tracker
+                            Row(
+                              children: [
+                                const Text('Prep', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w700)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween<double>(begin: 0.0, end: 0.65),
+                                      duration: const Duration(seconds: 2),
+                                      curve: Curves.easeOutCirc,
+                                      builder: (context, value, child) {
+                                        return LinearProgressIndicator(
+                                          value: value,
+                                          backgroundColor: const Color(0xFFF3F4F6),
+                                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8C4A27)),
+                                          minHeight: 8,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text('Cooling', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w700)),
+                              ],
                             ),
                           ],
                         ),
@@ -474,92 +709,150 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                         return category.contains(_inventoryCategoryFilter.toLowerCase());
                       }).toList();
 
-                      return ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filteredProducts.length,
-                        separatorBuilder: (_, __) => const Divider(color: borderLight, height: 16),
-                        itemBuilder: (context, index) {
-                          final p = filteredProducts[index];
-                          final name = p['name']?.toString() ?? 'Bakery Item';
-                          final category = p['category']?.toString().toUpperCase() ?? 'COOKIES';
-                          final price = _parseAmount(p['price']);
-                          final stock = int.tryParse(p['stock']?.toString() ?? '24') ?? 24;
-                          final icon = p['icon']?.toString() ??
-                              (category.contains('CAKE') ? '🎂' : '🍪');
-                          final bool isLowStock = stock <= 5;
+                      // For Bar Chart, we take top 6 products to avoid clutter
+                      final displayProducts = filteredProducts.take(6).toList();
 
-                          return Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: wellBg,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(icon, style: const TextStyle(fontSize: 16)),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12.5,
-                                        color: textDark,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
+                          // Bar Chart
+                          if (displayProducts.isNotEmpty)
+                            Container(
+                              height: 220,
+                              padding: const EdgeInsets.only(top: 10, right: 20),
+                              child: BarChart(
+                                BarChartData(
+                                  alignment: BarChartAlignment.spaceAround,
+                                  maxY: 50,
+                                  barTouchData: BarTouchData(
+                                    enabled: true,
+                                    touchTooltipData: BarTouchTooltipData(
+                                      tooltipPadding: const EdgeInsets.all(8),
+                                      tooltipMargin: 8,
+                                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                        return BarTooltipItem(
+                                          '${rod.toY.toInt()} in stock',
+                                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                        );
+                                      },
                                     ),
-                                    Text(
-                                      category,
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: textMuted,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '₱${price.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 12.5,
-                                  color: textDark,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: isLowStock
-                                      ? const Color(0xFFFFF3E0)
-                                      : const Color(0xFFE8F5E9),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  isLowStock ? '$stock left' : '$stock in stock',
-                                  style: TextStyle(
-                                    color: isLowStock
-                                        ? const Color(0xFFE65100)
-                                        : const Color(0xFF2E7D32),
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.bold,
                                   ),
+                                  titlesData: FlTitlesData(
+                                    show: true,
+                                    bottomTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        reservedSize: 32,
+                                        getTitlesWidget: (value, meta) {
+                                          if (value.toInt() >= displayProducts.length) return const SizedBox.shrink();
+                                          final name = displayProducts[value.toInt()]['name']?.toString() ?? '';
+                                          final shortName = name.length > 8 ? '${name.substring(0, 8)}..' : name;
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 10.0),
+                                            child: Text(shortName, style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280), fontWeight: FontWeight.w700)),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    leftTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        reservedSize: 36,
+                                        interval: 10,
+                                        getTitlesWidget: (value, meta) {
+                                          return Text(value.toInt().toString(), style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.bold));
+                                        },
+                                      ),
+                                    ),
+                                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  ),
+                                  gridData: FlGridData(
+                                    show: true,
+                                    drawVerticalLine: false,
+                                    horizontalInterval: 10,
+                                    getDrawingHorizontalLine: (value) => FlLine(
+                                      color: const Color(0xFFE5E7EB),
+                                      strokeWidth: 1,
+                                      dashArray: [4, 4],
+                                    ),
+                                  ),
+                                  borderData: FlBorderData(show: false),
+                                  barGroups: displayProducts.asMap().entries.map((entry) {
+                                    final stock = int.tryParse(entry.value['stock']?.toString() ?? '24') ?? 24;
+                                    final bool isLowStock = stock <= 5;
+                                    return BarChartGroupData(
+                                      x: entry.key,
+                                      barRods: [
+                                        BarChartRodData(
+                                          toY: stock.toDouble(),
+                                          color: isLowStock ? const Color(0xFFB45309) : const Color(0xFF8B7355),
+                                          width: 22,
+                                          borderRadius: BorderRadius.circular(4),
+                                          backDrawRodData: BackgroundBarChartRodData(
+                                            show: true,
+                                            toY: 50,
+                                            color: const Color(0xFFF3F4F6),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
                                 ),
                               ),
+                            ),
+                          const SizedBox(height: 30),
+                          const Row(
+                            children: [
+                              Icon(Icons.warning_rounded, color: Color(0xFFB45309), size: 18),
+                              SizedBox(width: 8),
+                              Text('Low Stock Alerts', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFB45309))),
                             ],
-                          );
-                        },
+                          ),
+                          const SizedBox(height: 12),
+                          // Low Stock List
+                          ...filteredProducts.where((p) => (int.tryParse(p['stock']?.toString() ?? '24') ?? 24) <= 5).map((p) {
+                            final name = p['name']?.toString() ?? 'Bakery Item';
+                            final stock = int.tryParse(p['stock']?.toString() ?? '24') ?? 24;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF8EE),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFEDD5A0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFB45309).withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F1209))),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFB45309),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text('$stock units left', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          if (filteredProducts.where((p) => (int.tryParse(p['stock']?.toString() ?? '24') ?? 24) <= 5).isEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              alignment: Alignment.center,
+                              child: const Text('All items are well-stocked! 🎉', style: TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w600)),
+                            ),
+                        ],
                       );
                     },
                   ),

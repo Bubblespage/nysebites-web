@@ -790,7 +790,7 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
                 style:
                     widget.style ??
                     const TextStyle(
-                      color: Color(0xFFF5EBE1),
+                      color: Color(0xFFFAFAFA),
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.3,
