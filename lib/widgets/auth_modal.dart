@@ -54,8 +54,9 @@ class _AuthModalState extends State<AuthModal> {
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(email.trim());
+    return RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email.trim());
   }
 
   Future<void> _handleSubmit() async {
@@ -76,7 +77,8 @@ class _AuthModalState extends State<AuthModal> {
         if (!_isPasswordValid) {
           setState(() {
             _isLoading = false;
-            _authErrorMessage = 'Please fulfill all password requirements below.';
+            _authErrorMessage =
+                'Please fulfill all password requirements below.';
           });
           return;
         }
@@ -90,12 +92,12 @@ class _AuthModalState extends State<AuthModal> {
             .collection('users')
             .doc(cred.user!.uid)
             .set({
-          'name': name,
-          'displayName': name,
-          'email': email,
-          'role': 'customer',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+              'name': name,
+              'displayName': name,
+              'email': email,
+              'role': 'customer',
+              'createdAt': FieldValue.serverTimestamp(),
+            });
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,11 +143,13 @@ class _AuthModalState extends State<AuthModal> {
             e.code == 'invalid-credential') {
           _authErrorMessage = 'Invalid email or password.';
         } else if (e.code == 'email-already-in-use') {
-          _authErrorMessage = 'An account with this email already exists. Please sign in.';
+          _authErrorMessage =
+              'An account with this email already exists. Please sign in.';
         } else if (e.code == 'weak-password') {
           _authErrorMessage = 'The password provided is too weak.';
         } else if (e.code == 'operation-not-allowed') {
-          _authErrorMessage = 'Email/Password sign-in is disabled in Firebase Console.';
+          _authErrorMessage =
+              'Email/Password sign-in is disabled in Firebase Console.';
         } else {
           _authErrorMessage = e.message ?? 'Authentication failed.';
         }
@@ -202,7 +206,9 @@ class _AuthModalState extends State<AuthModal> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF3E7DC),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFE5D5C5)),
+                              border: Border.all(
+                                color: const Color(0xFFE5D5C5),
+                              ),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(7),
@@ -230,8 +236,11 @@ class _AuthModalState extends State<AuthModal> {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close,
-                            color: Color(0xFF756256), size: 20),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Color(0xFF756256),
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -242,7 +251,10 @@ class _AuthModalState extends State<AuthModal> {
                         ? 'Register your bakery account to order and save custom cake designs.'
                         : 'Enter your credentials to access your tray and active orders.',
                     style: const TextStyle(
-                        fontSize: 12.5, height: 1.4, color: Color(0xFF756256)),
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: Color(0xFF756256),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -250,7 +262,9 @@ class _AuthModalState extends State<AuthModal> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFDE8E8),
                         borderRadius: BorderRadius.circular(10),
@@ -258,8 +272,11 @@ class _AuthModalState extends State<AuthModal> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded,
-                              color: Color(0xFF9B1C1C), size: 18),
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: Color(0xFF9B1C1C),
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -281,7 +298,7 @@ class _AuthModalState extends State<AuthModal> {
                     _buildValidatedField(
                       controller: _nameController,
                       label: 'Full Name',
-                      hint: 'e.g. Jane Doe',
+                      hint: 'e.g. Mai Leonhart',
                       icon: Icons.person_outline_rounded,
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -368,16 +385,25 @@ class _AuthModalState extends State<AuthModal> {
                             runSpacing: 6,
                             children: [
                               _buildRequirementBadge(
-                                  'At least 8 characters', _hasMinLength),
+                                'At least 8 characters',
+                                _hasMinLength,
+                              ),
                               _buildRequirementBadge(
-                                  'Uppercase letter (A-Z)', _hasUppercase),
+                                'Uppercase letter (A-Z)',
+                                _hasUppercase,
+                              ),
                               _buildRequirementBadge(
-                                  'Lowercase letter (a-z)', _hasLowercase),
+                                'Lowercase letter (a-z)',
+                                _hasLowercase,
+                              ),
                               _buildRequirementBadge(
-                                  'Number (0-9)', _hasNumber),
+                                'Number (0-9)',
+                                _hasNumber,
+                              ),
                               _buildRequirementBadge(
-                                  'Special character (!@#\$%^&*)',
-                                  _hasSpecialChar),
+                                'Special character (!@#\$%^&*)',
+                                _hasSpecialChar,
+                              ),
                             ],
                           ),
                         ],
@@ -395,7 +421,8 @@ class _AuthModalState extends State<AuthModal> {
                         backgroundColor: const Color(0xFF8E4A23),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 1,
                       ),
                       onPressed: _isLoading ? null : _handleSubmit,
@@ -411,7 +438,9 @@ class _AuthModalState extends State<AuthModal> {
                           : Text(
                               _isSignUp ? 'Complete Sign Up' : 'Sign In',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 14),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                     ),
                   ),
@@ -425,9 +454,10 @@ class _AuthModalState extends State<AuthModal> {
                         child: Text(
                           'OR',
                           style: TextStyle(
-                              fontSize: 10.5,
-                              color: Color(0xFF9E8E84),
-                              fontWeight: FontWeight.bold),
+                            fontSize: 10.5,
+                            color: Color(0xFF9E8E84),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Expanded(child: Divider(color: Color(0xFFEFE4D6))),
@@ -442,18 +472,26 @@ class _AuthModalState extends State<AuthModal> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF2E1B10),
                         side: const BorderSide(
-                            color: Color(0xFFDCC8B8), width: 1.2),
+                          color: Color(0xFFDCC8B8),
+                          width: 1.2,
+                        ),
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: _handleGuestAccess,
-                      icon: const Icon(Icons.person_pin_circle_outlined,
-                          size: 18, color: Color(0xFF8E4A23)),
+                      icon: const Icon(
+                        Icons.person_pin_circle_outlined,
+                        size: 18,
+                        color: Color(0xFF8E4A23),
+                      ),
                       label: const Text(
                         'Continue as Guest',
                         style: TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 13),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
@@ -468,7 +506,9 @@ class _AuthModalState extends State<AuthModal> {
                               ? 'Already have an account?'
                               : 'Don\'t have an account yet?',
                           style: const TextStyle(
-                              fontSize: 12.5, color: Color(0xFF756256)),
+                            fontSize: 12.5,
+                            color: Color(0xFF756256),
+                          ),
                         ),
                         TextButton(
                           onPressed: () {
@@ -548,9 +588,10 @@ class _AuthModalState extends State<AuthModal> {
         Text(
           label,
           style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2E1B10)),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF2E1B10),
+          ),
         ),
         const SizedBox(height: 6),
         TextFormField(
@@ -567,8 +608,10 @@ class _AuthModalState extends State<AuthModal> {
             filled: true,
             fillColor: Colors.white,
             errorStyle: const TextStyle(fontSize: 11, height: 1.1),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
@@ -579,8 +622,10 @@ class _AuthModalState extends State<AuthModal> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Color(0xFF8E4A23), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF8E4A23),
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -588,8 +633,7 @@ class _AuthModalState extends State<AuthModal> {
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Colors.redAccent, width: 1.5),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
             ),
           ),
         ),

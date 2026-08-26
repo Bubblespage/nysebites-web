@@ -98,37 +98,37 @@ final List<Product> mockProducts = [
   const Product(
     id: 8,
     order: 8,
-    name: 'Pure Decadance Cocoa Fudge',
+    name: 'Caramel Cookie Drip Cake',
     category: 'cakes',
     price: 800.0, // Standard cake base starting price
     servingSize: null,
     description:
-        'Choose dimensions, choice of chocolate, vanilla, and icing styles.',
-    imgSrc: 'assets/images/cake12.jpg',
-    icon: '🎂',
+        'Decadent caramel drip cake loaded with crushed cookies and a full cookie topper! 🤎',
+    imgSrc: 'assets/images/standard9.jpg',
+    icon: '🤎',
   ),
   const Product(
     id: 9,
     order: 9,
-    name: 'Vanilla Sky Cerulean Dream',
+    name: 'Whimsical Hot Air Balloon Cloud Cake',
     category: 'cakes',
     price: 1450.0, // 1 Tier starting price
     servingSize: null,
     description:
-        'Customized 1-tier celebration cake featuring 3D design elements and custom printable flavor bases.',
-    imgSrc: 'assets/images/cake3_.jpg',
-    icon: '🩵',
+        'Whimsical customized 1-tier celebration cake featuring a hot air balloon floating over fluffy clouds. ☁️🎈',
+    imgSrc: 'assets/images/1st_tier7.jpg',
+    icon: '🎈',
   ),
   const Product(
     id: 10,
     order: 10,
-    name: 'Lavender Noir Velvet',
+    name: 'Action-Packed Character Masterpiece',
     category: 'cakes',
     price: 2500.0, // 2 Tier starting price
     servingSize: null,
     description:
-        'Customized 2-tier celebration cake with dramatic tiered cascading buttercream ruffles (Requires 2 weeks reservation notice).',
-    imgSrc: 'assets/images/cake2.jpg',
-    icon: '💜',
+        'Action-packed multi-tiered custom character birthday cake masterpiece!🐾🎂',
+    imgSrc: 'assets/images/2nd_tier1.jpg',
+    icon: '🐾',
   ),
 ];

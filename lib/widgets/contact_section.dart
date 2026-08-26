@@ -276,7 +276,7 @@ class _ContactSectionState extends State<ContactSection> {
                       color: Color(0xFF2E1B10),
                     ),
                     decoration: _inputDecoration(
-                      hint: 'e.g. Jane Doe',
+                      hint: 'e.g. Mai Leonhart',
                       icon: Icons.person_outline,
                     ),
                   ),

@@ -78,7 +78,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFA),
+            color: const Color(0xFFFDFBF7),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFEFE4D6)),
             boxShadow: const [
@@ -439,6 +439,13 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         cleanStatus == 'delivered';
     final bool isBaking =
         cleanStatus == 'baking' ||
+        cleanStatus == 'baked_payment_required' ||
+        cleanStatus == 'baked_payment_verifying' ||
+        cleanStatus == 'delivering' ||
+        cleanStatus == 'delivered';
+    final bool isBakedPayment =
+        cleanStatus == 'baked_payment_required' ||
+        cleanStatus == 'baked_payment_verifying' ||
         cleanStatus == 'delivering' ||
         cleanStatus == 'delivered';
     final bool isDelivering =
@@ -742,7 +749,16 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
               'Your custom cake is currently being baked fresh and hand-decorated by our expert bakers.',
           isDone: isBaking,
           isActive: cleanStatus == 'baking',
-          child: cleanStatus == 'baking'
+        ),
+        _buildStepConnector(isBakedPayment),
+        _buildActionableStep(
+          icon: Icons.receipt_long_outlined,
+          title: 'Baked & Final Balance',
+          subtitle:
+              'Your cake is baked to perfection! Please settle the final balance before delivery.',
+          isDone: isBakedPayment,
+          isActive: cleanStatus == 'baked_payment_required',
+          child: cleanStatus == 'baked_payment_required'
               ? Container(
                   margin: const EdgeInsets.only(top: 12),
                   padding: const EdgeInsets.all(12),
@@ -834,8 +850,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                               return;
                             }
                             setState(() {
-                              _localStatus = 'delivering';
-                              _localStatusLabel = '🚗 Out for Delivery';
+                              _localStatus = 'baked_payment_verifying';
+                              _localStatusLabel = '⏳ Verifying Final Payment';
                             });
                             try {
                               await FirebaseFirestore.instance
@@ -845,8 +861,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                                     'balanceReference': _balanceRefController
                                         .text
                                         .trim(),
-                                    'status': 'delivering',
-                                    'statusLabel': '🚗 Out for Delivery',
+                                    'status': 'baked_payment_verifying',
+                                    'statusLabel': '⏳ Verifying Final Payment',
                                   }, SetOptions(merge: true));
                             } catch (e) {
                               debugPrint('Optimistic update failed: $e');

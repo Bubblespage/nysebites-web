@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
+import '../data/mock_products.dart';
 import 'checkout_modal.dart';
+import 'custom_cake_modal.dart';
 
 class CartDrawer extends StatefulWidget {
   final List<Product> cartItems;
@@ -30,11 +32,28 @@ class CartDrawer extends StatefulWidget {
   State<CartDrawer> createState() => _CartDrawerState();
 }
 
-class _CartDrawerState extends State<CartDrawer> {
+class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateMixin {
   static const Color brandCocoa = Color(0xFF3E2723);
   static const Color darkEspresso = Color(0xFF2E1B10);
   static const Color borderLight = Color(0xFFEFE4D6);
   static const Color textMuted = Color(0xFF756256);
+
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
 
   Map<String, List<Product>> get _groupedItems {
     final Map<String, List<Product>> grouped = {};
@@ -64,6 +83,9 @@ class _CartDrawerState extends State<CartDrawer> {
       ),
     );
   }
+
+  String? _editingCookieKey;
+  int? _tempCookieBoxSize;
 
   @override
   Widget build(BuildContext context) {
@@ -152,15 +174,25 @@ class _CartDrawerState extends State<CartDrawer> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                width: 72,
-                                height: 72,
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF3E7DC),
-                                  borderRadius: BorderRadius.circular(36),
-                                  border: Border.all(
-                                    color: const Color(0xFFE5D5C5),
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 800),
+                                curve: Curves.elasticOut,
+                                builder: (context, value, child) {
+                                  return Transform.scale(
+                                    scale: value,
+                                    child: child,
+                                  );
+                                },
+                                child: Container(
+                                  width: 72,
+                                  height: 72,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3E7DC),
+                                    borderRadius: BorderRadius.circular(36),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5D5C5),
                                   ),
                                 ),
                                 child: ClipRRect(
@@ -176,13 +208,24 @@ class _CartDrawerState extends State<CartDrawer> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 14),
+                            ),
+                            const SizedBox(height: 16),
                               const Text(
-                                'Your tray is empty',
+                                'Your sweet tray is looking\na bit crumbly... 🍪',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                   color: darkEspresso,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Let\'s add some treats!',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  color: textMuted,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -202,82 +245,256 @@ class _CartDrawerState extends State<CartDrawer> {
                           separatorBuilder: (_, __) =>
                               const Divider(color: borderLight, height: 24),
                           itemBuilder: (context, index) {
-                            final items = grouped.values.elementAt(index);
-                            final product = items.first;
-                            final quantity = items.length;
+                            final itemKey = grouped.keys.elementAt(index);
+                            final productList = grouped.values.elementAt(index);
+                            final product = productList.first;
+                            final quantity = productList.length;
                             final itemTotal = product.price * quantity;
 
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: Duration(milliseconds: 400 + (index * 100).clamp(0, 500)),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(40 * (1 - value), 0),
+                                  child: Opacity(
+                                    opacity: value,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: SizedBox(
                                     width: 64,
                                     height: 64,
-                                    child: product.imgSrc.startsWith('http')
-                                        ? Image.network(
-                                            product.imgSrc,
-                                            fit: BoxFit.cover,
+                                    child: product.imgSrc.isEmpty
+                                        ? Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF3E7DC),
+                                              border: Border.all(color: const Color(0xFFE5D5C5)),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              product.icon,
+                                              style: const TextStyle(fontSize: 28),
+                                            ),
                                           )
-                                        : Image.asset(
-                                            product.imgSrc,
-                                            fit: BoxFit.cover,
-                                          ),
+                                        : (product.imgSrc.startsWith('http')
+                                            ? Image.network(
+                                                product.imgSrc,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Image.asset(
+                                                product.imgSrc,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => const Icon(
+                                                  Icons.shopping_bag_outlined,
+                                                  color: brandCocoa,
+                                                ),
+                                              )),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        product.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 13.5,
-                                          color: darkEspresso,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (product.description.isNotEmpty && product.category.toLowerCase() == 'cakes') ...[
-                                        const SizedBox(height: 2),
+                                if (_editingCookieKey == itemKey)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
                                         Text(
-                                          product.description,
+                                          'Edit Size: ${product.name.replaceAll(RegExp(r' \(Box of \d+\)'), '')}',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, color: darkEspresso, fontSize: 13.5),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Wrap(
+                                          spacing: 8,
+                                          children: [
+                                            ChoiceChip(
+                                              label: const Text('Box of 4', style: TextStyle(fontSize: 12)),
+                                              selected: _tempCookieBoxSize == 4,
+                                              onSelected: (val) { if(val) setState(() => _tempCookieBoxSize = 4); },
+                                              selectedColor: const Color(0xFFF3E7DC),
+                                              checkmarkColor: brandCocoa,
+                                              padding: EdgeInsets.zero,
+                                            ),
+                                            ChoiceChip(
+                                              label: const Text('Box of 6', style: TextStyle(fontSize: 12)),
+                                              selected: _tempCookieBoxSize == 6,
+                                              onSelected: (val) { if(val) setState(() => _tempCookieBoxSize = 6); },
+                                              selectedColor: const Color(0xFFF3E7DC),
+                                              checkmarkColor: brandCocoa,
+                                              padding: EdgeInsets.zero,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            TextButton(
+                                              onPressed: () => setState(() => _editingCookieKey = null),
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.zero,
+                                                minimumSize: const Size(50, 30),
+                                              ),
+                                              child: const Text('Cancel', style: TextStyle(color: textMuted, fontSize: 12)),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: brandCocoa,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                                minimumSize: const Size(0, 30),
+                                              ),
+                                              onPressed: () {
+                                                final baseProduct = mockProducts.firstWhere((p) => p.id == product.id, orElse: () => product);
+                                                final updatedProduct = Product(
+                                                  id: baseProduct.id,
+                                                  name: '${baseProduct.name.replaceAll(RegExp(r' \(Box of \d+\)'), '')} (Box of $_tempCookieBoxSize)',
+                                                  category: baseProduct.category,
+                                                  price: _tempCookieBoxSize == 6 ? (baseProduct.priceBox6 ?? 390.0) : 260.0,
+                                                  description: baseProduct.description,
+                                                  imgSrc: baseProduct.imgSrc,
+                                                  servingSize: 'Box of $_tempCookieBoxSize',
+                                                );
+                                                widget.onRemoveAllOfProduct(product);
+                                                for (int i = 0; i < quantity; i++) {
+                                                  widget.onAddToCart(updatedProduct);
+                                                }
+                                                setState(() => _editingCookieKey = null);
+                                              },
+                                              child: const Text('Save', style: TextStyle(fontSize: 12)),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  )
+                                else ...[
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          product.name,
                                           style: const TextStyle(
-                                            fontSize: 10.5,
-                                            color: textMuted,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 13.5,
+                                            color: darkEspresso,
                                           ),
-                                          maxLines: 2,
+                                          maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                      ],
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        '₱${itemTotal.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 13.5,
-                                          color: brandCocoa,
+                                        if (product.description.isNotEmpty && product.category.toLowerCase() == 'cakes') ...[
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            margin: const EdgeInsets.only(right: 12),
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF9F6F0),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: const Color(0xFFEFE4D6)),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: product.description.split(' • ').map((attr) {
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(bottom: 3),
+                                                  child: Text(
+                                                    '• ${attr.trim()}',
+                                                    style: const TextStyle(
+                                                      fontSize: 10.5,
+                                                      color: textMuted,
+                                                      height: 1.2,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          '₱${itemTotal.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 13.5,
+                                            color: brandCocoa,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: const Color(0xFFE0D3C4),
+                                      ],
                                     ),
                                   ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    if (product.category.toLowerCase() == 'cakes' || product.category.toLowerCase() == 'cookies')
+                                      InkWell(
+                                        onTap: () {
+                                          if (product.category.toLowerCase() == 'cakes') {
+                                            Navigator.pop(context); // close cart
+                                            showDialog(
+                                              context: context,
+                                              builder: (ctx) => CustomCakeModal(
+                                                baseProduct: mockProducts.firstWhere(
+                                                  (p) => p.name == product.name,
+                                                  orElse: () => product,
+                                                ),
+                                                initialProduct: product,
+                                                onAddCustomCake: (updatedProduct) {
+                                                  widget.onRemoveAllOfProduct(product);
+                                                  for (int i = 0; i < quantity; i++) {
+                                                    widget.onAddToCart(updatedProduct);
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          } else if (product.category.toLowerCase() == 'cookies') {
+                                            setState(() {
+                                              _editingCookieKey = itemKey;
+                                              _tempCookieBoxSize = product.name.contains('Box of 6') ? 6 : 4;
+                                            });
+                                          }
+                                        },
+                                        child: const Padding(
+                                          padding: EdgeInsets.only(bottom: 8),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.edit, size: 12, color: brandCocoa),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Edit',
+                                                style: TextStyle(
+                                                  fontSize: 12.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: brandCocoa,
+                                                  decoration: TextDecoration.underline,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: const Color(0xFFE0D3C4),
+                                        ),
+                                      ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -324,14 +541,18 @@ class _CartDrawerState extends State<CartDrawer> {
                                             color: brandCocoa,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                                      ), // Closes InkWell
+                                    ], // Closes inner Row children
+                                  ), // Closes inner Row
+                                ), // Closes Container
+                                  ], // Closes Column children
+                                ), // Closes Column
+                              ] // Ends else branch for normal rendering
+                            ], // Closes inner Row children
+                        ), // Closes child Row
+                      ); // Closes TweenAnimationBuilder
+                    },
+                  ),
                 ),
 
                 // Subtotal & Checkout Button
@@ -365,33 +586,59 @@ class _CartDrawerState extends State<CartDrawer> {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isStoreOpen
-                                ? brandCocoa
-                                : Colors.grey,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
+                      AnimatedBuilder(
+                        animation: _shimmerController,
+                        builder: (context, child) {
+                          final isEnabled = isStoreOpen && widget.cartItems.isNotEmpty;
+                          return Container(
+                            width: double.infinity,
+                            height: 48,
+                            decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
+                              gradient: isEnabled
+                                  ? LinearGradient(
+                                      colors: const [
+                                        brandCocoa,
+                                        Color(0xFF5A3E36),
+                                        brandCocoa,
+                                      ],
+                                      stops: const [0.0, 0.5, 1.0],
+                                      begin: Alignment(-2.0 + (_shimmerController.value * 4), 0.0),
+                                      end: Alignment(0.0 + (_shimmerController.value * 4), 0.0),
+                                    )
+                                  : null,
+                              color: !isEnabled ? Colors.grey : null,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                )
+                              ],
                             ),
-                            elevation: 2,
-                          ),
-                          onPressed: (!isStoreOpen || widget.cartItems.isEmpty)
-                              ? null
-                              : () => _openGrabStyleCheckout(context),
-                          child: Text(
-                            !isStoreOpen
-                                ? 'Orders Temporarily Paused'
-                                : 'Proceed to Checkout',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: isEnabled
+                                    ? () => _openGrabStyleCheckout(context)
+                                    : null,
+                                child: Center(
+                                  child: Text(
+                                    !isStoreOpen
+                                        ? 'Orders Temporarily Paused'
+                                        : 'Proceed to Checkout',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ),

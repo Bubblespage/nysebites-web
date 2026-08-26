@@ -946,6 +946,105 @@ class AdminModals {
     );
   }
 
+  // 4.5 Balance Verification Modal
+  static void showBalanceVerificationModal(
+    BuildContext context,
+    Map<String, dynamic> order,
+    VoidCallback onConfirm,
+  ) {
+    final String customer = order['customer'] ?? 'Guest';
+    final String balanceRef = order['balanceReference'] ?? 'None provided';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFFAFAFA),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.verified_outlined,
+              color: Color(0xFF1967D2),
+              size: 22,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Verify Final Balance',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: textDark,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Confirm receipt of final balance payment from $customer.',
+              style: const TextStyle(fontSize: 12.5, color: textMuted, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFA5D6A7)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.receipt_long, size: 16, color: Color(0xFF2E7D32)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ref No: $balanceRef',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Once confirmed, the order will be marked as Ready for Delivery.',
+              style: TextStyle(fontSize: 11.5, color: textMuted, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: brandCocoa,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              onConfirm();
+            },
+            child: const Text(
+              'Confirm & Deliver',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 5. Custom Cake Spec Inspection Drawer
   static void showCustomCakeInspectionDrawer(
     BuildContext context,
@@ -985,74 +1084,194 @@ class AdminModals {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: textDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tier: $tier',
-              style: const TextStyle(fontSize: 12, color: textMuted),
-            ),
-            Text(
-              'Frosting: $frosting',
-              style: const TextStyle(fontSize: 12, color: textMuted),
-            ),
-            if (toppings.isNotEmpty)
-              Text(
-                'Toppings: ${toppings.join(', ')}',
-                style: const TextStyle(fontSize: 12, color: textMuted),
-              ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: wellBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Piping Inscription: "$dedication"',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: brandCocoa,
-                ),
-              ),
-            ),
-            if (order['referenceImageBase64'] != null && order['referenceImageBase64'].toString().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: wellBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('🖼️', style: TextStyle(fontSize: 16)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Customer Reference Image',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: brandCocoa,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (order['customCakes'] != null && (order['customCakes'] as List).isNotEmpty) ...[
+                  for (final customCake in order['customCakes']) ...[
+                    Builder(builder: (context) {
+                      final ccName = customCake['name']?.toString() ?? 'Custom Cake';
+                      final ccQuantity = customCake['quantity'] ?? 1;
+                      final ccDesc = customCake['description']?.toString() ?? '';
+                      final ccRefImageBase64 = customCake['referenceImageBase64']?.toString();
+                      
+                      String ccTier = '1 Tier (6-inch)';
+                      String ccFrosting = 'Buttercream Special';
+                      String ccPiping = 'No custom dedication requested';
+                      
+                      final parts = ccDesc.split(' • ');
+                      for (final part in parts) {
+                        if (part.startsWith('Dimensions:')) ccTier = part.replaceFirst('Dimensions:', '').trim();
+                        else if (part.startsWith('Icing:')) ccFrosting = part.replaceFirst('Icing:', '').trim();
+                        else if (part.startsWith('Piping:')) ccPiping = part.replaceFirst('Piping:', '').trim().replaceAll('"', '');
+                      }
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: borderLight),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${ccQuantity}x $ccName',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textDark),
                             ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 4,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.layers, size: 14, color: textMuted),
+                                    const SizedBox(width: 4),
+                                    Text(ccTier, style: const TextStyle(fontSize: 12, color: textMuted)),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.color_lens, size: 14, color: textMuted),
+                                    const SizedBox(width: 4),
+                                    Text(ccFrosting, style: const TextStyle(fontSize: 12, color: textMuted)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(8)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Piping Inscription:', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '"$ccPiping"',
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: brandCocoa, fontStyle: FontStyle.italic),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (ccRefImageBase64 != null && ccRefImageBase64.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              const Text('Reference Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textDark)),
+                              const SizedBox(height: 6),
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx2) => Dialog(
+                                      backgroundColor: Colors.transparent,
+                                      insetPadding: const EdgeInsets.all(16),
+                                      child: Stack(
+                                        alignment: Alignment.topRight,
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Image.memory(base64Decode(ccRefImageBase64), fit: BoxFit.contain),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                            onPressed: () => Navigator.pop(ctx2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.memory(base64Decode(ccRefImageBase64), height: 100, width: 100, fit: BoxFit.cover),
+                                ),
+                              )
+                            ],
+                          ],
+                        ),
+                      );
+                    }),
+                  ]
+                ] else ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderLight),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textDark),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.layers, size: 14, color: textMuted),
+                                const SizedBox(width: 4),
+                                Text(tier, style: const TextStyle(fontSize: 12, color: textMuted)),
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.color_lens, size: 14, color: textMuted),
+                                const SizedBox(width: 4),
+                                Text(frosting, style: const TextStyle(fontSize: 12, color: textMuted)),
+                              ],
+                            ),
+                            if (toppings.isNotEmpty)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star, size: 14, color: textMuted),
+                                  const SizedBox(width: 4),
+                                  Text(toppings.join(', '), style: const TextStyle(fontSize: 12, color: textMuted)),
+                                ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(8)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Piping Inscription:', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text(
+                                '"$dedication"',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: brandCocoa, fontStyle: FontStyle.italic),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
+                        ),
+                        if (order['referenceImageBase64'] != null && order['referenceImageBase64'].toString().isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          const Text('Reference Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textDark)),
+                          const SizedBox(height: 6),
                           GestureDetector(
                             onTap: () {
                               showDialog(
@@ -1065,10 +1284,7 @@ class AdminModals {
                                     children: [
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child: Image.memory(
-                                          base64Decode(order['referenceImageBase64']),
-                                          fit: BoxFit.contain,
-                                        ),
+                                        child: Image.memory(base64Decode(order['referenceImageBase64']), fit: BoxFit.contain),
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.close, color: Colors.white, size: 30),
@@ -1081,66 +1297,64 @@ class AdminModals {
                             },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(
-                                base64Decode(order['referenceImageBase64']),
-                                height: 120,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
+                              child: Image.memory(base64Decode(order['referenceImageBase64']), height: 100, width: 100, fit: BoxFit.cover),
                             ),
-                          ),
+                          )
                         ],
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
+                ],
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Base Price (₱):',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: brandCocoa),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: baseController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          prefixText: '₱ ',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: borderLight)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            const Text(
-              'Base Price (₱):',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: brandCocoa,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: baseController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                isDense: true,
-                prefixText: '₱ ',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: borderLight),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Custom Materials & Add-ons Price (₱):',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: brandCocoa),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: addonController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          prefixText: '₱ ',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: borderLight)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Custom Materials & Add-ons Price (₱):',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: brandCocoa,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: addonController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                isDense: true,
-                prefixText: '₱ ',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: borderLight),
-                ),
-              ),
+              ],
             ),
           ],
+        ),
+        ),
         ),
         actions: [
           TextButton(

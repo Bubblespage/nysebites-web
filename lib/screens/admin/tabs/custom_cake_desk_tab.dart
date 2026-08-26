@@ -180,59 +180,83 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                 ),
               )
             else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: currentList.length,
-                itemBuilder: (context, i) {
-                  final cake = currentList[i];
-
-                  final String orderId =
-                      cake['id']?.toString() ?? cake['docId']?.toString() ?? '';
-                  final String customer =
-                      cake['customer']?.toString() ?? 'Online Guest';
-                  final String phone = cake['contact']?.toString() ?? cake['phone']?.toString() ?? '';
-                  final String paymentMethod =
-                      cake['payment']?.toString() ??
-                      cake['paymentMethod']?.toString() ??
-                      'Cash on Delivery';
-
-                  final String itemTitle =
-                      cake['item']?.toString() ??
-                      cake['productName']?.toString() ??
-                      '1x Custom Celebration Cake';
-
-                  final String tier = cake['tier']?.toString() ?? '1 Tier (6-inch)';
-                  final String frosting =
-                      cake['frosting']?.toString() ?? 'Buttercream Special';
-                  final List<dynamic> toppings = (cake['toppings'] is Iterable)
-                      ? (cake['toppings'] as Iterable).toList()
-                      : [];
-
-                  double totalAmount = _parseTotal(cake['total']);
-                  if (totalAmount == 0.0) {
-                    totalAmount = _parseTotal(cake['totalAmount']);
-                  }
-                  if (totalAmount == 0.0) {
-                    totalAmount = _parseTotal(cake['subtotal']);
+              Builder(
+                builder: (context) {
+                  final flattenedList = <Map<String, dynamic>>[];
+                  for (final order in currentList) {
+                    if (order['customCakes'] != null && (order['customCakes'] as List).isNotEmpty) {
+                      final cakes = order['customCakes'] as List;
+                      for (int i = 0; i < cakes.length; i++) {
+                        final clonedOrder = Map<String, dynamic>.from(order);
+                        clonedOrder['customCakes'] = [cakes[i]];
+                        flattenedList.add({
+                          'order': clonedOrder,
+                          'customCake': cakes[i],
+                        });
+                      }
+                    } else {
+                      flattenedList.add({
+                        'order': order,
+                        'customCake': null,
+                      });
+                    }
                   }
 
-                  final String pipingText =
-                      cake['dedication']?.toString() ??
-                      cake['pipingText']?.toString() ??
-                      cake['piping']?.toString() ??
-                      cake['cakeMessage']?.toString() ??
-                      (cake['note'] != null &&
-                              !cake['note'].toString().contains('Delivery')
-                          ? cake['note'].toString()
-                          : 'No custom dedication requested');
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: flattenedList.length,
+                    itemBuilder: (context, i) {
+                      final entry = flattenedList[i];
+                      final cake = entry['order'];
+                      final customCake = entry['customCake'];
 
-                  final String? refImageBase64 = cake['referenceImageBase64']?.toString();
+                      final String orderId = cake['id']?.toString() ?? cake['docId']?.toString() ?? '';
+                      final String customer = cake['customer']?.toString() ?? 'Online Guest';
+                      final String phone = cake['contact']?.toString() ?? cake['phone']?.toString() ?? '';
+                      final String paymentMethod = cake['payment']?.toString() ?? cake['paymentMethod']?.toString() ?? 'Cash on Delivery';
 
-                  final String status = (cake['status'] ?? '').toString();
-                  final String statusLabel =
-                      (cake['statusLabel'] ?? 'Completed Delivery').toString();
-                  final bool isPending = _selectedSubTab == 0;
+                      String itemTitle = cake['item']?.toString() ?? cake['productName']?.toString() ?? '1x Custom Celebration Cake';
+                      String tier = cake['tier']?.toString() ?? '1 Tier (6-inch)';
+                      String frosting = cake['frosting']?.toString() ?? 'Buttercream Special';
+                      
+                      final List<dynamic> toppings = (cake['toppings'] is Iterable) ? (cake['toppings'] as Iterable).toList() : [];
+
+                      double totalAmount = _parseTotal(cake['total']);
+                      if (totalAmount == 0.0) totalAmount = _parseTotal(cake['totalAmount']);
+                      if (totalAmount == 0.0) totalAmount = _parseTotal(cake['subtotal']);
+
+                      String pipingText = cake['dedication']?.toString() ??
+                          cake['pipingText']?.toString() ??
+                          cake['piping']?.toString() ??
+                          cake['cakeMessage']?.toString() ??
+                          (cake['note'] != null && !cake['note'].toString().contains('Delivery')
+                              ? cake['note'].toString()
+                              : 'No custom dedication requested');
+
+                      String? refImageBase64 = cake['referenceImageBase64']?.toString();
+
+                      if (customCake != null) {
+                        final ccQuantity = customCake['quantity'] ?? 1;
+                        final ccName = customCake['name']?.toString() ?? 'Custom Cake';
+                        itemTitle = '${ccQuantity}x $ccName';
+                        
+                        final ccDesc = customCake['description']?.toString() ?? '';
+                        final parts = ccDesc.split(' • ');
+                        tier = '1 Tier (6-inch)';
+                        frosting = 'Buttercream Special';
+                        pipingText = 'No custom dedication requested';
+                        for (final part in parts) {
+                          if (part.startsWith('Dimensions:')) tier = part.replaceFirst('Dimensions:', '').trim();
+                          else if (part.startsWith('Icing:')) frosting = part.replaceFirst('Icing:', '').trim();
+                          else if (part.startsWith('Piping:')) pipingText = part.replaceFirst('Piping:', '').trim().replaceAll('"', '');
+                        }
+                        refImageBase64 = customCake['referenceImageBase64']?.toString();
+                      }
+
+                      final String status = (cake['status'] ?? '').toString();
+                      final String statusLabel = (cake['statusLabel'] ?? 'Completed Delivery').toString();
+                      final bool isPending = _selectedSubTab == 0;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
@@ -307,36 +331,27 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                         ),
                         const Divider(color: borderLight, height: 18),
 
-                        // Item Title
                         Text(
                           itemTitle,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: textDark,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textDark),
                         ),
                         const SizedBox(height: 8),
 
-                        // Spec Tags Wrap
                         Wrap(
                           spacing: 6,
                           runSpacing: 6,
                           children: [
                             _buildChipTag('Tier: $tier'),
                             _buildChipTag('Frosting: $frosting'),
-                            for (var t in toppings) _buildChipTag('Topping: $t'),
+                            if (customCake == null)
+                              for (var t in toppings) _buildChipTag('Topping: $t'),
                           ],
                         ),
                         const SizedBox(height: 12),
 
-                        // Piping Inscription Box
                         Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: wellBg,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                          decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(10)),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -345,27 +360,18 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                               Expanded(
                                 child: Text(
                                   'Piping Inscription: "$pipingText"',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11.5,
-                                    color: textDark,
-                                    height: 1.3,
-                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: textDark, height: 1.3),
                                 ),
                               ),
                             ],
                           ),
                         ),
 
-                        // Preferred Reference Image
                         if (refImageBase64 != null && refImageBase64.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: wellBg,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(10)),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -377,11 +383,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                     children: [
                                       const Text(
                                         'Customer Reference Image',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11.5,
-                                          color: textDark,
-                                        ),
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: textDark),
                                       ),
                                       const SizedBox(height: 8),
                                       GestureDetector(
@@ -396,10 +398,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                                 children: [
                                                   ClipRRect(
                                                     borderRadius: BorderRadius.circular(12),
-                                                    child: Image.memory(
-                                                      base64Decode(refImageBase64),
-                                                      fit: BoxFit.contain,
-                                                    ),
+                                                    child: Image.memory(base64Decode(refImageBase64!), fit: BoxFit.contain),
                                                   ),
                                                   IconButton(
                                                     icon: const Icon(Icons.close, color: Colors.white, size: 30),
@@ -412,12 +411,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                         },
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(8),
-                                          child: Image.memory(
-                                            base64Decode(refImageBase64),
-                                            width: 140,
-                                            height: 140,
-                                            fit: BoxFit.cover,
-                                          ),
+                                          child: Image.memory(base64Decode(refImageBase64), width: 140, height: 140, fit: BoxFit.cover),
                                         ),
                                       ),
                                     ],
@@ -491,7 +485,9 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                     ),
                   );
                 },
-              ),
+              );
+            },
+          ),
           ],
         );
       },

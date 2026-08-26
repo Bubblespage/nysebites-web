@@ -802,9 +802,33 @@ class LiveOrdersTab extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         onPressed: () =>
-            onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
+            onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance'),
         child: const Text(
-          'Mark Ready',
+          'Mark Baked',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (status == 'baked_payment_verifying') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFC27803),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(105, 30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        onPressed: () => AdminModals.showBalanceVerificationModal(
+          context,
+          order,
+          () => onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
+        ),
+        child: const Text(
+          'Verify Balance',
           style: TextStyle(
             color: Colors.white,
             fontSize: 10.5,
@@ -843,10 +867,10 @@ class LiveOrdersTab extends StatelessWidget {
     if (status == 'baking') {
       bg = const Color(0xFFFBEBE4);
       fg = brandCocoa;
-    } else if (status.contains('pending')) {
+    } else if (status.contains('pending') || status.contains('verifying')) {
       bg = const Color(0xFFFEF6E9);
       fg = const Color(0xFFC27803);
-    } else if (status == 'delivering') {
+    } else if (status == 'delivering' || status == 'baked_payment_required') {
       bg = const Color(0xFFEBF5EC);
       fg = const Color(0xFF2E7D32);
     } else if (status == 'ready_to_bake') {

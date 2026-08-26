@@ -116,9 +116,28 @@ class _CheckoutModalState extends State<CheckoutModal> {
     for (final item in widget.cartItems) {
       if (item.customImageBytes != null) {
         referenceImageBase64 = base64Encode(item.customImageBytes!);
-        break;
+        break; // Still keep for backwards compatibility
       }
     }
+
+    final Map<String, Map<String, dynamic>> customCakesMap = {};
+    for (final item in widget.cartItems) {
+      if (item.category.toLowerCase() == 'cakes') {
+        final key = '${item.name}_${item.description}';
+        if (customCakesMap.containsKey(key)) {
+          customCakesMap[key]!['quantity'] = (customCakesMap[key]!['quantity'] as int) + 1;
+        } else {
+          customCakesMap[key] = {
+            'name': item.name,
+            'description': item.description,
+            'referenceImageBase64': item.customImageBytes != null ? base64Encode(item.customImageBytes!) : null,
+            'price': item.price,
+            'quantity': 1,
+          };
+        }
+      }
+    }
+    final List<Map<String, dynamic>> customCakes = customCakesMap.values.toList();
 
     try {
       await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
@@ -150,6 +169,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
         'isCustom': hasCustomCake,
         'createdAt': FieldValue.serverTimestamp(),
         'referenceImageBase64': referenceImageBase64,
+        'customCakes': customCakes,
       });
 
       if (!mounted) return;
@@ -226,8 +246,20 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   ? standardDeliveryFee
                   : scheduledDeliveryFee;
 
-              final double grandTotal =
-                  widget.totalAmount + effectiveDeliveryFee + _packagingFee;
+              double regularItemsTotal = 0.0;
+              for (final item in widget.cartItems) {
+                if (item.category.toLowerCase() != 'cakes') {
+                  regularItemsTotal += item.price;
+                }
+              }
+
+              final double grandTotal = regularItemsTotal > 0
+                  ? regularItemsTotal + effectiveDeliveryFee + _packagingFee
+                  : 0.0;
+
+              final bool hasCustomCake = widget.cartItems.any(
+                (item) => item.category.toLowerCase() == 'cakes',
+              );
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -438,8 +470,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             ),
                             const SizedBox(height: 20),
 
-                            _sectionLabel('PAYMENT METHOD'),
-                            const SizedBox(height: 8),
+                            if (grandTotal > 0) ...[
+                              _sectionLabel('PAYMENT METHOD'),
+                              const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
@@ -578,6 +611,39 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 ],
                               ),
                             ),
+                            ],
+                            
+                            if (hasCustomCake) ...[
+                              const SizedBox(height: 20),
+                              _sectionLabel('CUSTOM CAKE PAYMENT'),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFDF8F5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFE8D0C3)),
+                                ),
+                                child: const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.info_outline, size: 20, color: Color(0xFF8E4A23)),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Payment for custom cakes is not required at checkout. It will be securely handled via GCash inside your Order Tracker once our bakers review and approve your cake design.',
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          color: Color(0xFF756256),
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
                             const SizedBox(height: 20),
 
                             // Rider / Bake Notes
@@ -696,22 +762,32 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              'Paying via GCash',
-                              style: TextStyle(
+                            Text(
+                              grandTotal > 0 ? 'Paying via GCash' : 'Custom Cake Inquiry',
+                              style: const TextStyle(
                                 fontSize: 10.5,
                                 color: Color(0xFF756256),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            Text(
-                              '₱${grandTotal.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF8E4A23),
+                            if (grandTotal > 0)
+                              Text(
+                                '₱${grandTotal.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF8E4A23),
+                                ),
+                              )
+                            else
+                              const Text(
+                                'Payment via Tracker',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF8E4A23),
+                                ),
                               ),
-                            ),
                           ],
                         ),
                         ElevatedButton.icon(
@@ -749,8 +825,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 ),
                           label: Text(
                             _isSubmitting
-                                ? 'Placing Order...'
-                                : 'Place Sweet Order',
+                                ? 'Submitting...'
+                                : (grandTotal > 0 ? 'Place Sweet Order' : 'Submit Inquiry'),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12.5,

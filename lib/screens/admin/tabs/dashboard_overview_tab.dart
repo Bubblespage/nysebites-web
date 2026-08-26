@@ -577,32 +577,19 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                               ],
                             ),
                             const SizedBox(height: 18),
-                            // Modern Pipeline Tracker
-                            Row(
-                              children: [
-                                const Text('Prep', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w700)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: TweenAnimationBuilder<double>(
-                                      tween: Tween<double>(begin: 0.0, end: 0.65),
-                                      duration: const Duration(seconds: 2),
-                                      curve: Curves.easeOutCirc,
-                                      builder: (context, value, child) {
-                                        return LinearProgressIndicator(
-                                          value: value,
-                                          backgroundColor: const Color(0xFFF3F4F6),
-                                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8C4A27)),
-                                          minHeight: 8,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Text('Cooling', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w700)),
-                              ],
+                            // Modern Pipeline Node Tracker
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  _PipelineNode(label: 'Prep', isCompleted: true),
+                                  _PipelineLine(isCompleted: true),
+                                  _PipelineNode(label: 'Baking', isActive: true, isPulsing: true),
+                                  _PipelineLine(isCompleted: false),
+                                  _PipelineNode(label: 'Cooling', isActive: false),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -935,6 +922,129 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PipelineNode extends StatefulWidget {
+  final String label;
+  final bool isCompleted;
+  final bool isActive;
+  final bool isPulsing;
+
+  const _PipelineNode({
+    required this.label,
+    this.isCompleted = false,
+    this.isActive = false,
+    this.isPulsing = false,
+  });
+
+  @override
+  State<_PipelineNode> createState() => _PipelineNodeState();
+}
+
+class _PipelineNodeState extends State<_PipelineNode> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+    if (widget.isPulsing) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.isCompleted || widget.isActive
+        ? const Color(0xFF8C4A27) // brandCocoa
+        : const Color(0xFFD1D5DB); // grey-300
+
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final double scale = widget.isPulsing ? 1.0 + (_controller.value * 0.2) : 1.0;
+            final double opacity = widget.isPulsing ? 1.0 - (_controller.value * 0.5) : 1.0;
+            
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                if (widget.isPulsing)
+                  Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color.withOpacity(opacity * 0.4),
+                      ),
+                    ),
+                  ),
+                // This transparent container ensures the stack is always at least 14x14
+                // preventing layout shifts when pulsing starts/stops.
+                Container(width: 14, height: 14, color: Colors.transparent),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.isCompleted ? color : Colors.white,
+                    border: Border.all(
+                      color: color,
+                      width: 2.5,
+                    ),
+                  ),
+                  child: widget.isCompleted 
+                      ? const Icon(Icons.check, size: 6, color: Colors.white)
+                      : null,
+                ),
+              ],
+            );
+          }
+        ),
+        const SizedBox(height: 6),
+        Text(
+          widget.label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: widget.isActive ? FontWeight.bold : FontWeight.w600,
+            color: widget.isActive ? const Color(0xFF1F1209) : const Color(0xFF9CA3AF),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PipelineLine extends StatelessWidget {
+  final bool isCompleted;
+
+  const _PipelineLine({required this.isCompleted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.only(top: 6, left: 4, right: 4), // align with center of 14x14 circle
+        decoration: BoxDecoration(
+          color: isCompleted ? const Color(0xFF8C4A27) : const Color(0xFFE5E7EB),
+          borderRadius: BorderRadius.circular(2),
+        ),
       ),
     );
   }

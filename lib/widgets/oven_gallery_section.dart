@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'instagram_post_modal.dart';
 
 class OvenGallerySection extends StatefulWidget {
   const OvenGallerySection({super.key});
@@ -12,8 +13,9 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
   final List<Map<String, dynamic>> _categories = [
     {
       'title': 'Standard Cakes',
-      'subtitle': 'Classic & Elegant (6 Designs)',
+      'subtitle': 'Classic & Elegant',
       'image': 'assets/images/standard1.jpg',
+
       'items': [
         {
           'image': 'assets/images/standard1.jpg',
@@ -57,11 +59,55 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
           'likes': '675',
           'comments': '9',
         },
+        {
+          'image': 'assets/images/standard7.jpg',
+          'caption':
+              'Black textured cake with striking floral petal-like decorations and gold leaf accents. ✨',
+          'likes': '715',
+          'comments': '35',
+        },
+        {
+          'image': 'assets/images/standard10.jpg',
+          'caption':
+              'Romantic red heart-shaped cake with buttercream roses and white pearl sprinkles. ❤️',
+          'likes': '950',
+          'comments': '68',
+        },
+        {
+          'image': 'assets/images/standard8.jpg',
+          'caption':
+              'Two-tone blue and white cake adorned with delicate pink frosting flowers and gold sprinkles. 🌸',
+          'likes': '690',
+          'comments': '42',
+        },
+
+        {
+          'image': 'assets/images/standard9.jpg',
+          'caption':
+              'Decadent caramel drip cake loaded with crushed cookies and a full cookie topper! 🤎',
+          'likes': '820',
+          'comments': '55',
+        },
+
+        {
+          'image': 'assets/images/standard11.jpg',
+          'caption':
+              'Caramel drip cake wrapped in cookie crumbles and topped with golden chocolate coins. 💰',
+          'likes': '740',
+          'comments': '33',
+        },
+        {
+          'image': 'assets/images/standard12.jpg',
+          'caption':
+              'Ruffled white frosting cake topped with fresh mango slices, chocolate chips, and gold coins. 🥭',
+          'likes': '860',
+          'comments': '47',
+        },
       ],
     },
     {
       'title': 'Customized 1-Tier Cakes',
-      'subtitle': 'Tailored Themes & Piping (19 Designs)',
+      'subtitle': 'Tailored Themes & Piping',
       'image': 'assets/images/1st_tier1.jpg',
       'items': [
         {
@@ -186,24 +232,52 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
           'comments': '29',
         },
         {
-          'image': 'assets/images/1st_tier18.jpg',
-          'caption':
-              'Decadent chocolate overload cake stacked with bars and truffles. 🍫🤎',
-          'likes': '515',
-          'comments': '24',
-        },
-        {
           'image': 'assets/images/1st_tier19.jpg',
           'caption':
               'Number 8 shaped anniversary or birthday cake with rich red and white piping. 🎂',
           'likes': '389',
           'comments': '12',
         },
+        {
+          'image': 'assets/images/1st_tier25.jpg',
+          'caption':
+              'Fun purple frosted cake featuring a custom COOKY bunny character topper! 💜🐰',
+          'likes': '680',
+          'comments': '41',
+        },
+        {
+          'image': 'assets/images/1st_tier26.jpg',
+          'caption':
+              'Peach and blue two-tone cake with custom CHA CHA lettering and a delicate pink rose. 🌹',
+          'likes': '490',
+          'comments': '18',
+        },
+        {
+          'image': 'assets/images/1st_tier27.jpg',
+          'caption':
+              'White drip cake with vibrant purple and pink accents, saying HELLO FAYE. ✨',
+          'likes': '715',
+          'comments': '33',
+        },
+        {
+          'image': 'assets/images/1st_tier28.jpg',
+          'caption':
+              'Playful pink swirled frosting cake sprinkled with colorful mini hearts. 💖',
+          'likes': '550',
+          'comments': '22',
+        },
+        {
+          'image': 'assets/images/1st_tier29.jpg',
+          'caption':
+              'Striking red heart-shaped cake dedicated to a HAPPY MONTHSARY. ❤️',
+          'likes': '820',
+          'comments': '48',
+        },
       ],
     },
     {
       'title': 'Customized 2-Tier & Up',
-      'subtitle': 'Grand Multi-Tier Masterpieces (4 Designs)',
+      'subtitle': 'Grand Multi-Tier Masterpieces',
       'image': 'assets/images/2nd_tier1.jpg',
       'items': [
         {
@@ -238,7 +312,7 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
     },
     {
       'title': 'Mini Cakes & Cupcakes',
-      'subtitle': 'Small-Batch Sweet Drops (4 Designs)',
+      'subtitle': 'Small-Batch Sweet Drops',
       'image': 'assets/images/cake&cupcake1.jpg',
       'items': [
         {
@@ -268,6 +342,131 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
               'Classic white bento mini cake accompanied by pink buttercream cupcakes. 🌸',
           'likes': '590',
           'comments': '27',
+        },
+        {
+          'image': 'assets/images/cake&cupcake5.jpg',
+          'caption':
+              'Brown frosted cake topped with a smiling fondant character and blue rosettes, paired with blue frosted cupcakes. 💙',
+          'likes': '640',
+          'comments': '29',
+        },
+        {
+          'image': 'assets/images/cake&cupcake6.jpg',
+          'caption':
+              'Vibrant purple mini cake and cupcakes featuring a rolled diploma and graduation theme! 🎓💜',
+          'likes': '710',
+          'comments': '35',
+        },
+        {
+          'image': 'assets/images/cake&cupcake7.jpg',
+          'caption':
+              'Red heart-shaped cake reading HAPPY MONTHSARY paired with floral piped cupcakes. ❤️',
+          'likes': '820',
+          'comments': '44',
+        },
+        {
+          'image': 'assets/images/cake&cupcake9.jpg',
+          'caption':
+              'Twin holiday mini cakes adorned with pink poinsettias and MERRY CHRISTMAS lettering, served with festive cupcakes. 🎄',
+          'likes': '910',
+          'comments': '52',
+        },
+        {
+          'image': 'assets/images/cake&cupcake10.jpg',
+          'caption':
+              'Rustic nut-crusted carrot cake reading HABADU flanked by two matching cupcakes. 🥕',
+          'likes': '680',
+          'comments': '31',
+        },
+      ],
+    },
+    {
+      'title': 'Cupcakes',
+      'subtitle': 'Bite-Sized Indulgence',
+      'image': 'assets/images/cupcake5.jpg',
+      'items': [
+        {
+          'image': 'assets/images/cupcake1.jpg',
+          'caption':
+              'Happy Mother\'s Day themed cupcakes with pink and purple frosting and gold toppers. 🌸',
+          'likes': '420',
+          'comments': '15',
+        },
+        {
+          'image': 'assets/images/cupcake2.jpg',
+          'caption':
+              'Elegant Mother\'s Day half-dozen with purple rosette and pink swirl buttercream. 💜',
+          'likes': '385',
+          'comments': '22',
+        },
+        {
+          'image': 'assets/images/cupcake3.jpg',
+          'caption':
+              'Four beautifully piped red and white buttercream rose cupcakes. 🌹',
+          'likes': '512',
+          'comments': '34',
+        },
+        {
+          'image': 'assets/images/cupcake4.jpg',
+          'caption':
+              'Magical Harry Potter themed cupcakes featuring the Sorting Hat and Golden Snitch! ⚡🧙‍♂️',
+          'likes': '476',
+          'comments': '18',
+        },
+        {
+          'image': 'assets/images/cupcake5.jpg',
+          'caption':
+              'A dozen vibrant blue and white swirl frosted cupcakes with gold sprinkles. 💙✨',
+          'likes': '610',
+          'comments': '41',
+        },
+        {
+          'image': 'assets/images/cupcake6.jpg',
+          'caption':
+              'Teal and purple galaxy-inspired swirl cupcakes in a dozen box. 🌌',
+          'likes': '395',
+          'comments': '12',
+        },
+        {
+          'image': 'assets/images/cupcake7.jpg',
+          'caption':
+              'Adorable pink and white animal-themed cupcakes, perfect for kids\' parties! 🐶💖',
+          'likes': '550',
+          'comments': '28',
+        },
+        {
+          'image': 'assets/images/cupcake8.jpg',
+          'caption':
+              'Striking red and yellow rose piped buttercream cupcakes. ❤️💛',
+          'likes': '680',
+          'comments': '55',
+        },
+        {
+          'image': 'assets/images/cupcake9.jpg',
+          'caption':
+              'Six elegant pink and purple swirled cupcakes with gold pearl sprinkles. ✨',
+          'likes': '430',
+          'comments': '19',
+        },
+        {
+          'image': 'assets/images/cupcake10.jpg',
+          'caption':
+              'Mint green and pastel yellow floral buttercream cupcakes. 🌿💛',
+          'likes': '720',
+          'comments': '47',
+        },
+        {
+          'image': 'assets/images/cupcake11.jpg',
+          'caption': 'Six bold red and white swirl frosted cupcakes. ❤️🤍',
+          'likes': '590',
+          'comments': '33',
+        },
+        {
+          'image': 'assets/images/cupcake12.jpg',
+          'caption':
+              'A grand box of 24 elegant purple rosette cupcakes with delicate flower accents. 💜🌸',
+          'likes': '645',
+          'comments': '38',
         },
       ],
     },
@@ -354,71 +553,80 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                     itemCount: (category['items'] as List).length,
                     itemBuilder: (context, index) {
                       final item = category['items'][index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE5D5C5)),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color.fromRGBO(60, 34, 22, 0.05),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(15),
-                                ),
-                                child: Image.asset(
-                                  item['image'],
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                      return GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) =>
+                                InstagramPostModal(item: item),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE5D5C5)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color.fromRGBO(60, 34, 22, 0.05),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(15),
+                                  ),
+                                  child: Image.asset(
+                                    item['image'],
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.favorite,
-                                        color: Colors.redAccent,
-                                        size: 14,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        item['likes'],
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF2E1B10),
+                              Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.favorite,
+                                          color: Colors.redAccent,
+                                          size: 14,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item['caption'],
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF756256),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item['likes'],
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF2E1B10),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      item['caption'],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF756256),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -463,21 +671,38 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
             style: TextStyle(color: Color(0xFF756256), fontSize: 13.5),
           ),
           const SizedBox(height: 28),
-          Center(
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              alignment: WrapAlignment.center,
-              children: _categories.map((category) {
-                return SizedBox(
-                  width: 240,
-                  child: _HoverableCategoryCard(
-                    category: category,
-                    onTap: () => _openCategoryModal(context, category),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate width to fit 5 items if possible, max 240, min 180
+              double itemWidth =
+                  (constraints.maxWidth - (10 * 2 * _categories.length)) /
+                  _categories.length;
+              if (itemWidth > 240) itemWidth = 240;
+              if (itemWidth < 180) itemWidth = 180;
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                child: Container(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _categories.map((category) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: SizedBox(
+                          width: itemWidth,
+                          child: _HoverableCategoryCard(
+                            category: category,
+                            onTap: () => _openCategoryModal(context, category),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
-import 'product_social_modal.dart'; // Make sure to import this modal widget
-
 class ProductCard extends StatefulWidget {
   final Product product;
   final Function(Product) onAddToCart;
@@ -83,38 +81,28 @@ class _ProductCardState extends State<ProductCard> {
           children: [
             Stack(
               children: [
-                // Tapping the image opens the Instagram-style post lightbox modal
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) =>
-                          ProductSocialModal(product: widget.product),
-                    );
-                  },
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(19),
-                    ),
-                    child: SizedBox(
-                      height: isNarrowCard ? 110 : 180,
-                      width: double.infinity,
-                      child: widget.product.imgSrc.startsWith('http')
-                          ? Image.network(
-                              widget.product.imgSrc,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildFallbackImage(),
-                            )
-                          : (widget.product.imgSrc.isNotEmpty
-                                ? Image.asset(
-                                    widget.product.imgSrc,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        _buildFallbackImage(),
-                                  )
-                                : _buildFallbackImage()),
-                    ),
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(19),
+                  ),
+                  child: SizedBox(
+                    height: isNarrowCard ? 110 : 180,
+                    width: double.infinity,
+                    child: widget.product.imgSrc.startsWith('http')
+                        ? Image.network(
+                            widget.product.imgSrc,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                _buildFallbackImage(),
+                          )
+                        : (widget.product.imgSrc.isNotEmpty
+                              ? Image.asset(
+                                  widget.product.imgSrc,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _buildFallbackImage(),
+                                )
+                              : _buildFallbackImage()),
                   ),
                 ),
                 Positioned(

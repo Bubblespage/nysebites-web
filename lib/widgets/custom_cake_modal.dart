@@ -6,11 +6,13 @@ import 'cake_radius_visualizer.dart';
 
 class CustomCakeModal extends StatefulWidget {
   final Product baseProduct;
+  final Product? initialProduct;
   final Function(Product) onAddCustomCake;
 
   const CustomCakeModal({
     super.key,
     required this.baseProduct,
+    this.initialProduct,
     required this.onAddCustomCake,
   });
 
@@ -61,6 +63,43 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
       };
     }
     _selectedSize = _sizeOptions.keys.first;
+
+    if (widget.initialProduct != null) {
+      _parseInitialProduct(widget.initialProduct!);
+    }
+  }
+
+  void _parseInitialProduct(Product initialProduct) {
+    final desc = initialProduct.description;
+    final parts = desc.split(' • ');
+    for (final part in parts) {
+      if (part.startsWith('Dimensions:')) {
+        final sizeStr = part.replaceFirst('Dimensions:', '').trim();
+        if (_sizeOptions.containsKey(sizeStr)) {
+          _selectedSize = sizeStr;
+        }
+      } else if (part.startsWith('Base:')) {
+        final baseStr = part.replaceFirst('Base:', '').trim();
+        if (_baseOptions.contains(baseStr)) {
+          _selectedBase = baseStr;
+        }
+      } else if (part.startsWith('Icing:')) {
+        final icingStr = part.replaceFirst('Icing:', '').replaceAll('(Included)', '').trim();
+        if (_frostingOptions.contains(icingStr)) {
+          _selectedFrosting = icingStr;
+        }
+      } else if (part.startsWith('Piping:')) {
+        final pipingStr = part.replaceFirst('Piping:', '').trim().replaceAll('"', '');
+        _pipingMessageController.text = pipingStr;
+      } else if (part.startsWith('Notes:')) {
+        final notesStr = part.replaceFirst('Notes:', '').trim();
+        _customNotesController.text = notesStr;
+      }
+    }
+    _preferredImageBytes = initialProduct.customImageBytes;
+    if (_preferredImageBytes != null) {
+      _preferredImageName = 'Attached Image';
+    }
   }
 
   double get _calculatedTotal => _sizeOptions[_selectedSize] ?? 800.0;
@@ -97,6 +136,9 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
     );
 
     widget.onAddCustomCake(customizedCake);
+    
+    // If it was opened from cart to edit, we don't need to show success banner usually,
+    // but showing it is fine or parent handles it.
     Navigator.pop(context);
   }
 
@@ -294,13 +336,23 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                   borderRadius: BorderRadius.circular(20),
                   onTap: () => _showFullScreenImage(context),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
                         Icon(Icons.zoom_out_map, color: Colors.white, size: 16),
                         SizedBox(width: 6),
-                        Text('View Full', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text(
+                          'View Full',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -413,8 +465,8 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                     child: widget.baseProduct.imgSrc.startsWith('http')
                         ? Image.network(widget.baseProduct.imgSrc)
                         : (widget.baseProduct.imgSrc.isNotEmpty
-                            ? Image.asset(widget.baseProduct.imgSrc)
-                            : _buildFallbackShowcase()),
+                              ? Image.asset(widget.baseProduct.imgSrc)
+                              : _buildFallbackShowcase()),
                   ),
                 ),
                 Positioned(
@@ -426,7 +478,11 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -684,7 +740,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
           controller: _pipingMessageController,
           maxLength: 35,
           decoration: InputDecoration(
-            hintText: 'e.g. Happy Birthday Shaina! 🎂',
+            hintText: 'e.g. Happy Birthday Mai! 🎂',
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(
