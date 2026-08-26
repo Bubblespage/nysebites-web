@@ -21,6 +21,7 @@ dependencies:
   firebase_auth: ^6.5.7
   cloud_firestore: ^6.8.0
   fl_chart: ^1.2.0
+  http: ^1.6.0
 
 dependency_overrides:
   firebase_core_web: 3.10.0

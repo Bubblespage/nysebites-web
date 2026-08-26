@@ -107,7 +107,7 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
             _announcement3Controller.text = data['announcement3']?.toString() ??
                 '🎂 Custom cakes require a 2-week reservation notice in advance!';
 
-            _gcashQrController.text = data['gcashQrUrl']?.toString() ?? 'assets/images/gcash_qr.png';
+            _gcashQrController.text = data['gcashQrUrl']?.toString() ?? 'assets/images/qr_code.jpg';
             _initialized = true;
           } else {
             if (!_announcement1Focus.hasFocus) {

@@ -801,8 +801,13 @@ class LiveOrdersTab extends StatelessWidget {
           minimumSize: const Size(105, 30),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
-        onPressed: () =>
-            onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance'),
+        onPressed: () {
+          if (isCustom) {
+            onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance');
+          } else {
+            onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
+          }
+        },
         child: const Text(
           'Mark Baked',
           style: TextStyle(
@@ -831,6 +836,26 @@ class LiveOrdersTab extends StatelessWidget {
           'Verify Balance',
           style: TextStyle(
             color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (status == 'baked_payment_required') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(105, 30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        onPressed: null,
+        child: const Text(
+          'Pending Balance',
+          style: TextStyle(
+            color: Colors.grey,
             fontSize: 10.5,
             fontWeight: FontWeight.bold,
           ),

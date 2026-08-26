@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'gcash_portal_modal.dart';
 
 class OrderTrackerModal extends StatefulWidget {
   final String orderNumber;
@@ -23,10 +26,6 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _orderStream;
   bool _isManualRefresh = false;
 
-  final TextEditingController _downPaymentRefController =
-      TextEditingController();
-  final TextEditingController _balanceRefController = TextEditingController();
-
   String? _localStatus;
   String? _localStatusLabel;
 
@@ -38,8 +37,6 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
 
   @override
   void dispose() {
-    _downPaymentRefController.dispose();
-    _balanceRefController.dispose();
     super.dispose();
   }
 
@@ -70,11 +67,17 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final double screenHeight = mediaQuery.size.height;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: BoxConstraints(
+          maxWidth: 600,
+          maxHeight: screenHeight * 0.90,
+        ),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -136,10 +139,13 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   case 'preparing':
                   case 'in_kitchen':
                     return 4;
-                  case 'delivering':
+                  case 'baked_payment_required':
+                  case 'baked_payment_verifying':
                     return 5;
-                  case 'delivered':
+                  case 'delivering':
                     return 6;
+                  case 'delivered':
+                    return 7;
                   default:
                     return -1;
                 }
@@ -635,96 +641,51 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         style: TextStyle(fontSize: 11),
                       ),
                       const SizedBox(height: 12),
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF007DFE,
-                              ).withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.qr_code_2,
-                                size: 64,
-                                color: Color(0xFF007DFE),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '₱${downPayment.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF007DFE),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _downPaymentRefController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter 13-digit Reference No.',
-                          hintStyle: const TextStyle(fontSize: 11),
-                          isDense: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE8D5C4),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF007DFE),
+                            backgroundColor: const Color(0xFF0053E0), // GCash blue
                             foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () async {
-                            if (_downPaymentRefController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Please enter reference number',
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            setState(() {
-                              _localStatus = 'ready_to_bake';
-                              _localStatusLabel = '💰 Down Payment Paid';
-                            });
-                            try {
-                              await FirebaseFirestore.instance
-                                  .collection('orders')
-                                  .doc(widget.orderNumber)
-                                  .set({
-                                    'downPaymentReference':
-                                        _downPaymentRefController.text.trim(),
-                                    'status': 'ready_to_bake',
-                                    'statusLabel': '💰 Down Payment Paid',
-                                  }, SetOptions(merge: true));
-                            } catch (e) {
-                              debugPrint('Optimistic update failed: $e');
-                            }
+                          onPressed: () {
+                            GCashPortalModal.show(
+                              context: context,
+                              amount: downPayment,
+                              qrAssetPath: 'assets/images/qr_code.jpg',
+                              onSubmit: (ref, screenshot) async {
+                                setState(() {
+                                  _localStatus = 'ready_to_bake';
+                                  _localStatusLabel = '💰 Down Payment Paid';
+                                });
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('orders')
+                                      .doc(widget.orderNumber)
+                                      .set({
+                                        'downPaymentReference': ref,
+                                        'downpaymentProofBase64': screenshot,
+                                        'status': 'ready_to_bake',
+                                        'statusLabel': '💰 Down Payment Paid',
+                                      }, SetOptions(merge: true));
+                                } catch (e) {
+                                  debugPrint('Optimistic update failed: $e');
+                                }
+                              },
+                            );
                           },
-                          child: const Text('Submit Payment Reference'),
+                          icon: const Icon(Icons.qr_code_scanner, size: 20),
+                          label: const Text(
+                            'Pay with GCash',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -778,97 +739,51 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF007DFE,
-                              ).withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.qr_code_2,
-                                size: 64,
-                                color: Color(0xFF007DFE),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '₱${balance.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF007DFE),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _balanceRefController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter 13-digit Reference No.',
-                          hintStyle: const TextStyle(fontSize: 11),
-                          isDense: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE8D5C4),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF007DFE),
+                            backgroundColor: const Color(0xFF0053E0), // GCash blue
                             foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () async {
-                            if (_balanceRefController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Please enter reference number',
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            setState(() {
-                              _localStatus = 'baked_payment_verifying';
-                              _localStatusLabel = '⏳ Verifying Final Payment';
-                            });
-                            try {
-                              await FirebaseFirestore.instance
-                                  .collection('orders')
-                                  .doc(widget.orderNumber)
-                                  .set({
-                                    'balanceReference': _balanceRefController
-                                        .text
-                                        .trim(),
-                                    'status': 'baked_payment_verifying',
-                                    'statusLabel': '⏳ Verifying Final Payment',
-                                  }, SetOptions(merge: true));
-                            } catch (e) {
-                              debugPrint('Optimistic update failed: $e');
-                            }
+                          onPressed: () {
+                            GCashPortalModal.show(
+                              context: context,
+                              amount: balance,
+                              qrAssetPath: 'assets/images/qr_code.jpg',
+                              onSubmit: (ref, screenshot) async {
+                                setState(() {
+                                  _localStatus = 'baked_payment_verifying';
+                                  _localStatusLabel = '⏳ Verifying Final Payment';
+                                });
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('orders')
+                                      .doc(widget.orderNumber)
+                                      .set({
+                                        'balanceReference': ref,
+                                        'finalPaymentProofBase64': screenshot,
+                                        'status': 'baked_payment_verifying',
+                                        'statusLabel': '⏳ Verifying Final Payment',
+                                      }, SetOptions(merge: true));
+                                } catch (e) {
+                                  debugPrint('Optimistic update failed: $e');
+                                }
+                              },
+                            );
                           },
-                          child: const Text('Submit Payment Reference'),
+                          icon: const Icon(Icons.qr_code_scanner, size: 20),
+                          label: const Text(
+                            'Pay Final Balance via GCash',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -898,14 +813,34 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         ),
                       ),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Contacting rider...')),
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text(
+                              'Contact Admin',
+                              style: TextStyle(
+                                color: Color(0xFF8E4A23),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            content: const Text(
+                              'Please contact the Kitchen Admin at:\n\n09950829180',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  'Close',
+                                  style: TextStyle(color: Color(0xFF8E4A23)),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                       icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
-                      label: const Text(
-                        'Contact Delivery Rider / Kitchen Admin',
-                      ),
+                      label: const Text('Contact Kitchen Admin'),
                     ),
                   ),
                 )

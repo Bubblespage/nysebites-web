@@ -915,9 +915,30 @@ class AdminModals {
             ),
           ],
         ),
-        content: Text(
-          'Confirm receipt of payment from $customer for the amount of $total before forwarding to the kitchen bake pipeline.',
-          style: const TextStyle(fontSize: 12.5, color: textMuted, height: 1.4),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Confirm receipt of payment from $customer for the amount of $total before forwarding to the kitchen bake pipeline.',
+              style: const TextStyle(fontSize: 12.5, color: textMuted, height: 1.4),
+            ),
+            if (order['paymentProofBase64'] != null || order['downpaymentProofBase64'] != null) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Payment Screenshot Attachment:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.memory(
+                  base64Decode(order['paymentProofBase64'] ?? order['downpaymentProofBase64']),
+                  height: 180,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
+          ],
         ),
         actions: [
           TextButton(
@@ -1011,6 +1032,24 @@ class AdminModals {
                 ],
               ),
             ),
+            if (order['finalPaymentProofBase64'] != null) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Payment Screenshot Attachment:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(
+                    base64Decode(order['finalPaymentProofBase64']),
+                    height: 180,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             const Text(
               'Once confirmed, the order will be marked as Ready for Delivery.',

@@ -12,6 +12,7 @@
     }
   },
   "hosting": {
+    "site": "nyse-bites",
     "public": "build/web",
     "ignore": [
       "firebase.json",

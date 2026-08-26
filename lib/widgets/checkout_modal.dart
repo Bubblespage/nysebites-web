@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'gcash_portal_modal.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
 
 class CheckoutModal extends StatefulWidget {
@@ -40,6 +43,17 @@ class _CheckoutModalState extends State<CheckoutModal> {
   bool _isGrabCarStandard = true;
   final double _packagingFee = 15.0;
   bool _isSubmitting = false;
+  String? _paymentProofBase64;
+
+  Future<void> _pickPaymentProof() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      setState(() => _paymentProofBase64 = base64Image);
+    }
+  }
 
   @override
   void initState() {
@@ -59,27 +73,13 @@ class _CheckoutModalState extends State<CheckoutModal> {
     super.dispose();
   }
 
-  Future<void> _handlePlaceOrder({
+  Future<void> _submitOrderToFirestore({
     required double activeDeliveryFee,
     required double calculatedGrandTotal,
-    required bool isStoreOpen,
+    String? referenceNumber,
+    String? paymentProofBase64,
+    bool shouldPop = true,
   }) async {
-    if (!isStoreOpen) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Color(0xFFD32F2F),
-          content: Text('The bakery is currently closed for new orders.'),
-        ),
-      );
-      return;
-    }
-
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-
     final String orderId =
         'NB-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
@@ -125,70 +125,153 @@ class _CheckoutModalState extends State<CheckoutModal> {
       if (item.category.toLowerCase() == 'cakes') {
         final key = '${item.name}_${item.description}';
         if (customCakesMap.containsKey(key)) {
-          customCakesMap[key]!['quantity'] = (customCakesMap[key]!['quantity'] as int) + 1;
+          customCakesMap[key]!['quantity'] =
+              (customCakesMap[key]!['quantity'] as int) + 1;
         } else {
           customCakesMap[key] = {
             'name': item.name,
             'description': item.description,
-            'referenceImageBase64': item.customImageBytes != null ? base64Encode(item.customImageBytes!) : null,
+            'referenceImageBase64': item.customImageBytes != null
+                ? base64Encode(item.customImageBytes!)
+                : null,
             'price': item.price,
             'quantity': 1,
           };
         }
       }
     }
-    final List<Map<String, dynamic>> customCakes = customCakesMap.values.toList();
+    final List<Map<String, dynamic>> customCakes = customCakesMap.values
+        .toList();
 
+    await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
+      'id': orderId,
+      'orderNumber': orderId,
+      'customer': _fullNameController.text.trim().isEmpty
+          ? (widget.currentUser ?? 'Online Guest')
+          : _fullNameController.text.trim(),
+      'contact': completePhone,
+      'address': _addressController.text.trim(),
+      'item': itemizedSummary,
+      'specs': deliverySpeedLabel,
+      'referenceNumber': referenceNumber,
+      'note': _noteController.text.trim().isEmpty
+          ? null
+          : _noteController.text.trim(),
+      'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
+      'subtotal': widget.totalAmount,
+      'baseCakePrice': hasCustomCake ? widget.totalAmount : null,
+      'deliveryFee': activeDeliveryFee,
+      'packagingFee': _packagingFee,
+      'status': status,
+      'statusLabel': statusLabel,
+      'payment': 'GCash',
+      'paymentMethod': 'GCash',
+      'deliveryMethod': 'GrabCar',
+      'isCustom': hasCustomCake,
+      'createdAt': FieldValue.serverTimestamp(),
+      'referenceImageBase64': referenceImageBase64,
+      'customCakes': customCakes,
+      'paymentProofBase64': paymentProofBase64,
+    });
+
+    // Trigger Admin Email Notification via EmailJS
     try {
-      await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
-        'id': orderId,
-        'orderNumber': orderId,
-        'customer': _fullNameController.text.trim().isEmpty
-            ? (widget.currentUser ?? 'Online Guest')
-            : _fullNameController.text.trim(),
-        'contact': completePhone,
-        'address': _addressController.text.trim(),
-        'item': itemizedSummary,
-        'specs': deliverySpeedLabel,
-        'referenceNumber': _refNumberController.text.trim().isEmpty
-            ? null
-            : _refNumberController.text.trim(),
-        'note': _noteController.text.trim().isEmpty
-            ? null
-            : _noteController.text.trim(),
-        'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
-        'subtotal': widget.totalAmount,
-        'baseCakePrice': hasCustomCake ? widget.totalAmount : null,
-        'deliveryFee': activeDeliveryFee,
-        'packagingFee': _packagingFee,
-        'status': status,
-        'statusLabel': statusLabel,
-        'payment': 'GCash',
-        'paymentMethod': 'GCash',
-        'deliveryMethod': 'GrabCar',
-        'isCustom': hasCustomCake,
-        'createdAt': FieldValue.serverTimestamp(),
-        'referenceImageBase64': referenceImageBase64,
-        'customCakes': customCakes,
-      });
-
-      if (!mounted) return;
-      widget.onOrderSuccess(
-        orderId,
-        widget.cartItems.length,
-        calculatedGrandTotal,
-        'GCash',
+      final customerName = _fullNameController.text.trim().isEmpty
+          ? (widget.currentUser ?? 'Online Guest')
+          : _fullNameController.text.trim();
+          
+      final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'service_id': 'service_lknatb4',
+          'template_id': 'template_slz600e',
+          'user_id': 'v7VSBAFbXx0Qqp1l8',
+          'template_params': {
+            'order_id': orderId,
+            'customer_name': customerName,
+            'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
+            'items': itemizedSummary,
+          },
+        }),
       );
-      Navigator.pop(context);
+      
+      debugPrint('EmailJS Response: ${response.statusCode} - ${response.body}');
     } catch (e) {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFFD32F2F),
-            content: Text('Failed to submit order: $e'),
-          ),
+      debugPrint('Failed to queue email notification: $e');
+    }
+
+    if (!mounted) return;
+    widget.onOrderSuccess(
+      orderId,
+      widget.cartItems.length,
+      calculatedGrandTotal,
+      'GCash',
+    );
+    if (shouldPop) {
+      Navigator.pop(context); // Close the checkout modal
+    }
+  }
+
+  Future<void> _handlePlaceOrder({
+    required double activeDeliveryFee,
+    required double calculatedGrandTotal,
+    required bool isStoreOpen,
+    required String gcashQrPath,
+  }) async {
+    if (!isStoreOpen) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFD32F2F),
+          content: Text('The bakery is currently closed for new orders.'),
+        ),
+      );
+      return;
+    }
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (calculatedGrandTotal > 0) {
+      final success = await GCashPortalModal.show(
+        context: context,
+        amount: calculatedGrandTotal,
+        qrAssetPath: gcashQrPath,
+        onSubmit: (ref, screenshot) async {
+          await _submitOrderToFirestore(
+            activeDeliveryFee: activeDeliveryFee,
+            calculatedGrandTotal: calculatedGrandTotal,
+            referenceNumber: ref,
+            paymentProofBase64: screenshot,
+            shouldPop: false, // GCash modal handles its own success state and pop
+          );
+        },
+      );
+      
+      if (success == true && mounted) {
+        Navigator.pop(context);
+      }
+    } else {
+      setState(() => _isSubmitting = true);
+      try {
+        await _submitOrderToFirestore(
+          activeDeliveryFee: activeDeliveryFee,
+          calculatedGrandTotal: calculatedGrandTotal,
         );
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFFD32F2F),
+              content: Text('Failed to submit order: $e'),
+            ),
+          );
+        }
       }
     }
   }
@@ -233,8 +316,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
               final data = snapshot.data?.data() ?? {};
 
               final bool isStoreOpen = data['isStoreOpen'] ?? true;
-              final String gcashQr =
-                  data['gcashQrUrl'] ?? 'assets/images/gcash_qr.png';
+              String gcashQr =
+                  data['gcashQrUrl'] ?? 'assets/images/qr_code.jpg';
+              if (gcashQr == 'assets/images/gcash_qr.png') {
+                gcashQr = 'assets/images/qr_code.jpg';
+              }
 
               final double standardDeliveryFee =
                   (data['standardDeliveryFee'] ?? data['deliveryFee'] ?? 80.0)
@@ -473,146 +559,70 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             if (grandTotal > 0) ...[
                               _sectionLabel('PAYMENT METHOD'),
                               const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFF8E4A23),
-                                  width: 1.5,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF8E4A23),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.account_balance_wallet_outlined,
+                                      size: 18,
+                                      color: Color(0xFF8E4A23),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'GCash (Online Payment Only)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Color(0xFF2E1B10),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.account_balance_wallet_outlined,
-                                    size: 18,
-                                    color: Color(0xFF8E4A23),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'GCash (Online Payment Only)',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: Color(0xFF2E1B10),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFAF2E9),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: const Color(0xFFE8D0C3),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFAF2E9),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFE8D0C3),
+                                  ),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.info_outline, color: Color(0xFF8E4A23), size: 20),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'You will be redirected to the secure GCash payment portal after clicking Place Sweet Order.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF756256),
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(5),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF8E4A23),
-                                          borderRadius: BorderRadius.circular(
-                                            7,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.qr_code_scanner,
-                                          color: Colors.white,
-                                          size: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      const Expanded(
-                                        child: Text(
-                                          'Official GCash Merchant QR',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: Color(0xFF2E1B10),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: const Color(0xFFE5D5C5),
-                                      ),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: SizedBox(
-                                        width: 140,
-                                        height: 140,
-                                        child: _buildQrImage(gcashQr),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    'Scan with GCash app • Total: ₱${grandTotal.toStringAsFixed(2)}',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF756256),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: _refNumberController,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    decoration: InputDecoration(
-                                      labelText:
-                                          'GCash Payment Reference No. *',
-                                      hintText: 'e.g. 1029384756',
-                                      prefixIcon: const Icon(
-                                        Icons.receipt_long,
-                                        size: 16,
-                                        color: Color(0xFF8E4A23),
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      isDense: true,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: Color(0xFFEFE4D6),
-                                        ),
-                                      ),
-                                    ),
-                                    validator: (v) =>
-                                        (v == null || v.trim().isEmpty)
-                                        ? 'Please enter GCash reference number'
-                                        : null,
-                                  ),
-                                ],
-                              ),
-                            ),
                             ],
-                            
+
                             if (hasCustomCake) ...[
                               const SizedBox(height: 20),
                               _sectionLabel('CUSTOM CAKE PAYMENT'),
@@ -622,12 +632,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFDF8F5),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE8D0C3)),
+                                  border: Border.all(
+                                    color: const Color(0xFFE8D0C3),
+                                  ),
                                 ),
                                 child: const Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.info_outline, size: 20, color: Color(0xFF8E4A23)),
+                                    Icon(
+                                      Icons.info_outline,
+                                      size: 20,
+                                      color: Color(0xFF8E4A23),
+                                    ),
                                     SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
@@ -763,7 +779,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              grandTotal > 0 ? 'Paying via GCash' : 'Custom Cake Inquiry',
+                              grandTotal > 0
+                                  ? 'Paying via GCash'
+                                  : 'Custom Cake Inquiry',
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 color: Color(0xFF756256),
@@ -805,11 +823,14 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           ),
                           onPressed: (_isSubmitting || !isStoreOpen)
                               ? null
-                              : () => _handlePlaceOrder(
-                                  activeDeliveryFee: effectiveDeliveryFee,
-                                  calculatedGrandTotal: grandTotal,
-                                  isStoreOpen: isStoreOpen,
-                                ),
+                              : () {
+                                  _handlePlaceOrder(
+                                    activeDeliveryFee: effectiveDeliveryFee,
+                                    calculatedGrandTotal: grandTotal,
+                                    isStoreOpen: isStoreOpen,
+                                    gcashQrPath: gcashQr,
+                                  );
+                                },
                           icon: _isSubmitting
                               ? const SizedBox(
                                   width: 14,
@@ -826,7 +847,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           label: Text(
                             _isSubmitting
                                 ? 'Submitting...'
-                                : (grandTotal > 0 ? 'Place Sweet Order' : 'Submit Inquiry'),
+                                : (grandTotal > 0
+                                      ? 'Place Sweet Order'
+                                      : 'Submit Inquiry'),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12.5,

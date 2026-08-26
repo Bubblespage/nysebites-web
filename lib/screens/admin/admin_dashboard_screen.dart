@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'tabs/live_orders_tab.dart';
 import 'tabs/dashboard_overview_tab.dart';
@@ -43,6 +44,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   late Animation<Offset> _slideAnim;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot>? _ordersSubscription;
+  bool _isFirstSnapshot = true;
 
   @override
   void initState() {
@@ -63,6 +66,52 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
         );
     _animController.forward();
+    
+    _ordersSubscription = _firestore.collection('orders').snapshots().listen((snapshot) {
+      if (_isFirstSnapshot) {
+        _isFirstSnapshot = false;
+        return;
+      }
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>? ?? {};
+          final orderId = data['id'] ?? 'Unknown Order';
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.notifications_active, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'New Order Received: $orderId',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF10B981), // Green
+                duration: const Duration(seconds: 5),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                margin: const EdgeInsets.all(16),
+                action: SnackBarAction(
+                  label: 'VIEW',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    _switchTab(0); // Switch to Live Orders tab
+                  },
+                ),
+              ),
+            );
+          }
+        }
+      }
+    });
   }
 
   @override
@@ -70,6 +119,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     WidgetsBinding.instance.removeObserver(
       this,
     ); // Clean up mobile browser observer hook
+    _ordersSubscription?.cancel();
     _animController.dispose();
     _searchController.dispose();
     super.dispose();
