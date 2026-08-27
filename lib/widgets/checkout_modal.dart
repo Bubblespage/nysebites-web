@@ -436,9 +436,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
                       physics: isWebDesktop
                           ? const NeverScrollableScrollPhysics()
                           : null,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isSmallScreen ? 16 : 22,
-                        vertical: isSmallScreen ? 12 : 24,
+                      padding: EdgeInsets.fromLTRB(
+                        isSmallScreen ? 16 : 22,
+                        isSmallScreen ? 12 : 24,
+                        isSmallScreen ? 16 : 22,
+                        isSmallScreen ? 80 : 24, // extra bottom so Grand Total clears the sticky bar on mobile
                       ),
                       child: Form(
                         key: _formKey,
@@ -1398,7 +1400,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       thickness: 1.5,
                                       height: 1,
                                     ),
-                                    const SizedBox(height: 14),
+                                    const SizedBox(height: 8),
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -1486,7 +1488,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
-                      vertical: 18,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -1547,7 +1549,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       ? 'Paying via GCash'
                                       : 'Custom Cake Inquiry',
                                   style: const TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 9.5,
                                     color: Color(0xFF756256),
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1556,7 +1558,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   Text(
                                     '₱${grandTotal.toStringAsFixed(2)}',
                                     style: const TextStyle(
-                                      fontSize: 17,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF8E4A23),
                                     ),
@@ -1565,7 +1567,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   const Text(
                                     'Payment via Tracker',
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF8E4A23),
                                     ),
@@ -1597,8 +1599,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   backgroundColor: Colors.transparent,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 16,
+                                    horizontal: 22,
+                                    vertical: 11,
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
