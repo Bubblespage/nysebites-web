@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:printing/printing.dart';
+import '../../../utils/pdf_report_generator.dart';
 
 class DashboardOverviewTab extends StatefulWidget {
   final List<Map<String, dynamic>> orders;
@@ -117,6 +119,34 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Dashboard Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textDark)),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final stats = {
+                      'totalSales': realizedRevenue.toStringAsFixed(2),
+                      'totalOrders': widget.orders.length.toString(),
+                      'pendingOrders': (widget.orders.length - completedOrders.length).toString(),
+                      'completedOrders': completedOrders.length.toString(),
+                    };
+                    final bytes = await PdfReportGenerator.generateDashboardReport(stats);
+                    await Printing.sharePdf(bytes: bytes, filename: 'dashboard_report.pdf');
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 16),
+                  label: Text(isMobile ? 'PDF' : 'Export PDF'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: brandCocoa,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             // Section 1: Responsive Metrics Grid
             Wrap(
               spacing: 12,

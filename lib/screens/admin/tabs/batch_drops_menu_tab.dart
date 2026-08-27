@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:printing/printing.dart';
+import '../../../utils/pdf_report_generator.dart';
 import '../admin_modals.dart';
 
 class BatchDropsMenuTab extends StatefulWidget {
@@ -149,18 +152,54 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                         ),
                         if (isSuperAdmin) ...[
                           const SizedBox(height: 14),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: brandCocoa,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: brandCocoa,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  onPressed: () => AdminModals.showAddProductDialog(context, widget.onAddProduct),
+                                  icon: const Icon(Icons.cookie_outlined, size: 16, color: Colors.white),
+                                  label: const Text('+ Bake New SKU Drop', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                                ),
                               ),
-                              onPressed: () => AdminModals.showAddProductDialog(context, widget.onAddProduct),
-                              icon: const Icon(Icons.cookie_outlined, size: 16, color: Colors.white),
-                              label: const Text('+ Bake New SKU Drop', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () async {
+                                  final bytes = await PdfReportGenerator.generateBatchMenuReport(
+                                    _filteredInventory,
+                                    filterInfo: _activeCategory,
+                                  );
+                                  final filename = 'batch_menu_${_activeCategory.toLowerCase()}.pdf';
+                                  await Printing.sharePdf(bytes: bytes, filename: filename);
+                                },
+                                icon: const Icon(Icons.download_rounded, color: brandCocoa),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFBF7F2),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ] else ...[
+                          const SizedBox(height: 14),
+                          IconButton(
+                            onPressed: () async {
+                              final bytes = await PdfReportGenerator.generateBatchMenuReport(
+                                _filteredInventory,
+                                filterInfo: _activeCategory,
+                              );
+                              final filename = 'batch_menu_${_activeCategory.toLowerCase()}.pdf';
+                              await Printing.sharePdf(bytes: bytes, filename: filename);
+                            },
+                            icon: const Icon(Icons.download_rounded, color: brandCocoa),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFFBF7F2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
                             ),
                           ),
                         ],
@@ -212,22 +251,50 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                             ),
                           ],
                         ),
-                        if (isSuperAdmin)
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: brandCocoa,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        Row(
+                          children: [
+                            if (isSuperAdmin) ...[
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: brandCocoa,
+                                  foregroundColor: Colors.white,
+                                  elevation: 2,
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                                onPressed: () => AdminModals.showAddProductDialog(context, widget.onAddProduct),
+                                icon: const Icon(Icons.cookie_outlined, size: 16, color: Colors.white),
+                                label: const Text(
+                                  '+ Bake New SKU Drop',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                final bytes = await PdfReportGenerator.generateBatchMenuReport(
+                                  _filteredInventory,
+                                  filterInfo: _activeCategory,
+                                );
+                                final filename = 'batch_menu_${_activeCategory.toLowerCase()}.pdf';
+                                await Printing.sharePdf(bytes: bytes, filename: filename);
+                              },
+                              icon: const Icon(Icons.download_rounded, size: 16),
+                              label: const Text('Export PDF'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFDF4E9),
+                                foregroundColor: brandCocoa,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: const BorderSide(color: brandCocoa, width: 1.5),
+                                ),
+                              ),
                             ),
-                            onPressed: () => AdminModals.showAddProductDialog(context, widget.onAddProduct),
-                            icon: const Icon(Icons.cookie_outlined, size: 16, color: Colors.white),
-                            label: const Text(
-                              '+ Bake New SKU Drop',
-                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
-                            ),
-                          ),
+                          ],
+                        ),
                       ],
                     ),
             ),

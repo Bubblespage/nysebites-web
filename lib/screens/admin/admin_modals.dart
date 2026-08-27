@@ -192,6 +192,8 @@ class AdminModals {
                 _cleanPdfCurrency(subtotalNum),
               ),
               _buildReceiptRow('Delivery Fee:', _cleanPdfCurrency(deliveryFee)),
+              if (order['packagingFee'] != null && order['packagingFee'] > 0)
+                _buildReceiptRow('Packaging Fee:', _cleanPdfCurrency(order['packagingFee'])),
               pw.SizedBox(height: 4),
               _buildDashedLine(),
               pw.SizedBox(height: 4),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:printing/printing.dart';
+import '../../../utils/pdf_report_generator.dart';
 
 class SweetNotesTab extends StatelessWidget {
   final List<Map<String, dynamic>> sweetNotes;
@@ -31,18 +33,45 @@ class SweetNotesTab extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Sweet Notes & Customer Inquiries',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textDark,
-              ),
-            ),
-            const SizedBox(height: 3),
-            const Text(
-              'Messages and customer catering inquiries received from the Sweet Note form',
-              style: TextStyle(fontSize: 11.5, color: textMuted),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Sweet Notes & Customer Inquiries',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Messages and customer catering inquiries received from the Sweet Note form',
+                        style: TextStyle(fontSize: 11.5, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final bytes = await PdfReportGenerator.generateSweetNotesReport(sweetNotes);
+                    await Printing.sharePdf(bytes: bytes, filename: 'sweet_notes_report.pdf');
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 16),
+                  label: Text(isSmallMobile ? 'PDF' : 'Export PDF'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: brandCocoa,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 18),
             if (sweetNotes.isEmpty)

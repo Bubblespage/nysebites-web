@@ -40,10 +40,28 @@ class _CheckoutModalState extends State<CheckoutModal> {
   final TextEditingController _refNumberController = TextEditingController();
 
   final String _selectedPaymentMethod = 'GCash';
-  bool _isGrabCarStandard = true;
   final double _packagingFee = 15.0;
   bool _isSubmitting = false;
   String? _paymentProofBase64;
+  DateTime? _targetDate;
+  String? _targetTimeSlot;
+
+  List<String> _getAvailableTimeSlots(DateTime date) {
+    final now = DateTime.now();
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
+    if (!isToday) {
+      return ['1:00 PM - 3:00 PM', '3:00 PM - 6:00 PM', '6:00 PM - 8:00 PM'];
+    }
+
+    final List<String> slots = [];
+    if (now.hour < 13) slots.add('1:00 PM - 3:00 PM');
+    if (now.hour < 16) slots.add('3:00 PM - 6:00 PM');
+    if (now.hour < 18) slots.add('6:00 PM - 8:00 PM');
+
+    if (slots.isEmpty) return ['ASAP (Subject to GrabCar)'];
+    return slots;
+  }
 
   Future<void> _pickPaymentProof() async {
     final picker = ImagePicker();
@@ -74,7 +92,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
   }
 
   Future<void> _submitOrderToFirestore({
-    required double activeDeliveryFee,
     required double calculatedGrandTotal,
     String? referenceNumber,
     String? paymentProofBase64,
@@ -103,9 +120,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
       statusLabel = '🎂 Needs Spec Review';
     }
 
-    final String deliverySpeedLabel = _isGrabCarStandard
-        ? 'GrabCar Standard Delivery (25-35 mins)'
-        : 'GrabCar Priority Express';
+    final String deliverySpeedLabel = 'GrabCar Delivery (Paid to Rider)';
 
     final String rawPhone = _phoneController.text.trim();
     final String completePhone = rawPhone.startsWith('+63')
@@ -160,7 +175,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
       'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
       'subtotal': widget.totalAmount,
       'baseCakePrice': hasCustomCake ? widget.totalAmount : null,
-      'deliveryFee': activeDeliveryFee,
+      'deliveryFee': 0.0, // Paid to rider
       'packagingFee': _packagingFee,
       'status': status,
       'statusLabel': statusLabel,
@@ -169,6 +184,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
       'deliveryMethod': 'GrabCar',
       'isCustom': hasCustomCake,
       'createdAt': FieldValue.serverTimestamp(),
+      'targetDate': _targetDate != null
+          ? Timestamp.fromDate(_targetDate!)
+          : FieldValue.serverTimestamp(),
+      'targetTimeSlot': _targetTimeSlot,
       'referenceImageBase64': referenceImageBase64,
       'customCakes': customCakes,
       'paymentProofBase64': paymentProofBase64,
@@ -179,13 +198,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
       final customerName = _fullNameController.text.trim().isEmpty
           ? (widget.currentUser ?? 'Online Guest')
           : _fullNameController.text.trim();
-          
+
       final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'service_id': 'service_lknatb4',
           'template_id': 'template_slz600e',
@@ -198,7 +215,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
           },
         }),
       );
-      
+
       debugPrint('EmailJS Response: ${response.statusCode} - ${response.body}');
     } catch (e) {
       debugPrint('Failed to queue email notification: $e');
@@ -217,7 +234,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
   }
 
   Future<void> _handlePlaceOrder({
-    required double activeDeliveryFee,
     required double calculatedGrandTotal,
     required bool isStoreOpen,
     required String gcashQrPath,
@@ -236,6 +252,30 @@ class _CheckoutModalState extends State<CheckoutModal> {
       return;
     }
 
+    final bool hasCustomCake = widget.cartItems.any(
+      (item) => item.category.toLowerCase() == 'cakes',
+    );
+    if (hasCustomCake && _targetDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFD32F2F),
+          content: Text(
+            'Please select a scheduled delivery date for your custom cake.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (_targetDate != null && _targetTimeSlot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFD32F2F),
+          content: Text('Please select a delivery time slot.'),
+        ),
+      );
+      return;
+    }
+
     if (calculatedGrandTotal > 0) {
       final success = await GCashPortalModal.show(
         context: context,
@@ -243,15 +283,15 @@ class _CheckoutModalState extends State<CheckoutModal> {
         qrAssetPath: gcashQrPath,
         onSubmit: (ref, screenshot) async {
           await _submitOrderToFirestore(
-            activeDeliveryFee: activeDeliveryFee,
             calculatedGrandTotal: calculatedGrandTotal,
             referenceNumber: ref,
             paymentProofBase64: screenshot,
-            shouldPop: false, // GCash modal handles its own success state and pop
+            shouldPop:
+                false, // GCash modal handles its own success state and pop
           );
         },
       );
-      
+
       if (success == true && mounted) {
         Navigator.pop(context);
       }
@@ -259,7 +299,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
       setState(() => _isSubmitting = true);
       try {
         await _submitOrderToFirestore(
-          activeDeliveryFee: activeDeliveryFee,
           calculatedGrandTotal: calculatedGrandTotal,
         );
       } catch (e) {
@@ -282,28 +321,33 @@ class _CheckoutModalState extends State<CheckoutModal> {
     final double screenWidth = mediaQuery.size.width;
     final double screenHeight = mediaQuery.size.height;
     final bool isSmallScreen = screenWidth < 480;
+    final bool isWebDesktop = screenWidth >= 800;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(
         horizontal: isSmallScreen ? 12 : 24,
-        vertical: isSmallScreen ? 16 : 24,
+        vertical: 12,
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 580,
-          maxHeight: screenHeight * 0.90,
+          maxWidth: isWebDesktop ? 980 : 580,
+          maxHeight: screenHeight * 0.97,
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFA),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFEFE4D6)),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFF7F2), Color(0xFFFFFFFF)],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFFFEAD9), width: 1.5),
             boxShadow: const [
               BoxShadow(
-                color: Color.fromRGBO(60, 34, 22, 0.22),
-                blurRadius: 28,
-                offset: Offset(0, 12),
+                color: Color.fromRGBO(60, 34, 22, 0.15),
+                blurRadius: 35,
+                offset: Offset(0, 15),
               ),
             ],
           ),
@@ -322,16 +366,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                 gcashQr = 'assets/images/qr_code.jpg';
               }
 
-              final double standardDeliveryFee =
-                  (data['standardDeliveryFee'] ?? data['deliveryFee'] ?? 80.0)
-                      .toDouble();
-              final double scheduledDeliveryFee =
-                  (data['scheduledDeliveryFee'] ?? 70.0).toDouble();
-
-              final double effectiveDeliveryFee = _isGrabCarStandard
-                  ? standardDeliveryFee
-                  : scheduledDeliveryFee;
-
               double regularItemsTotal = 0.0;
               for (final item in widget.cartItems) {
                 if (item.category.toLowerCase() != 'cakes') {
@@ -340,7 +374,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
               }
 
               final double grandTotal = regularItemsTotal > 0
-                  ? regularItemsTotal + effectiveDeliveryFee + _packagingFee
+                  ? regularItemsTotal + _packagingFee
                   : 0.0;
 
               final bool hasCustomCake = widget.cartItems.any(
@@ -396,465 +430,1218 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   ),
                   const Divider(color: Color(0xFFEFE4D6), height: 1),
 
-                  Expanded(
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.all(isSmallScreen ? 16 : 22),
+                      physics: isWebDesktop
+                          ? const NeverScrollableScrollPhysics()
+                          : null,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmallScreen ? 16 : 22,
+                        vertical: isSmallScreen ? 12 : 24,
+                      ),
                       child: Form(
                         key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _sectionLabel('CONTACT & DELIVERY DETAILS'),
-                            const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _fullNameController,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2E1B10),
-                              ),
-                              decoration: InputDecoration(
-                                labelText: 'Recipient Full Name *',
-                                hintText: 'e.g. Maria Santos',
-                                prefixIcon: const Icon(
-                                  Icons.person_outline,
-                                  size: 18,
-                                  color: Color(0xFF8E4A23),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Please enter recipient name'
-                                  : null,
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2E1B10),
-                              ),
-                              decoration: InputDecoration(
-                                labelText: 'Mobile Number *',
-                                hintText: '917 123 4567',
-                                prefixIcon: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  alignment: Alignment.centerLeft,
-                                  width: 78,
-                                  child: const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.phone_outlined,
-                                        size: 16,
-                                        color: Color(0xFF8E4A23),
+                        child: Builder(
+                          builder: (context) {
+                            final leftCol = <Widget>[
+                              _sectionLabel('SCHEDULE DELIVERY'),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final now = DateTime.now();
+                                        final firstDate = hasCustomCake
+                                            ? now.add(const Duration(days: 14))
+                                            : now;
+                                        final initialDate =
+                                            _targetDate != null &&
+                                                _targetDate!.isAfter(firstDate)
+                                            ? _targetDate!
+                                            : firstDate;
+                                        final picked = await showDialog<DateTime>(
+                                          context: context,
+                                          builder: (context) {
+                                            DateTime tempDate = initialDate;
+                                            return Dialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              backgroundColor: Colors.white,
+                                              child: Container(
+                                                width: 340,
+                                                padding: const EdgeInsets.all(
+                                                  20.0,
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Text(
+                                                      'Select Delivery Date',
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Color(
+                                                          0xFF2E1B10,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    Theme(
+                                                      data: Theme.of(context).copyWith(
+                                                        colorScheme:
+                                                            const ColorScheme.light(
+                                                              primary: Color(
+                                                                0xFF8E4A23,
+                                                              ),
+                                                              onPrimary:
+                                                                  Colors.white,
+                                                              onSurface: Color(
+                                                                0xFF2E1B10,
+                                                              ),
+                                                            ),
+                                                      ),
+                                                      child: SizedBox(
+                                                        width: 300,
+                                                        child:
+                                                            CalendarDatePicker(
+                                                              initialDate:
+                                                                  initialDate,
+                                                              firstDate:
+                                                                  firstDate,
+                                                              lastDate: now.add(
+                                                                const Duration(
+                                                                  days: 90,
+                                                                ),
+                                                              ),
+                                                              onDateChanged:
+                                                                  (date) =>
+                                                                      tempDate =
+                                                                          date,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                context,
+                                                              ),
+                                                          child: const Text(
+                                                            'Cancel',
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                0xFF756256,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                const Color(
+                                                                  0xFF8E4A23,
+                                                                ),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    8,
+                                                                  ),
+                                                            ),
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      20,
+                                                                ),
+                                                          ),
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                context,
+                                                                tempDate,
+                                                              ),
+                                                          child: const Text(
+                                                            'Confirm',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                        if (picked != null) {
+                                          setState(() {
+                                            _targetDate = picked;
+                                            final validSlots =
+                                                _getAvailableTimeSlots(picked);
+                                            if (_targetTimeSlot == null ||
+                                                !validSlots.contains(
+                                                  _targetTimeSlot,
+                                                )) {
+                                              _targetTimeSlot =
+                                                  validSlots.first;
+                                            }
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFFEFE4D6),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFF8E4A23,
+                                              ).withValues(alpha: 0.04),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.calendar_month_rounded,
+                                              size: 18,
+                                              color: Color(0xFF8E4A23),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                _targetDate == null
+                                                    ? (hasCustomCake
+                                                          ? 'Pick Date (Required)'
+                                                          : 'ASAP Delivery')
+                                                    : '${_targetDate!.month}/${_targetDate!.day}/${_targetDate!.year}',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                      _targetDate == null &&
+                                                          hasCustomCake
+                                                      ? const Color(0xFFD32F2F)
+                                                      : const Color(0xFF8E4A23),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        '+63',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12.5,
-                                          color: Color(0xFF2E1B10),
+                                    ),
+                                  ),
+                                  if (_targetDate != null) ...[
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 4,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFFEFE4D6),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFF8E4A23,
+                                              ).withValues(alpha: 0.04),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: _targetTimeSlot,
+                                            isExpanded: true,
+                                            isDense: true,
+                                            icon: const Icon(
+                                              Icons.access_time,
+                                              color: Color(0xFF8E4A23),
+                                              size: 18,
+                                            ),
+                                            style: const TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF8E4A23),
+                                            ),
+                                            dropdownColor: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            items:
+                                                _getAvailableTimeSlots(
+                                                  _targetDate!,
+                                                ).map((slot) {
+                                                  String label = slot;
+                                                  if (slot.startsWith('1:00'))
+                                                    label = '1:00 PM - 3:00 PM';
+                                                  else if (slot.startsWith(
+                                                    '3:00',
+                                                  ))
+                                                    label = '3:00 PM - 6:00 PM';
+                                                  else if (slot.startsWith(
+                                                    '6:00',
+                                                  ))
+                                                    label = '6:00 PM - 8:00 PM';
+                                                  else
+                                                    label = slot;
+                                                  return DropdownMenuItem(
+                                                    value: slot,
+                                                    child: Text(label),
+                                                  );
+                                                }).toList(),
+                                            onChanged: (val) {
+                                              if (val != null)
+                                                setState(
+                                                  () => _targetTimeSlot = val,
+                                                );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (!hasCustomCake) ...[
+                                      const SizedBox(width: 8),
+                                      InkWell(
+                                        onTap: () => setState(() {
+                                          _targetDate = null;
+                                          _targetTimeSlot = null;
+                                        }),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            border: Border.all(
+                                              color: const Color(0xFFFFD6D6),
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(
+                                                  0xFFD32F2F,
+                                                ).withValues(alpha: 0.06),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            size: 18,
+                                            color: Color(0xFFD32F2F),
+                                          ),
                                         ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
+                                  ],
+                                ],
                               ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty)
-                                  return 'Please enter your mobile number';
-                                final cleaned = v.replaceAll(RegExp(r'\D'), '');
-                                if (cleaned.length < 10)
-                                  return 'Please enter a valid 10 or 11-digit mobile number';
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _addressController,
-                              maxLines: 2,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2E1B10),
+                              if (hasCustomCake)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8, left: 4),
+                                  child: Text(
+                                    '* Custom cakes require a minimum 2-week lead time.',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF756256),
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 28),
+                              _sectionLabel('CONTACT & DELIVERY DETAILS'),
+                              const SizedBox(height: 14),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _fullNameController,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF2E1B10),
+                                      ),
+                                      decoration: InputDecoration(
+                                        labelText: 'Recipient Name *',
+                                        hintText: 'e.g. Maria Santos',
+                                        prefixIcon: const Padding(
+                                          padding: EdgeInsets.only(
+                                            left: 14,
+                                            right: 10,
+                                          ),
+                                          child: Icon(
+                                            Icons.person_outline,
+                                            size: 18,
+                                            color: Color(0xFF8E4A23),
+                                          ),
+                                        ),
+                                        prefixIconConstraints:
+                                            const BoxConstraints(
+                                              minWidth: 0,
+                                              minHeight: 0,
+                                            ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFEFE4D6),
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFEFE4D6),
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFF8E4A23),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                      validator: (v) =>
+                                          (v == null || v.trim().isEmpty)
+                                          ? 'Required'
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _phoneController,
+                                      keyboardType: TextInputType.phone,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF2E1B10),
+                                      ),
+                                      decoration: InputDecoration(
+                                        labelText: 'Mobile Number *',
+                                        hintText: '917 123 4567',
+                                        prefixIcon: Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 4,
+                                            top: 4,
+                                            bottom: 4,
+                                            right: 12,
+                                          ),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFDF8F5),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: const Color(0xFFE8D0C3),
+                                              ),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.phone_outlined,
+                                                  size: 14,
+                                                  color: Color(0xFF8E4A23),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  '+63',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 12,
+                                                    color: Color(0xFF2E1B10),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        prefixIconConstraints:
+                                            const BoxConstraints(
+                                              minWidth: 0,
+                                              minHeight: 0,
+                                            ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFEFE4D6),
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFFEFE4D6),
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFF8E4A23),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                      validator: (v) {
+                                        if (v == null || v.trim().isEmpty) {
+                                          return 'Required';
+                                        }
+                                        final cleaned = v.replaceAll(
+                                          RegExp(r'\D'),
+                                          '',
+                                        );
+                                        if (cleaned.length < 10) {
+                                          return 'Invalid number';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                              decoration: InputDecoration(
-                                labelText: 'Complete Delivery Address *',
-                                hintText:
-                                    'Unit/House No., Street, Barangay, Subdivision, City',
-                                prefixIcon: const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 18,
-                                  color: Color(0xFF8E4A23),
+                              const SizedBox(height: 14),
+                              TextFormField(
+                                controller: _addressController,
+                                minLines: 1,
+                                maxLines: 3,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2E1B10),
                                 ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
-                                  ),
-                                ),
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Please enter your full delivery address'
-                                  : null,
-                            ),
-                            const SizedBox(height: 20),
-
-                            _sectionLabel('GRABCAR DELIVERY SPEED'),
-                            const SizedBox(height: 8),
-                            Column(
-                              children: [
-                                _deliveryOptionCard(
-                                  icon: Icons.local_taxi,
-                                  title: 'GrabCar Standard Delivery',
-                                  subtitle: 'Direct dispatch (25-35 mins)',
-                                  priceText:
-                                      '₱${standardDeliveryFee.toStringAsFixed(2)}',
-                                  isSelected: _isGrabCarStandard,
-                                  onTap: () =>
-                                      setState(() => _isGrabCarStandard = true),
-                                ),
-                                const SizedBox(height: 8),
-                                _deliveryOptionCard(
-                                  icon: Icons.bolt,
-                                  title: 'GrabCar Priority Express',
-                                  subtitle:
-                                      'Dedicated rider straight to doorstep',
-                                  priceText:
-                                      '₱${scheduledDeliveryFee.toStringAsFixed(2)}',
-                                  isSelected: !_isGrabCarStandard,
-                                  onTap: () => setState(
-                                    () => _isGrabCarStandard = false,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-
-                            if (grandTotal > 0) ...[
-                              _sectionLabel('PAYMENT METHOD'),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFF8E4A23),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.account_balance_wallet_outlined,
+                                decoration: InputDecoration(
+                                  labelText: 'Complete Delivery Address *',
+                                  hintText:
+                                      'Unit/House No., Street, Barangay, Subdivision, City',
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.only(
+                                      left: 14,
+                                      right: 10,
+                                    ),
+                                    child: Icon(
+                                      Icons.location_on_outlined,
                                       size: 18,
                                       color: Color(0xFF8E4A23),
                                     ),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      'GCash (Online Payment Only)',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: Color(0xFF2E1B10),
-                                      ),
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(
+                                    minWidth: 0,
+                                    minHeight: 0,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  errorStyle: const TextStyle(
+                                    color: Color(0xFFD32F2F),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFEFE4D6),
                                     ),
-                                  ],
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFEFE4D6),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF8E4A23),
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE57373),
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFD32F2F),
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                    ? 'Please enter your full delivery address'
+                                    : null,
+                              ),
+                              const SizedBox(height: 28),
+
+                              // Rider / Bake Notes
+                              _sectionLabel('RIDER / BAKE NOTES (Optional)'),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _noteController,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: Color(0xFF2E1B10),
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'e.g. call upon arrival...',
+                                  hintStyle: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF9E8E84),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFFDF8F5),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE8D0C3),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE8D0C3),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF8E4A23),
+                                      width: 1.5,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 14),
-
+                              const SizedBox(height: 40),
                               Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(14),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFAF2E9),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFE8D0C3),
+                                    color: const Color(0xFFFFEAD9),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.info_outline, color: Color(0xFF8E4A23), size: 20),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'You will be redirected to the secure GCash payment portal after clicking Place Sweet Order.',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF756256),
-                                          height: 1.4,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-
-                            if (hasCustomCake) ...[
-                              const SizedBox(height: 20),
-                              _sectionLabel('CUSTOM CAKE PAYMENT'),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFDF8F5),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFFE8D0C3),
-                                  ),
-                                ),
-                                child: const Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      size: 20,
+                                    const Icon(
+                                      Icons.cookie_outlined,
                                       color: Color(0xFF8E4A23),
+                                      size: 28,
                                     ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'Payment for custom cakes is not required at checkout. It will be securely handled via GCash inside your Order Tracker once our bakers review and approve your cake design.',
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          color: Color(0xFF756256),
-                                          height: 1.4,
-                                        ),
+                                    const SizedBox(width: 12),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Freshly Baked Promise',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF2E1B10),
+                                              fontSize: 12.5,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            'Your sweet treats are prepared with love and the finest ingredients.',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: Color(0xFF756256),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
+                            ]; // End leftCol
 
-                            const SizedBox(height: 20),
-
-                            // Rider / Bake Notes
-                            _sectionLabel('RIDER / BAKE NOTES'),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _noteController,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                color: Color(0xFF2E1B10),
-                              ),
-                              decoration: InputDecoration(
-                                hintText:
-                                    'e.g. Leave with GrabCar driver, call upon arrival...',
-                                hintStyle: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF9E8E84),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEFE4D6),
+                            final rightCol = <Widget>[
+                              if (grandTotal > 0) ...[
+                                _sectionLabel('PAYMENT METHOD'),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
                                   ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Payment Breakdown
-                            _sectionLabel('PAYMENT BREAKDOWN'),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: const Color(0xFFEFE4D6),
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  _receiptRow(
-                                    'Items Subtotal (${widget.cartItems.length} items)',
-                                    '₱${widget.totalAmount.toStringAsFixed(2)}',
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFDF8F5),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: const Color(0xFFE8D0C3),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF8E4A23,
+                                        ).withValues(alpha: 0.05),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 6),
-                                  _receiptRow(
-                                    'GrabCar Delivery Fee',
-                                    '₱${effectiveDeliveryFee.toStringAsFixed(2)}',
-                                  ),
-                                  const SizedBox(height: 6),
-                                  _receiptRow(
-                                    'Bakery Eco Seal Packaging',
-                                    '₱${_packagingFee.toStringAsFixed(2)}',
-                                  ),
-                                  const Divider(
-                                    color: Color(0xFFEFE4D6),
-                                    height: 16,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  child: const Row(
                                     children: [
-                                      const Text(
-                                        'Grand Total:',
+                                      Icon(
+                                        Icons.account_balance_wallet,
+                                        size: 20,
+                                        color: Color(0xFF8E4A23),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'GCash (Online Payment Only)',
                                         style: TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 13.5,
                                           color: Color(0xFF2E1B10),
                                         ),
                                       ),
-                                      Text(
-                                        '₱${grandTotal.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 17,
-                                          color: Color(0xFF8E4A23),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF2E9),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: const Color(0xFFE8D0C3),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        color: Color(0xFF8E4A23),
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'You will be redirected to the secure GCash payment portal after clicking Place Sweet Order.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF756256),
+                                            height: 1.4,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
+                              ],
+
+                              if (hasCustomCake) ...[
+                                const SizedBox(height: 20),
+                                _sectionLabel('CUSTOM CAKE PAYMENT'),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: const Color(0xFFEFE4D6),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF8E4A23,
+                                        ).withValues(alpha: 0.04),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 20,
+                                        color: Color(0xFF8E4A23),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Payment for custom cakes is not required at checkout. It will be securely handled via GCash inside your Order Tracker once our bakers review and approve your cake design.',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            color: Color(0xFF756256),
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 20),
+
+                              // Payment Breakdown
+                              _sectionLabel('PAYMENT BREAKDOWN'),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF0F0),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFD6D6),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFD32F2F,
+                                      ).withValues(alpha: 0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(
+                                      Icons.info_outline,
+                                      color: Color(0xFFD32F2F),
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Delivery Fee Not Included',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 11.5,
+                                              color: Color(0xFFD32F2F),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          const Text(
+                                            'You must pay the GrabCar driver directly in cash for the delivery fee upon arrival.',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: Color(0xFFD32F2F),
+                                              height: 1.4,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFFFF9F5,
+                                  ), // Cute soft peach background
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFE4D6),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF8E4A23,
+                                      ).withValues(alpha: 0.04),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    _receiptRow(
+                                      'Items Subtotal (${widget.cartItems.length} items)',
+                                      '₱${widget.totalAmount.toStringAsFixed(2)}',
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _receiptRowWidget(
+                                      'GrabCar Delivery Fee',
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFE4D6),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Paid to Rider',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFFD86A35),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _receiptRow(
+                                      'Bakery Eco Seal Packaging',
+                                      '₱${_packagingFee.toStringAsFixed(2)}',
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Divider(
+                                      color: Color(0xFFFFE4D6),
+                                      thickness: 1.5,
+                                      height: 1,
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          'Grand Total:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12.5,
+                                            color: Color(0xFF2E1B10),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF8E4A23),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '₱${grandTotal.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ]; // End rightCol
+                            if (isWebDesktop) {
+                              return IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 5,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: leftCol,
+                                      ),
+                                    ),
+                                    const VerticalDivider(
+                                      width: 48,
+                                      thickness: 1.0,
+                                      color: Color(0xFFF5EBE1),
+                                    ),
+                                    Expanded(
+                                      flex: 4,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: rightCol,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ...leftCol,
+                                const SizedBox(height: 24),
+                                ...rightCol,
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
                   ),
 
-                  // Bottom Action Bar
+                  // Persistent Bottom Action Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
+                      horizontal: 24,
+                      vertical: 18,
                     ),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border(top: BorderSide(color: Color(0xFFEFE4D6))),
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(23),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(28),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF8E4A23,
+                          ).withValues(alpha: 0.04),
+                          blurRadius: 32,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        if (isWebDesktop)
+                          TextButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF756256),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Back to Menu',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+                        Row(
                           mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
-                              grandTotal > 0
-                                  ? 'Paying via GCash'
-                                  : 'Custom Cake Inquiry',
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                color: Color(0xFF756256),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (grandTotal > 0)
-                              Text(
-                                '₱${grandTotal.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF8E4A23),
-                                ),
-                              )
-                            else
-                              const Text(
-                                'Payment via Tracker',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF8E4A23),
-                                ),
-                              ),
-                          ],
-                        ),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8E4A23),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 2,
-                          ),
-                          onPressed: (_isSubmitting || !isStoreOpen)
-                              ? null
-                              : () {
-                                  _handlePlaceOrder(
-                                    activeDeliveryFee: effectiveDeliveryFee,
-                                    calculatedGrandTotal: grandTotal,
-                                    isStoreOpen: isStoreOpen,
-                                    gcashQrPath: gcashQr,
-                                  );
-                                },
-                          icon: _isSubmitting
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  grandTotal > 0
+                                      ? 'Paying via GCash'
+                                      : 'Custom Cake Inquiry',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: Color(0xFF756256),
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                )
-                              : const Icon(
-                                  Icons.check_circle_outline,
-                                  size: 16,
                                 ),
-                          label: Text(
-                            _isSubmitting
-                                ? 'Submitting...'
-                                : (grandTotal > 0
-                                      ? 'Place Sweet Order'
-                                      : 'Submit Inquiry'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.5,
+                                if (grandTotal > 0)
+                                  Text(
+                                    '₱${grandTotal.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF8E4A23),
+                                    ),
+                                  )
+                                else
+                                  const Text(
+                                    'Payment via Tracker',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF8E4A23),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ),
+                            const SizedBox(width: 24),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFD97241),
+                                    Color(0xFF8E4A23),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF8E4A23,
+                                    ).withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  elevation: 0,
+                                  shadowColor: Colors.transparent,
+                                ),
+                                onPressed: (_isSubmitting || !isStoreOpen)
+                                    ? null
+                                    : () {
+                                        _handlePlaceOrder(
+                                          calculatedGrandTotal: grandTotal,
+                                          isStoreOpen: isStoreOpen,
+                                          gcashQrPath: gcashQr,
+                                        );
+                                      },
+                                icon: _isSubmitting
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.check_circle_outline,
+                                        size: 16,
+                                      ),
+                                label: Text(
+                                  _isSubmitting
+                                      ? 'Submitting...'
+                                      : (grandTotal > 0
+                                            ? 'Place Sweet Order'
+                                            : 'Submit Inquiry'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -907,91 +1694,23 @@ class _CheckoutModalState extends State<CheckoutModal> {
   }
 
   Widget _sectionLabel(String label) {
-    return Text(
-      label,
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.8,
-        color: Color(0xFF8E4A23),
-      ),
-    );
-  }
-
-  Widget _deliveryOptionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String priceText,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFAF2E9) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF8E4A23)
-                : const Color(0xFFEFE4D6),
-            width: isSelected ? 1.5 : 1.0,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 14, color: Color(0xFF8E4A23)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+              color: Color(0xFF8E4A23),
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF8E4A23)
-                    : const Color(0xFFF3E7DC),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                size: 18,
-                color: isSelected ? Colors.white : const Color(0xFF8E4A23),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF2E1B10),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF756256),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              priceText,
-              style: const TextStyle(
-                fontSize: 12.5,
-                color: Color(0xFF8E4A23),
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -1012,6 +1731,19 @@ class _CheckoutModalState extends State<CheckoutModal> {
             color: Color(0xFF2E1B10),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _receiptRowWidget(String label, Widget valueWidget) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF756256)),
+        ),
+        valueWidget,
       ],
     );
   }

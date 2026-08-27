@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:printing/printing.dart';
+import '../../../utils/pdf_report_generator.dart';
 import '../admin_modals.dart';
 
-class LiveOrdersTab extends StatelessWidget {
+class LiveOrdersTab extends StatefulWidget {
   final List<Map<String, dynamic>> orders;
   final bool isDesktop;
   final String searchQuery;
   final String
-  currentRole; // 'Super Admin', 'Baker Admin', or 'Order Dispatcher'
-  final Function(String id, String newStatus, String newLabel, [Map<String, dynamic>? extraData]) onUpdateStatus;
+      currentRole; // 'Super Admin', 'Baker Admin', or 'Order Dispatcher'
+  final Function(String id, String newStatus, String newLabel,
+      [Map<String, dynamic>? extraData]) onUpdateStatus;
 
   const LiveOrdersTab({
     super.key,
@@ -19,12 +22,20 @@ class LiveOrdersTab extends StatelessWidget {
     required this.onUpdateStatus,
   });
 
+  @override
+  State<LiveOrdersTab> createState() => _LiveOrdersTabState();
+}
+
+class _LiveOrdersTabState extends State<LiveOrdersTab> {
   static const Color brandCocoa = Color(0xFF8C4A27);
   static const Color darkEspresso = Color(0xFF251811);
   static const Color textDark = Color(0xFF3A2312);
   static const Color textMuted = Color(0xFF6E5D53);
   static const Color borderLight = Color(0xFFEFE3D5);
   static const Color wellBg = Color(0xFFF4EDE6);
+
+  String _currentFilter = 'All';
+
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return 'Just now';
@@ -58,11 +69,86 @@ class LiveOrdersTab extends StatelessWidget {
     return timestamp.toString();
   }
 
+  List<Map<String, dynamic>> get _filteredOrders {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    return widget.orders.where((order) {
+      if (_currentFilter == 'All') return true;
+
+      // Filter out completed and cancelled orders for the specific pipeline tabs
+      final status = (order['status'] ?? '').toString().toLowerCase();
+      if (status == 'delivered' || status == 'completed' || status == 'cancelled' || status == 'picked_up') {
+        return false;
+      }
+
+
+      final targetField = order['targetDate'] ?? order['createdAt'];
+      DateTime? targetDate;
+      if (targetField is Timestamp) {
+        targetDate = targetField.toDate();
+      } else if (targetField != null) {
+        targetDate = DateTime.tryParse(targetField.toString());
+      }
+
+      if (targetDate == null) {
+        return _currentFilter == 'Due Today'; // Default to today if no date
+      }
+
+      final dateOnly = DateTime(targetDate.year, targetDate.month, targetDate.day);
+
+      if (_currentFilter == 'Due Today') {
+        return dateOnly.isBefore(tomorrow); // Today or earlier
+      } else if (_currentFilter == 'Due Tomorrow') {
+        return dateOnly.isAtSameMomentAs(tomorrow);
+      } else if (_currentFilter == 'Upcoming') {
+        return dateOnly.isAfter(tomorrow);
+      }
+
+      return true;
+    }).toList();
+  }
+
+  Widget _buildFilterButton(String title) {
+    final isSelected = _currentFilter == title;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: () => setState(() => _currentFilter = title),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? brandCocoa : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isSelected ? brandCocoa : borderLight),
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : textMuted,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredOrders;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // We assume _buildMetricsRow() is defined somewhere in the class or as a standalone function.
+        // It's called in original code, so let's keep it if it exists, but wait, original had _buildMetricsRow().
+        // If it's undefined, it will cause an error, but it must be defined further down.
+        // wait, I don't see _buildMetricsRow in the snippet... Ah, it must be lower down.
+        // Actually, let me just replace the build method accurately.
         _buildMetricsRow(),
         const SizedBox(height: 20),
         Container(
@@ -72,7 +158,7 @@ class LiveOrdersTab extends StatelessWidget {
             border: Border.all(color: borderLight),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF8B7355).withOpacity(0.08),
+                color: const Color(0xFF8B7355).withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -86,27 +172,67 @@ class LiveOrdersTab extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Live Kitchen Pipeline',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: textDark,
-                      ),
-                    ),
-                    if (searchQuery.isNotEmpty)
-                      Text(
-                        'Found ${orders.length} orders',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: brandCocoa,
-                          fontWeight: FontWeight.bold,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Live Kitchen Pipeline',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: textDark,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _buildFilterButton('All'),
+                            _buildFilterButton('Due Today'),
+                            _buildFilterButton('Due Tomorrow'),
+                            _buildFilterButton('Upcoming'),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        if (widget.searchQuery.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Text(
+                              'Found ${filtered.length} orders',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: brandCocoa,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final bytes = await PdfReportGenerator.generateLiveOrdersReport(
+                              filtered, 
+                              filterInfo: _currentFilter,
+                            );
+                            final filename = 'live_orders_${_currentFilter.toLowerCase().replaceAll(' ', '_')}.pdf';
+                            await Printing.sharePdf(bytes: bytes, filename: filename);
+                          },
+                          icon: const Icon(Icons.download_rounded, size: 16),
+                          label: const Text('Export PDF'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: brandCocoa,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              if (orders.isEmpty)
+              if (filtered.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(36),
                   alignment: Alignment.center,
@@ -116,11 +242,11 @@ class LiveOrdersTab extends StatelessWidget {
                   ),
                 )
               else
-                isDesktop
-                    ? _buildDesktopTable(context)
+                widget.isDesktop
+                    ? _buildDesktopTable(context, filtered)
                     : Padding(
                         padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
-                        child: _buildMobileList(context),
+                        child: _buildMobileList(context, filtered),
                       ),
             ],
           ),
@@ -129,7 +255,7 @@ class LiveOrdersTab extends StatelessWidget {
     );
   }
 
-  Widget _buildDesktopTable(BuildContext context) {
+  Widget _buildDesktopTable(BuildContext context, List<Map<String, dynamic>> filteredOrders) {
     return Column(
       children: [
         Container(
@@ -176,7 +302,7 @@ class LiveOrdersTab extends StatelessWidget {
               ),
               SizedBox(width: 12),
               SizedBox(
-                width: 155,
+                width: 190,
                 child: Text(
                   'ACTIONS',
                   style: _headerStyle,
@@ -189,11 +315,11 @@ class LiveOrdersTab extends StatelessWidget {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: orders.length,
+          itemCount: filteredOrders.length,
           separatorBuilder: (_, __) =>
               const Divider(color: borderLight, height: 1),
           itemBuilder: (context, i) {
-            final order = orders[i];
+            final order = filteredOrders[i];
             final formattedDate = _formatTimestamp(order['createdAt']);
 
             return HoverElevate(
@@ -281,6 +407,24 @@ class LiveOrdersTab extends StatelessWidget {
                             color: textMuted,
                           ),
                         ),
+                        if (order['targetTimeSlot'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.access_time, size: 12, color: brandCocoa),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${order['targetDate'] != null ? _formatTimestamp(order['targetDate']) + ' at ' : ''}${order['targetTimeSlot']}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: brandCocoa,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         if (order['note'] != null &&
                             order['note'].toString().isNotEmpty)
                           Padding(
@@ -324,7 +468,7 @@ class LiveOrdersTab extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   SizedBox(
-                    width: 155,
+                    width: 190,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -342,6 +486,16 @@ class LiveOrdersTab extends StatelessWidget {
                             printData['printDate'] = formattedDate;
                             AdminModals.showPrintSlipDialog(context, printData);
                           },
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: Color(0xFFD32F2F),
+                          ),
+                          tooltip: 'Delete Order',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _showDeleteConfirmation(context, (order['id'] ?? order['docId'] ?? '').toString()),
                         ),
                         const SizedBox(width: 4),
                         _buildPrimaryStepButton(context, order),
@@ -365,14 +519,14 @@ class LiveOrdersTab extends StatelessWidget {
     letterSpacing: 0.8,
   );
 
-  Widget _buildMobileList(BuildContext context) {
+  Widget _buildMobileList(BuildContext context, List<Map<String, dynamic>> filteredOrders) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: orders.length,
+      itemCount: filteredOrders.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, i) {
-        final order = orders[i];
+        final order = filteredOrders[i];
         final formattedDate = _formatTimestamp(order['createdAt']);
 
         return HoverElevate(
@@ -449,6 +603,24 @@ class LiveOrdersTab extends StatelessWidget {
                 order['specs'] ?? '',
                 style: const TextStyle(fontSize: 11, color: textMuted),
               ),
+              if (order['targetTimeSlot'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 12, color: brandCocoa),
+                      const SizedBox(width: 4),
+                      Text(
+                        order['targetTimeSlot'],
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: brandCocoa,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               if (order['note'] != null && order['note'].toString().isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -487,6 +659,15 @@ class LiveOrdersTab extends StatelessWidget {
                           printData['printDate'] = formattedDate;
                           AdminModals.showPrintSlipDialog(context, printData);
                         },
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Color(0xFFD32F2F),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _showDeleteConfirmation(context, (order['id'] ?? order['docId'] ?? '').toString()),
                       ),
                       const SizedBox(width: 4),
                       _buildPrimaryStepButton(context, order),
@@ -540,7 +721,7 @@ class LiveOrdersTab extends StatelessWidget {
     final String targetDocId = (order['docId'] ?? order['id'] ?? '').toString();
     final String status = order['status'] ?? '';
     final bool isCustom = order['isCustom'] == true;
-    final bool isRider = currentRole == 'Order Dispatcher';
+    final bool isRider = widget.currentRole == 'Order Dispatcher';
 
     if (isRider) {
       if (status == 'pending_ewallet' ||
@@ -575,7 +756,7 @@ class LiveOrdersTab extends StatelessWidget {
             ),
           ),
           onPressed: () =>
-              onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
+              widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
           icon: const Icon(Icons.takeout_dining, size: 13, color: Colors.white),
           label: const Text(
             'Pick Up Batch',
@@ -605,7 +786,7 @@ class LiveOrdersTab extends StatelessWidget {
           onPressed: () => AdminModals.showRiderTrackerModal(
             context,
             order,
-            () => onUpdateStatus(
+            () => widget.onUpdateStatus(
               targetDocId,
               'delivered',
               '✓ Completed Delivery',
@@ -650,13 +831,13 @@ class LiveOrdersTab extends StatelessWidget {
           order,
           () {
             if (isCustom) {
-              onUpdateStatus(
+              widget.onUpdateStatus(
                 targetDocId,
                 'pending_spec_review',
                 '🎂 Needs Spec Review',
               );
             } else {
-              onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven');
+              widget.onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven');
             }
           },
         ),
@@ -684,13 +865,13 @@ class LiveOrdersTab extends StatelessWidget {
           order,
           () {
             if (isCustom) {
-              onUpdateStatus(
+              widget.onUpdateStatus(
                 targetDocId,
                 'pending_spec_review',
                 '🎂 Needs Spec Review',
               );
             } else {
-              onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven');
+              widget.onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven');
             }
           },
         ),
@@ -721,7 +902,7 @@ class LiveOrdersTab extends StatelessWidget {
             final double downPayment = total / 2;
             final double balance = total - downPayment;
             
-            onUpdateStatus(
+            widget.onUpdateStatus(
               targetDocId, 
               'quote_received', 
               '📝 Quote & Contract Sent',
@@ -734,7 +915,7 @@ class LiveOrdersTab extends StatelessWidget {
               }
             );
           },
-          () => onUpdateStatus(targetDocId, 'spec_rejected', '❌ Spec Rejected'),
+          () => widget.onUpdateStatus(targetDocId, 'spec_rejected', '❌ Spec Rejected'),
         ),
         icon: const Icon(Icons.cake_outlined, size: 13, color: Colors.white),
         label: const Text(
@@ -759,7 +940,7 @@ class LiveOrdersTab extends StatelessWidget {
         onPressed: () => AdminModals.showPaymentVerificationModal(
           context,
           order,
-          () => onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven'),
+          () => widget.onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven'),
         ),
         child: const Text(
           'Verify GCash',
@@ -781,7 +962,7 @@ class LiveOrdersTab extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         onPressed: () =>
-            onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Packing'),
+            widget.onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Packing'),
         child: const Text(
           'Start Bake',
           style: TextStyle(
@@ -803,9 +984,9 @@ class LiveOrdersTab extends StatelessWidget {
         ),
         onPressed: () {
           if (isCustom) {
-            onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance');
+            widget.onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance');
           } else {
-            onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
+            widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
           }
         },
         child: const Text(
@@ -830,7 +1011,7 @@ class LiveOrdersTab extends StatelessWidget {
         onPressed: () => AdminModals.showBalanceVerificationModal(
           context,
           order,
-          () => onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
+          () => widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
         ),
         child: const Text(
           'Verify Balance',
@@ -873,7 +1054,7 @@ class LiveOrdersTab extends StatelessWidget {
       onPressed: () => AdminModals.showRiderTrackerModal(
         context,
         order,
-        () => onUpdateStatus(targetDocId, 'delivered', '✓ Completed Delivery'),
+        () => widget.onUpdateStatus(targetDocId, 'delivered', '✓ Completed Delivery'),
       ),
       child: const Text(
         'Track Rider',
@@ -928,7 +1109,7 @@ class LiveOrdersTab extends StatelessWidget {
   }
 
   Widget _buildMetricsRow() {
-    final completedOrders = orders.where((o) {
+    final completedOrders = widget.orders.where((o) {
       final status = (o['status'] ?? '').toString().toLowerCase();
       final label = (o['statusLabel'] ?? '').toString().toLowerCase();
       return status == 'delivered' ||
@@ -937,12 +1118,12 @@ class LiveOrdersTab extends StatelessWidget {
           label.contains('completed');
     }).toList();
 
-    final double todaySales = completedOrders.fold(0.0, (sum, o) {
-      return sum +
+    final double todaySales = completedOrders.fold(0.0, (totalSum, o) {
+      return totalSum +
           _parseOrderAmount(o['total'] ?? o['totalAmount'] ?? o['subtotal']);
     });
 
-    final customCakeOrders = orders.where((o) {
+    final customCakeOrders = widget.orders.where((o) {
       final bool isCustomFlag =
           o['isCustom'] == true ||
           o['isCustom']?.toString().toLowerCase() == 'true';
@@ -975,7 +1156,7 @@ class LiveOrdersTab extends StatelessWidget {
           children: [
             _metricCard(
               'ACTIVE ORDERS',
-              '${orders.length} Batches',
+              '${widget.orders.length} Batches',
               'In pipeline now',
               brandCocoa,
               cardWidth,
@@ -1051,6 +1232,55 @@ class LiveOrdersTab extends StatelessWidget {
       ),
     );
   }
+  void _showDeleteConfirmation(BuildContext context, String orderId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Delete Order?',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+          ),
+          content: Text(
+            'Are you sure you want to permanently delete order $orderId? This action cannot be undone.',
+            style: const TextStyle(color: textDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: textMuted)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await FirebaseFirestore.instance.collection('orders').doc(orderId).delete();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Order successfully deleted'), backgroundColor: Color(0xFF4CAF50)),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: const Color(0xFFD32F2F)),
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class HoverElevate extends StatefulWidget {
@@ -1081,8 +1311,8 @@ class _HoverElevateState extends State<HoverElevate> {
           boxShadow: _isHovering
               ? [
                   BoxShadow(
-                    color: const Color(0xFF8B7355).withOpacity(0.08),
-                    blurRadius: 10,
+            color: const Color(0xFF8B7355).withValues(alpha: 0.08),
+            blurRadius: 16,
                     offset: const Offset(0, 4),
                   )
                 ]

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:printing/printing.dart';
+import '../../../utils/pdf_report_generator.dart';
 import 'dart:convert';
 import '../admin_modals.dart';
 
@@ -103,21 +105,43 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                         style: TextStyle(fontSize: 11.5, color: textMuted),
                       ),
                       const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: wellBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: borderLight),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(child: _subTabButton('Pending (${pendingSpecs.length})', 0)),
-                            const SizedBox(width: 4),
-                            Expanded(child: _subTabButton('History (${cakeHistory.length})', 1)),
-                          ],
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: wellBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: borderLight),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(child: _subTabButton('Pending (${pendingSpecs.length})', 0)),
+                                  const SizedBox(width: 4),
+                                  Expanded(child: _subTabButton('History (${cakeHistory.length})', 1)),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () async {
+                              final filterText = _selectedSubTab == 0 ? 'Pending Specs' : 'Cake Order History';
+                              final bytes = await PdfReportGenerator.generateCustomCakesReport(
+                                currentList,
+                                filterInfo: filterText,
+                              );
+                              final filename = 'custom_cakes_${filterText.toLowerCase().replaceAll(' ', '_')}.pdf';
+                              await Printing.sharePdf(bytes: bytes, filename: filename);
+                            },
+                            icon: const Icon(Icons.download_rounded, color: brandCocoa),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFFBF7F2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   )
@@ -143,20 +167,45 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: wellBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: borderLight),
-                        ),
-                        child: Row(
-                          children: [
-                            _subTabButton('Pending Specs (${pendingSpecs.length})', 0),
-                            const SizedBox(width: 4),
-                            _subTabButton('Cake Order History (${cakeHistory.length})', 1),
-                          ],
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: wellBg,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: borderLight),
+                            ),
+                            child: Row(
+                              children: [
+                                _subTabButton('Pending Specs (${pendingSpecs.length})', 0),
+                                const SizedBox(width: 4),
+                                _subTabButton('Cake Order History (${cakeHistory.length})', 1),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final filterText = _selectedSubTab == 0 ? 'Pending Specs' : 'Cake Order History';
+                              final bytes = await PdfReportGenerator.generateCustomCakesReport(
+                                currentList,
+                                filterInfo: filterText,
+                              );
+                              final filename = 'custom_cakes_${filterText.toLowerCase().replaceAll(' ', '_')}.pdf';
+                              await Printing.sharePdf(bytes: bytes, filename: filename);
+                            },
+                            icon: const Icon(Icons.download_rounded, size: 16),
+                            label: const Text('Export PDF'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: brandCocoa,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
