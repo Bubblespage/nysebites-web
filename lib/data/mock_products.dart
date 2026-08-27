@@ -104,7 +104,7 @@ final List<Product> mockProducts = [
     servingSize: null,
     description:
         'Decadent caramel drip cake loaded with crushed cookies and a full cookie topper! 🤎',
-    imgSrc: 'assets/images/standard9.jpg',
+    imgSrc: 'assets/images/standard9_fixed.jpg',
     icon: '🤎',
   ),
   const Product(

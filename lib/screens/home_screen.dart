@@ -81,8 +81,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           'App resumed from background: Re-syncing Firestore connection streams and refreshing UI.',
         );
       });
-      // Force Firestore to reconnect/sync pending data streams immediately on mobile
-      FirebaseFirestore.instance.clearPersistence().catchError((_) {});
+      // Firestore automatically handles reconnections.
+      // Calling clearPersistence() here throws [cloud_firestore/failed-precondition]
     }
   }
 
@@ -261,6 +261,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
         return Scaffold(
           key: _scaffoldKey,
+          resizeToAvoidBottomInset: false,
           backgroundColor: const Color(0xFFFAF4ED),
           drawer: MobileNavDrawer(
             currentUser: _currentUser,
@@ -501,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Text(
             _selectedCategory == 'daily_batches'
                 ? "Today's Daily Oven Drops"
-                : 'Explore Our Oven Creations',
+                : 'Our Sweet Menu',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'serif',

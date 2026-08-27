@@ -10,12 +10,39 @@ class OvenGallerySection extends StatefulWidget {
 }
 
 class _OvenGallerySectionState extends State<OvenGallerySection> {
+  final ScrollController _scrollController = ScrollController();
+
+  void _scrollLeft() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        (_scrollController.offset - 220).clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _scrollRight() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        (_scrollController.offset + 220).clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   final List<Map<String, dynamic>> _categories = [
     {
       'title': 'Standard Cakes',
       'subtitle': 'Classic & Elegant',
       'image': 'assets/images/standard1.jpg',
-
       'items': [
         {
           'image': 'assets/images/standard1.jpg',
@@ -80,15 +107,13 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
           'likes': '690',
           'comments': '42',
         },
-
         {
-          'image': 'assets/images/standard9.jpg',
+          'image': 'assets/images/standard9_fixed.jpg',
           'caption':
               'Decadent caramel drip cake loaded with crushed cookies and a full cookie topper! 🤎',
           'likes': '820',
           'comments': '55',
         },
-
         {
           'image': 'assets/images/standard11.jpg',
           'caption':
@@ -173,7 +198,6 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
           'likes': '395',
           'comments': '16',
         },
-
         {
           'image': 'assets/images/1st_tier11.jpg',
           'caption':
@@ -216,7 +240,6 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
           'likes': '799',
           'comments': '59',
         },
-
         {
           'image': 'assets/images/1st_tier16.jpg',
           'caption':
@@ -673,14 +696,14 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
           const SizedBox(height: 28),
           LayoutBuilder(
             builder: (context, constraints) {
-              // Calculate width to fit 5 items if possible, max 240, min 180
               double itemWidth =
                   (constraints.maxWidth - (10 * 2 * _categories.length)) /
                   _categories.length;
               if (itemWidth > 240) itemWidth = 240;
               if (itemWidth < 180) itemWidth = 180;
 
-              return SingleChildScrollView(
+              Widget scrollView = SingleChildScrollView(
+                controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 clipBehavior: Clip.none,
                 child: Container(
@@ -702,6 +725,58 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                   ),
                 ),
               );
+
+              if (isMobile) {
+                return Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    scrollView,
+                    Positioned(
+                      left: 0,
+                      child: Transform.translate(
+                        offset: const Offset(0, -15),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.85),
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 6),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.chevron_left,
+                                size: 26, color: Color(0xFF8E4A23)),
+                            onPressed: _scrollLeft,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: Transform.translate(
+                        offset: const Offset(0, -15),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.85),
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 6),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.chevron_right,
+                                size: 26, color: Color(0xFF8E4A23)),
+                            onPressed: _scrollRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return scrollView;
             },
           ),
         ],
