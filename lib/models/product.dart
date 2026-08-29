@@ -33,9 +33,7 @@ class Product {
 
   factory Product.fromMap(String id, Map<String, dynamic> data) {
     return Product(
-      id: data['id'] is int
-          ? data['id']
-          : int.tryParse(data['id']?.toString() ?? '0') ?? 0,
+      id: id,
       order: data['order'] is int
           ? data['order']
           : (int.tryParse(data['order']?.toString() ?? '') ??

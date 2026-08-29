@@ -5,7 +5,7 @@
 
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-visual">
   <meta name="description" content="Nyse Bites — Artisanal Cookies, Cakes, and Custom Bakes.">
   <meta name="theme-color" content="#3C2216">
 
@@ -21,10 +21,91 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=4">
   <link rel="shortcut icon" type="image/png" href="favicon.png?v=4">
 
+  <!-- Anti-cache controls -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <title>Nyse Bites | Artisanal Cookies & Cakes</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FDF9F3;
+      overflow: hidden;
+      opacity: 1 !important;
+    }
+    #loading-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FDF9F3;
+      font-family: sans-serif;
+      color: #3C2216;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #EFE4D6;
+      border-top: 4px solid #8C4A27;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body style="background-color: #FDF9F3; margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100%;">
+<body>
+  <div id="loading-container">
+    <div class="spinner"></div>
+    <p style="font-weight: 600; font-size: 14px; letter-spacing: 0.5px;">Loading Fresh Bakes...</p>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
+
+  <script>
+    // SAMSUNG REPAINT FIX: Forces the body and canvas to wake up and render 
+    // the moment the Flutter view mounts, clearing the loading spinner.
+    window.addEventListener('load', function() {
+      var checkInterval = setInterval(function() {
+        var flutterCanvas = document.querySelector('flutter-view, flt-glass-pane, canvas');
+        if (flutterCanvas) {
+          var loader = document.getElementById('loading-container');
+          if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => loader.remove(), 300);
+          }
+          // Force layout reflow so Samsung browsers paint immediately
+          window.dispatchEvent(new Event('resize'));
+          document.body.style.opacity = '1';
+          clearInterval(checkInterval);
+        }
+      }, 100);
+
+      // Failsafe timer to remove spinner after 3 seconds no matter what
+      setTimeout(function() {
+        var loader = document.getElementById('loading-container');
+        if (loader) {
+          loader.remove();
+        }
+        window.dispatchEvent(new Event('resize'));
+      }, 3000);
+    });
+  </script>
 </body>
 </html>

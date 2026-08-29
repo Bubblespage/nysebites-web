@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReviewsSlideshow extends StatefulWidget {
   const ReviewsSlideshow({super.key});
@@ -15,6 +14,7 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
   Timer? _autoSlideTimer;
   bool _isHovered = false;
 
+  // Hardcoded reviews only — completely independent of Firebase collection
   final List<Map<String, String>> _fallbackReviews = [
     {
       'rating': '★★★★★',
@@ -112,70 +112,57 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 980;
-    final mobileCardWidth = screenWidth > 40
-        ? (screenWidth - 40).clamp(200.0, 310.0)
-        : 280.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use LayoutBuilder width instead of MediaQuery to support Chrome's "Desktop site" mode correctly
+        final availableWidth = constraints.maxWidth > 0 ? constraints.maxWidth : MediaQuery.of(context).size.width;
+        final isCompact = availableWidth < 980;
+        
+        final mobileCardWidth = availableWidth > 40
+            ? (availableWidth - 40).clamp(200.0, 340.0)
+            : 280.0;
 
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('reviews').snapshots(),
-      builder: (context, snapshot) {
-        List<Map<String, String>> reviews = [];
-
-        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-          reviews = snapshot.data!.docs.map((doc) {
-            final data = doc.data();
-            return {
-              'rating': data['rating']?.toString() ?? '★★★★★',
-              'comment': data['comment']?.toString() ?? '',
-              'name': data['name']?.toString() ?? '- Sweet Customer',
-            };
-          }).toList();
-        } else {
-          reviews = _fallbackReviews;
-        }
-
+        final reviews = _fallbackReviews;
         final reviewBatches = _chunkReviews(reviews, 3);
-        final totalPages = isMobile ? reviews.length : reviewBatches.length;
+        final totalPages = isCompact ? reviews.length : reviewBatches.length;
 
-        // Reset slide timer for current page length
         _startAutoSlide(totalPages);
 
         return Container(
           width: double.infinity,
           color: const Color(0xFFF7ECE1),
           padding: EdgeInsets.symmetric(
-            vertical: isMobile ? 28 : 48,
-            horizontal: 20,
+            vertical: isCompact ? 24 : 36,
+            horizontal: 16,
           ),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1060),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'Loved By Sweet Lovers',
                     style: TextStyle(
                       fontFamily: 'serif',
-                      fontSize: 28,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF2E1B10),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
                   MouseRegion(
                     onEnter: (_) => setState(() => _isHovered = true),
                     onExit: (_) => setState(() => _isHovered = false),
                     child: SizedBox(
-                      height: isMobile ? 200 : 175,
+                      height: 165,
                       child: PageView.builder(
                         controller: _pageController,
                         itemCount: totalPages,
                         onPageChanged: (index) =>
                             setState(() => _currentPage = index),
                         itemBuilder: (context, index) {
-                          if (isMobile) {
+                          if (isCompact) {
                             return Center(
                               child: _buildSmallCard(
                                 reviews[index],
@@ -198,7 +185,7 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   if (totalPages > 1)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -235,7 +222,7 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
     return Container(
       width: width,
       height: 165,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -256,7 +243,7 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
             review['rating'] ?? '★★★★★',
             style: const TextStyle(
               color: Color(0xFF8E4A23),
-              fontSize: 16,
+              fontSize: 15,
               letterSpacing: 2,
             ),
           ),
@@ -265,8 +252,8 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 13,
-              height: 1.4,
+              fontSize: 12.5,
+              height: 1.35,
               color: Color(0xFF2E1B10),
             ),
           ),
@@ -274,7 +261,7 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
             review['name'] ?? '- Sweet Customer',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 11.5,
               color: Color(0xFF756256),
             ),
           ),

@@ -15,6 +15,8 @@ class CartDrawer extends StatefulWidget {
   final void Function(String orderId, int itemCount, double totalAmount)
   onOrderPlaced;
   final String? currentUser;
+  final String? currentPhone;
+  final String? currentAddress;
 
   const CartDrawer({
     super.key,
@@ -26,6 +28,8 @@ class CartDrawer extends StatefulWidget {
     required this.onClearCart,
     required this.onOrderPlaced,
     this.currentUser,
+    this.currentPhone,
+    this.currentAddress,
   });
 
   @override
@@ -76,6 +80,8 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
         cartItems: widget.cartItems,
         totalAmount: widget.totalPrice,
         currentUser: widget.currentUser,
+        currentPhone: widget.currentPhone,
+        currentAddress: widget.currentAddress,
         onOrderSuccess: (orderId, itemCount, grandTotal, paymentMethod) {
           widget.onOrderPlaced(orderId, itemCount, grandTotal);
           widget.onClearCart();
@@ -105,19 +111,37 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
 
         return Drawer(
           width: drawerWidth,
-          backgroundColor: const Color(0xFFFAFAFA),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: borderLight)),
-                  ),
+          backgroundColor: Colors.transparent,
+          elevation: 24,
+          shadowColor: Colors.black26,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.horizontal(left: Radius.circular(24)),
+          ),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFFFFBF7),
+                  Color(0xFFFAF4ED),
+                  Color(0xFFF5EDDF),
+                ],
+              ),
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(24)),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Color(0xFFE5D5C5))),
+                    ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -160,7 +184,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: textMuted),
+                        icon: const Icon(Icons.close_rounded, color: darkEspresso),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -559,8 +583,8 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: borderLight)),
+                    color: Colors.transparent,
+                    border: Border(top: BorderSide(color: Color(0xFFE5D5C5))),
                   ),
                   child: Column(
                     children: [
@@ -607,7 +631,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                       end: Alignment(0.0 + (_shimmerController.value * 4), 0.0),
                                     )
                                   : null,
-                              color: !isEnabled ? Colors.grey : null,
+                              color: !isEnabled ? const Color(0xFFE5D5C5) : null,
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black26,
@@ -628,10 +652,10 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                     !isStoreOpen
                                         ? 'Orders Temporarily Paused'
                                         : 'Proceed to Checkout',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
-                                      color: Colors.white,
+                                      color: isEnabled ? Colors.white : const Color(0xFFA58D7C),
                                     ),
                                   ),
                                 ),
@@ -646,7 +670,8 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
               ],
             ),
           ),
-        );
+          ), // Closes Container
+        ); // Closes Drawer
       },
     );
   }

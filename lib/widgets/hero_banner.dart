@@ -12,46 +12,54 @@ class HeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 960;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // ── FIX: Uses LayoutBuilder which perfectly tracks the actual Web Browser Window size ──
+        final width = constraints.maxWidth > 0 ? constraints.maxWidth : MediaQuery.of(context).size.width;
+        final isMobile = width < 960;
 
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFCF7EF), Color(0xFFF7ECE0), Color(0xFFEFE1D1)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 48,
-        vertical: isMobile ? 36 : 64,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
-            children: [
-              if (isMobile) ...[
-                _buildLeftHeroContent(isMobile),
-                const SizedBox(height: 36),
-                _buildRightShowcaseCard(isMobile),
-              ] else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(flex: 6, child: _buildLeftHeroContent(isMobile)),
-                    const SizedBox(width: 48),
-                    Expanded(flex: 5, child: _buildRightShowcaseCard(isMobile)),
-                  ],
-                ),
-              const SizedBox(height: 52),
-              _buildTrustBadges(isMobile),
-            ],
+        return Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFCF7EF), Color(0xFFF7ECE0), Color(0xFFEFE1D1)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-      ),
+          // ── FIX: Increased top padding to give the banner breathing room below the ticker ──
+          padding: EdgeInsets.only(
+            top: isMobile ? 32 : 56, 
+            bottom: isMobile ? 36 : 64,
+            left: isMobile ? 20 : 48,
+            right: isMobile ? 20 : 48,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                children: [
+                  if (isMobile) ...[
+                    _buildLeftHeroContent(isMobile),
+                    const SizedBox(height: 32),
+                    _buildRightShowcaseCard(isMobile),
+                  ] else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(flex: 6, child: _buildLeftHeroContent(isMobile)),
+                        const SizedBox(width: 48),
+                        Expanded(flex: 5, child: _buildRightShowcaseCard(isMobile)),
+                      ],
+                    ),
+                  const SizedBox(height: 48),
+                  _buildTrustBadges(isMobile),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -220,84 +228,118 @@ class HeroBanner extends StatelessWidget {
   }
 
   Widget _buildRightShowcaseCard(bool isMobile) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFE5D5C5), width: 1.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(60, 34, 22, 0.12),
-            blurRadius: 28,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(26),
-                ),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=800&q=80',
-                  height: 240,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+    return GestureDetector(
+      onTap: onExploreMenu,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFE5D5C5), width: 1.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(60, 34, 22, 0.12),
+                blurRadius: 28,
+                offset: Offset(0, 12),
               ),
-              Positioned(
-                top: 14,
-                left: 14,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(26),
+                    ),
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=800&q=80',
+                      height: 240,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E1B10).withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.star, color: Color(0xFFF1B74C), size: 14),
-                      SizedBox(width: 4),
-                      Text(
-                        'Top Seller Batch',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  Positioned(
+                    top: 14,
+                    left: 14,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                    ],
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E1B10).withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star, color: Color(0xFFF1B74C), size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            'Top Seller Batch',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(child: _buildShowcaseDetails()),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8E4A23),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF8E4A23).withOpacity(0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '₱260.00',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(
+                            Icons.favorite_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: isMobile
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildShowcaseDetails(),
-                      const SizedBox(height: 12),
-                      _buildShowcasePrice(),
-                    ],
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [_buildShowcaseDetails(), _buildShowcasePrice()],
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -309,9 +351,10 @@ class HeroBanner extends StatelessWidget {
         Text(
           'Belgian Choco Chip Cookie',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w900, 
             fontSize: 16,
             color: Color(0xFF2B170E),
+            letterSpacing: -0.3,
           ),
         ),
         SizedBox(height: 4),
@@ -321,25 +364,6 @@ class HeroBanner extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
-    );
-  }
-
-  Widget _buildShowcasePrice() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF2E9),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5D5C5)),
-      ),
-      child: const Text(
-        '₱65.00',
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: 16,
-          color: Color(0xFF8E4A23),
-        ),
-      ),
     );
   }
 

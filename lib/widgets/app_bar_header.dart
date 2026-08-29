@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? currentUser;
+  final bool isAuthChecking;
   final VoidCallback onOpenDrawer;
   final VoidCallback onOpenAuth;
   final VoidCallback onLogout;
+  final VoidCallback onProfileClick;
   final VoidCallback onLogoClick;
   final VoidCallback onMenuClick;
   final VoidCallback onCustomCakesClick;
@@ -17,9 +19,11 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
   const AppBarHeader({
     super.key,
     this.currentUser,
+    this.isAuthChecking = false,
     required this.onOpenDrawer,
     required this.onOpenAuth,
     required this.onLogout,
+    required this.onProfileClick,
     required this.onLogoClick,
     required this.onMenuClick,
     required this.onCustomCakesClick,
@@ -158,45 +162,19 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (currentUser != null)
-                PopupMenuButton<String>(
-                  onSelected: (val) {
-                    if (val == 'logout') onLogout();
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      enabled: false,
-                      child: Text(
-                        'Signed in as $currentUser',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E1B10),
-                        ),
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.logout_rounded,
-                            size: 16,
-                            color: Colors.redAccent,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Sign Out',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              if (isAuthChecking)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8E4A23)),
+                  ),
+                )
+              else if (currentUser != null)
+                InkWell(
+                  onTap: onProfileClick,
+                  borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -233,11 +211,6 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
                             ),
                           ),
                         ],
-                        const Icon(
-                          Icons.arrow_drop_down,
-                          size: 16,
-                          color: Color(0xFF756256),
-                        ),
                       ],
                     ),
                   ),

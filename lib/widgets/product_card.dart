@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+
 class ProductCard extends StatefulWidget {
   final Product product;
   final Function(Product) onAddToCart;
   final Function(Product) onCustomize;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteToggle;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onAddToCart,
     required this.onCustomize,
+    this.isFavorite = false,
+    this.onFavoriteToggle,
   });
 
   @override
@@ -51,7 +56,11 @@ class _ProductCardState extends State<ProductCard> {
   Widget build(BuildContext context) {
     final isCake = widget.product.category == 'cakes';
     final isCookie = widget.product.category == 'cookies';
-    final isNarrowCard = MediaQuery.of(context).size.width < 900;
+    
+    // ── RELIABLE WIDTH CHECK FOR DESKTOP SITE MODE ──
+    final flutterView = View.of(context);
+    final physicalWidth = flutterView.physicalSize.width / flutterView.devicePixelRatio;
+    final isNarrowCard = physicalWidth < 900;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -86,7 +95,8 @@ class _ProductCardState extends State<ProductCard> {
                     top: Radius.circular(19),
                   ),
                   child: SizedBox(
-                    height: isNarrowCard ? 110 : 180,
+                    // FIX: Reduced from 180 to 165 to give the text area vertical breathing room!
+                    height: isNarrowCard ? 125 : 165, 
                     width: double.infinity,
                     child: widget.product.imgSrc.startsWith('http')
                         ? Image.network(
@@ -96,13 +106,13 @@ class _ProductCardState extends State<ProductCard> {
                                 _buildFallbackImage(),
                           )
                         : (widget.product.imgSrc.isNotEmpty
-                              ? Image.asset(
-                                  widget.product.imgSrc,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      _buildFallbackImage(),
-                                )
-                              : _buildFallbackImage()),
+                            ? Image.asset(
+                                widget.product.imgSrc,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    _buildFallbackImage(),
+                              )
+                            : _buildFallbackImage()),
                   ),
                 ),
                 Positioned(
@@ -164,15 +174,17 @@ class _ProductCardState extends State<ProductCard> {
                   ),
               ],
             ),
+            
+            // ── UNIFIED RESPONSIVE CONTENT AREA ──
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                // FIX: Clean, strict margins pushing the content slightly higher
+                padding: const EdgeInsets.only(left: 15, right: 15, top: 14, bottom: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: isNarrowCard
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Perfect distribution
                   children: [
+                    // --- TOP: Titles and Description ---
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -180,8 +192,9 @@ class _ProductCardState extends State<ProductCard> {
                           widget.product.name,
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 15.5,
+                            fontSize: 14.5,
                             color: Color(0xFF2E1B10),
+                            letterSpacing: -0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -194,69 +207,53 @@ class _ProductCardState extends State<ProductCard> {
                             height: 1.35,
                             color: Color(0xFF756256),
                           ),
-                          maxLines: 2,
+                          maxLines: isNarrowCard ? 3 : 2, 
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (!isNarrowCard && isCookie) ...[
-                          const SizedBox(height: 8),
+                      ],
+                    ),
+                    
+                    // --- BOTTOM: Options, Price, and Buttons ---
+                    SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 1. Serving Size / Box Size Chips (ALWAYS ON TOP of Price)
+                          if (isCookie)
+                            Row(
+                              children: [
+                                _buildBoxSizeChip(4, 'Box of 4', compact: isNarrowCard),
+                                const SizedBox(width: 6),
+                                _buildBoxSizeChip(6, 'Box of 6', compact: isNarrowCard),
+                              ],
+                            )
+                          else if (widget.product.servingSize != null && widget.product.servingSize!.isNotEmpty)
+                            _buildServingBadge(),
+                            
+                          const SizedBox(height: 10), // Clean gap 
+                          
+                          // 2. Inline Price and Actions Row 
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center, // Center aligns icons and text horizontally!
                             children: [
-                              _buildBoxSizeChip(4, 'Box of 4'),
-                              const SizedBox(width: 6),
-                              _buildBoxSizeChip(6, 'Box of 6'),
+                              Text(
+                                '₱${_currentPrice.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16.5,
+                                  color: Color(0xFF8E4A23),
+                                  height: 1.0, // Strict height keeps baseline aligned with icons
+                                ),
+                              ),
+                              _buildActionButton(isCake),
                             ],
                           ),
                         ],
-                      ],
-                    ),
-                    if (isNarrowCard)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FittedBox(
-                              alignment: Alignment.centerLeft,
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildPriceRow(isCookie),
-                                  if (isCookie) ...[
-                                    const SizedBox(width: 5),
-                                    _buildBoxSizeChip(
-                                      4,
-                                      'Box of 4',
-                                      compact: true,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    _buildBoxSizeChip(
-                                      6,
-                                      'Box of 6',
-                                      compact: true,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _buildActionButton(isCake),
-                          ),
-                        ],
-                      )
-                    else
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildPriceRow(isCookie),
-                          _buildActionButton(isCake),
-                        ],
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -264,29 +261,6 @@ class _ProductCardState extends State<ProductCard> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPriceRow(bool isCookie, {bool includeServing = true}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          '₱${_currentPrice.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 16.5,
-            color: Color(0xFF8E4A23),
-          ),
-        ),
-        if (includeServing &&
-            !isCookie &&
-            widget.product.servingSize != null) ...[
-          const SizedBox(width: 6),
-          _buildServingBadge(),
-        ],
-      ],
     );
   }
 
@@ -314,37 +288,57 @@ class _ProductCardState extends State<ProductCard> {
         ? () => widget.onCustomize(widget.product)
         : _handleAddToCart;
 
-    return Material(
-      color: isCake ? const Color(0xFF8E4A23) : const Color(0xFF2E1B10),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isCake ? Icons.cake_outlined : Icons.add_shopping_cart,
-                color: Colors.white,
-                size: 15,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                isCake ? 'Build' : 'Add',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        // Favorite Button
+        Material(
+          color: widget.isFavorite ? const Color(0xFFFDE8E8) : const Color(0xFFFAF4ED),
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: widget.onFavoriteToggle,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: widget.isFavorite ? const Color(0xFFE88B8B) : const Color(0xFFEFE4D6),
+                  width: 1.2,
                 ),
               ),
-            ],
+              child: Icon(
+                widget.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: widget.isFavorite ? const Color(0xFFE53935) : const Color(0xFFDCC8B8),
+                size: 16,
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(width: 8),
+        // Add / Build Button
+        Material(
+          color: isCake ? const Color(0xFF8E4A23) : const Color(0xFF2E1B10),
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              child: Icon(
+                isCake ? Icons.auto_awesome : Icons.add_shopping_cart,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -355,7 +349,7 @@ class _ProductCardState extends State<ProductCard> {
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 5 : 8,
+          horizontal: compact ? 6 : 8,
           vertical: compact ? 3 : 4,
         ),
         decoration: BoxDecoration(
@@ -371,7 +365,7 @@ class _ProductCardState extends State<ProductCard> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: compact ? 9 : 10.5,
+            fontSize: compact ? 9.5 : 10.5,
             fontWeight: FontWeight.w700,
             color: isSelected ? Colors.white : const Color(0xFF5A4438),
           ),

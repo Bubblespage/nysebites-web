@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
+import 'dart:async';
 import 'admin_dashboard_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -23,11 +24,64 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscure = true;
-  bool _isLoading = false;
+  bool _isLoading = true; // Start loading while checking auth
   String? _errorMessage;
+  StreamSubscription<User?>? _authSubscription;
+  bool _hasNavigated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to auth state changes to survive rapid page refreshes seamlessly
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user != null && !_hasNavigated) {
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+
+          if (!mounted) return;
+
+          if (userDoc.exists) {
+            final data = userDoc.data() as Map<String, dynamic>;
+            final String rawRole = (data['role'] ?? '').toString();
+            
+            if (rawRole.isNotEmpty) {
+              String resolvedRole = 'Baker Admin';
+              if (rawRole == 'super_admin' || rawRole == 'Super Admin') {
+                resolvedRole = 'Super Admin';
+              } else if (rawRole == 'order_dispatcher' || rawRole == 'rider') {
+                resolvedRole = 'Order Dispatcher';
+              }
+              
+              _hasNavigated = true;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AdminDashboardScreen(
+                    currentRole: resolvedRole,
+                    adminEmail: user.email ?? '',
+                  ),
+                ),
+              );
+              return;
+            }
+          }
+        } catch (e) {
+          debugPrint('Auto-login stream error: $e');
+        }
+      }
+      
+      if (mounted && !_hasNavigated) {
+        setState(() => _isLoading = false);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -114,6 +168,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: cardBg,
+        body: Center(
+          child: CircularProgressIndicator(color: brandCocoa),
+        ),
+      );
+    }
+
     final mediaQuery = MediaQuery.of(context);
     final double screenWidth = mediaQuery.size.width;
     final bool isDesktop = screenWidth >= 900;

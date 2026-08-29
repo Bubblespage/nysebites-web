@@ -15,7 +15,10 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
   void _scrollLeft() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        (_scrollController.offset - 220).clamp(0.0, _scrollController.position.maxScrollExtent),
+        (_scrollController.offset - 220).clamp(
+          0.0,
+          _scrollController.position.maxScrollExtent,
+        ),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -25,7 +28,10 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
   void _scrollRight() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        (_scrollController.offset + 220).clamp(0.0, _scrollController.position.maxScrollExtent),
+        (_scrollController.offset + 220).clamp(
+          0.0,
+          _scrollController.position.maxScrollExtent,
+        ),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -665,8 +671,11 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768;
+    // ── TRUE HARDWARE WIDTH CHECK FOR MOBILE ──
+    final flutterView = View.of(context);
+    final physicalWidth =
+        flutterView.physicalSize.width / flutterView.devicePixelRatio;
+    final isMobile = physicalWidth < 768;
 
     return Container(
       width: double.infinity,
@@ -745,8 +754,11 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.chevron_left,
-                                size: 26, color: Color(0xFF8E4A23)),
+                            icon: const Icon(
+                              Icons.chevron_left,
+                              size: 26,
+                              color: Color(0xFF8E4A23),
+                            ),
                             onPressed: _scrollLeft,
                           ),
                         ),
@@ -765,8 +777,11 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.chevron_right,
-                                size: 26, color: Color(0xFF8E4A23)),
+                            icon: const Icon(
+                              Icons.chevron_right,
+                              size: 26,
+                              color: Color(0xFF8E4A23),
+                            ),
                             onPressed: _scrollRight,
                           ),
                         ),

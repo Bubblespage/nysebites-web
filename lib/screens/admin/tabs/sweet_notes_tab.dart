@@ -3,15 +3,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
 
-class SweetNotesTab extends StatelessWidget {
+class SweetNotesTab extends StatefulWidget {
   final List<Map<String, dynamic>> sweetNotes;
 
   const SweetNotesTab({super.key, required this.sweetNotes});
 
+  @override
+  State<SweetNotesTab> createState() => _SweetNotesTabState();
+}
+
+class _SweetNotesTabState extends State<SweetNotesTab> {
   static const Color brandCocoa = Color(0xFF3E2723);
   static const Color textDark = Color(0xFF111827);
   static const Color textMuted = Color(0xFF6B7280);
   static const Color borderLight = Color(0xFFE5E7EB);
+
+  Set<String> _selectedExportIds = {};
 
   String _formatDate(dynamic timestamp) {
     if (timestamp is Timestamp) {
@@ -56,25 +63,69 @@ class SweetNotesTab extends StatelessWidget {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final bytes = await PdfReportGenerator.generateSweetNotesReport(sweetNotes);
-                    await Printing.sharePdf(bytes: bytes, filename: 'sweet_notes_report.pdf');
-                  },
-                  icon: const Icon(Icons.download_rounded, size: 16),
-                  label: Text(isSmallMobile ? 'PDF' : 'Export PDF'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: brandCocoa,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                Row(
+                  children: [
+                    if (_selectedExportIds.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Container(
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF5F5),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFFFE5E5)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _showBatchDeleteConfirmation(context),
+                                icon: const Icon(Icons.delete_outline, size: 16),
+                                label: Text('Delete (${_selectedExportIds.length})'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFD32F2F),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                              ),
+                              Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                              TextButton(
+                                onPressed: () => setState(() => _selectedExportIds.clear()),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF9CA3AF),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                                child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final notesToExport = _selectedExportIds.isEmpty
+                            ? widget.sweetNotes
+                            : widget.sweetNotes.where((n) => _selectedExportIds.contains((n['docId']).toString())).toList();
+                        final bytes = await PdfReportGenerator.generateSweetNotesReport(notesToExport);
+                        await Printing.sharePdf(bytes: bytes, filename: 'sweet_notes_report.pdf');
+                      },
+                      icon: const Icon(Icons.download_rounded, size: 16),
+                      label: Text(isSmallMobile ? 'PDF' : 'Export PDF'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandCocoa,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 18),
-            if (sweetNotes.isEmpty)
+            if (widget.sweetNotes.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),
@@ -93,9 +144,9 @@ class SweetNotesTab extends StatelessWidget {
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: sweetNotes.length,
+                itemCount: widget.sweetNotes.length,
                 itemBuilder: (context, i) {
-                  final note = sweetNotes[i];
+                  final note = widget.sweetNotes[i];
                   final bool isRead = note['isRead'] == true;
                   final String docId = note['docId']?.toString() ?? '';
 
@@ -120,6 +171,21 @@ class SweetNotesTab extends StatelessWidget {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
+                                      Checkbox(
+                                        value: _selectedExportIds.contains(docId),
+                                        activeColor: brandCocoa,
+                                        visualDensity: VisualDensity.compact,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            if (val == true) {
+                                              _selectedExportIds.add(docId);
+                                            } else {
+                                              _selectedExportIds.remove(docId);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
                                           note['name'] ?? 'Customer',
@@ -162,16 +228,34 @@ class SweetNotesTab extends StatelessWidget {
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      note['name'] ?? 'Customer',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: textDark,
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Checkbox(
+                                        value: _selectedExportIds.contains(docId),
+                                        activeColor: brandCocoa,
+                                        visualDensity: VisualDensity.compact,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            if (val == true) {
+                                              _selectedExportIds.add(docId);
+                                            } else {
+                                              _selectedExportIds.remove(docId);
+                                            }
+                                          });
+                                        },
                                       ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        note['name'] ?? 'Customer',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: textDark,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -229,6 +313,65 @@ class SweetNotesTab extends StatelessWidget {
                   );
                 },
               ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBatchDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          title: Text(
+            'Delete ${_selectedExportIds.length} Messages?',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+          ),
+          content: const Text(
+            'Are you sure you want to permanently delete the selected messages? This action cannot be undone.',
+            style: TextStyle(color: textDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: textMuted)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  final batch = FirebaseFirestore.instance.batch();
+                  for (final id in _selectedExportIds) {
+                    final docRef = FirebaseFirestore.instance.collection('sweet_notes').doc(id);
+                    batch.delete(docRef);
+                  }
+                  await batch.commit();
+                  
+                  if (context.mounted) {
+                    setState(() {
+                      _selectedExportIds.clear();
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Messages successfully deleted'), backgroundColor: Color(0xFF4CAF50)),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: const Color(0xFFD32F2F)),
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete All', style: TextStyle(color: Colors.white)),
+            ),
           ],
         );
       },

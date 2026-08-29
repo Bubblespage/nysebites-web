@@ -897,52 +897,125 @@ class AdminModals {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAFAFA),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: const Color(0xFFFCF9F5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFE8D5C4), width: 1.5),
+        ),
         title: Row(
           children: [
-            const Icon(
-              Icons.verified_outlined,
-              color: Color(0xFF1967D2),
-              size: 22,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E5DA),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.verified_user_rounded,
+                color: brandCocoa,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Text(
               'Verify $payment Payment',
               style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: textDark,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: brandCocoa,
               ),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Confirm receipt of payment from $customer for the amount of $total before forwarding to the kitchen bake pipeline.',
-              style: const TextStyle(fontSize: 12.5, color: textMuted, height: 1.4),
-            ),
-            if (order['paymentProofBase64'] != null || order['downpaymentProofBase64'] != null) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Payment Screenshot Attachment:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Confirm receipt of payment from $customer for the amount of $total before forwarding to the kitchen bake pipeline.',
+                style: const TextStyle(fontSize: 14, color: textMuted, height: 1.4),
               ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.memory(
-                  base64Decode(order['paymentProofBase64'] ?? order['downpaymentProofBase64']),
-                  height: 180,
-                  fit: BoxFit.contain,
+              if (order['paymentProofBase64'] != null || order['downpaymentProofBase64'] != null || order['fullPaymentProofBase64'] != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9EFE4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8D5C4)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.zoom_in_rounded, color: brandCocoa, size: 22),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Click the image below to zoom in and verify the GCash reference number.',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: brandCocoa),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: ctx,
+                        builder: (context) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          insetPadding: const EdgeInsets.all(16),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              InteractiveViewer(
+                                child: Image.memory(
+                                  base64Decode(order['paymentProofBase64'] ?? order['downpaymentProofBase64'] ?? order['fullPaymentProofBase64']),
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE8D5C4), width: 2),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: brandCocoa.withValues(alpha: 0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            base64Decode(order['paymentProofBase64'] ?? order['downpaymentProofBase64'] ?? order['fullPaymentProofBase64']),
+                            height: 280,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-        actions: [
+          ),
+      ),
+      actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel', style: TextStyle(color: textMuted)),
@@ -981,83 +1054,153 @@ class AdminModals {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAFAFA),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: const Color(0xFFFCF9F5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFE8D5C4), width: 1.5),
+        ),
         title: Row(
           children: [
-            const Icon(
-              Icons.verified_outlined,
-              color: Color(0xFF1967D2),
-              size: 22,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E5DA),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.verified_user_rounded,
+                color: brandCocoa,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const Text(
               'Verify Final Balance',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: textDark,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: brandCocoa,
               ),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Confirm receipt of final balance payment from $customer.',
-              style: const TextStyle(fontSize: 12.5, color: textMuted, height: 1.4),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFA5D6A7)),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Confirm receipt of final balance payment from $customer.',
+                style: const TextStyle(fontSize: 14, color: textMuted, height: 1.4),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.receipt_long, size: 16, color: Color(0xFF2E7D32)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Ref No: $balanceRef',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Color(0xFF1B5E20),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9EFE4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE8D5C4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long, size: 16, color: brandCocoa),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Ref No: $balanceRef',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: brandCocoa,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (order['finalPaymentProofBase64'] != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9EFE4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8D5C4)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.zoom_in_rounded, color: brandCocoa, size: 22),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Click the image below to zoom in and verify the GCash reference number.',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: brandCocoa),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: ctx,
+                        builder: (context) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          insetPadding: const EdgeInsets.all(16),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              InteractiveViewer(
+                                child: Image.memory(
+                                  base64Decode(order['finalPaymentProofBase64']),
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE8D5C4), width: 2),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: brandCocoa.withValues(alpha: 0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            base64Decode(order['finalPaymentProofBase64']),
+                            height: 280,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-            if (order['finalPaymentProofBase64'] != null) ...[
+                ),
+              ],
               const SizedBox(height: 16),
               const Text(
-                'Payment Screenshot Attachment:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(
-                    base64Decode(order['finalPaymentProofBase64']),
-                    height: 180,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                'Once confirmed, the order will be marked as Ready for Delivery.',
+                style: TextStyle(fontSize: 11.5, color: textMuted, fontStyle: FontStyle.italic),
               ),
             ],
-            const SizedBox(height: 12),
-            const Text(
-              'Once confirmed, the order will be marked as Ready for Delivery.',
-              style: TextStyle(fontSize: 11.5, color: textMuted, fontStyle: FontStyle.italic),
-            ),
-          ],
+          ),
         ),
         actions: [
           TextButton(

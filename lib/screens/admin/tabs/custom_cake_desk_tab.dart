@@ -50,20 +50,30 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
           s == 'received';
     }).toList();
 
+    final inProgress = widget.customCakes.where((c) {
+      final s = (c['status'] ?? '').toString().toLowerCase();
+      return s == 'quote_received' ||
+          s == 'contract_signed' ||
+          s == 'pending_retainer_verification' ||
+          s == 'ready_to_bake' ||
+          s == 'baking' ||
+          s == 'baked_payment_required' ||
+          s == 'baked_payment_verifying' ||
+          s == 'delivering';
+    }).toList();
+
     final cakeHistory = widget.customCakes.where((c) {
       final s = (c['status'] ?? '').toString().toLowerCase();
-      return s == 'baking' ||
-          s == 'delivering' ||
-          s == 'delivered' ||
+      return s == 'delivered' ||
           s == 'completed' ||
           s.contains('completed') ||
           s == 'rejected' ||
-          s == 'spec_rejected' ||
-          s == 'quote_received' ||
-          s == 'ready_to_bake';
+          s == 'spec_rejected';
     }).toList();
 
-    final currentList = _selectedSubTab == 0 ? pendingSpecs : cakeHistory;
+    final currentList = _selectedSubTab == 0
+        ? pendingSpecs
+        : (_selectedSubTab == 1 ? inProgress : cakeHistory);
 
     currentList.sort((a, b) {
       final aDate = a['createdAt'];
@@ -119,7 +129,9 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                 children: [
                                   Expanded(child: _subTabButton('Pending (${pendingSpecs.length})', 0)),
                                   const SizedBox(width: 4),
-                                  Expanded(child: _subTabButton('History (${cakeHistory.length})', 1)),
+                                  Expanded(child: _subTabButton('In Progress (${inProgress.length})', 1)),
+                                  const SizedBox(width: 4),
+                                  Expanded(child: _subTabButton('History (${cakeHistory.length})', 2)),
                                 ],
                               ),
                             ),
@@ -127,7 +139,9 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                           const SizedBox(width: 8),
                           IconButton(
                             onPressed: () async {
-                              final filterText = _selectedSubTab == 0 ? 'Pending Specs' : 'Cake Order History';
+                              final filterText = _selectedSubTab == 0 
+                                  ? 'Pending Specs' 
+                                  : (_selectedSubTab == 1 ? 'In Progress' : 'Cake Order History');
                               final bytes = await PdfReportGenerator.generateCustomCakesReport(
                                 currentList,
                                 filterInfo: filterText,
@@ -180,14 +194,18 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                               children: [
                                 _subTabButton('Pending Specs (${pendingSpecs.length})', 0),
                                 const SizedBox(width: 4),
-                                _subTabButton('Cake Order History (${cakeHistory.length})', 1),
+                                _subTabButton('In Progress (${inProgress.length})', 1),
+                                const SizedBox(width: 4),
+                                _subTabButton('Cake Order History (${cakeHistory.length})', 2),
                               ],
                             ),
                           ),
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
                             onPressed: () async {
-                              final filterText = _selectedSubTab == 0 ? 'Pending Specs' : 'Cake Order History';
+                              final filterText = _selectedSubTab == 0 
+                                  ? 'Pending Specs' 
+                                  : (_selectedSubTab == 1 ? 'In Progress' : 'Cake Order History');
                               final bytes = await PdfReportGenerator.generateCustomCakesReport(
                                 currentList,
                                 filterInfo: filterText,
@@ -224,7 +242,9 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                 child: Text(
                   _selectedSubTab == 0
                       ? 'No pending custom cake requests awaiting review.'
-                      : 'No custom cake order history found.',
+                      : (_selectedSubTab == 1 
+                          ? 'No custom cakes currently in progress.'
+                          : 'No custom cake order history found.'),
                   style: const TextStyle(color: textMuted, fontSize: 13),
                 ),
               )
@@ -306,6 +326,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                       final String status = (cake['status'] ?? '').toString();
                       final String statusLabel = (cake['statusLabel'] ?? 'Completed Delivery').toString();
                       final bool isPending = _selectedSubTab == 0;
+                      final bool isInProgress = _selectedSubTab == 1;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
@@ -529,6 +550,14 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                               ),
                             ],
                           ),
+                        ] else if (isInProgress) ...[
+                          const SizedBox(height: 14),
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            children: [
+                              _buildActionButtons(context, cake, orderId, status),
+                            ],
+                          ),
                         ],
                       ],
                     ),
@@ -587,6 +616,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
   }
 
   Widget _buildStatusPill(String label, String status) {
+    label = label.replaceAll('Packing', 'Preparation');
     Color bg = wellBg;
     Color fg = textDark;
     final s = status.toLowerCase();
@@ -616,6 +646,118 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
         style: TextStyle(color: fg, fontWeight: FontWeight.bold, fontSize: 10.5),
       ),
     );
+  }
+
+  Widget _buildActionButtons(BuildContext context, Map<String, dynamic> order, String orderId, String status) {
+    if (status == 'quote_received') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: null,
+        child: const Text('Awaiting Signature', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'contract_signed') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: null,
+        child: const Text('Awaiting Payment', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'pending_retainer_verification') {
+      final bool isFull = order['paymentType'] == 'full';
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFC27803),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () => AdminModals.showPaymentVerificationModal(
+          context,
+          order,
+          () => widget.onUpdateStatus(orderId, 'ready_to_bake', '✓ Ready for Oven'),
+        ),
+        child: Text(isFull ? 'Verify Full Payment' : 'Verify Retainer', style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'ready_to_bake') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: darkEspresso,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () => widget.onUpdateStatus(orderId, 'baking', '🍪 Baking & Preparation'),
+        child: const Text('Start Bake', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'baking') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: brandCocoa,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () {
+          final bool isFullyPaid = order['paymentType'] == 'full';
+          if (isFullyPaid) {
+            widget.onUpdateStatus(orderId, 'delivering', '🛵 Out for Delivery');
+          } else {
+            widget.onUpdateStatus(orderId, 'baked_payment_required', '💳 Awaiting Balance');
+          }
+        },
+        child: const Text('Mark Baked', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'baked_payment_verifying') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFC27803),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () => AdminModals.showBalanceVerificationModal(
+          context,
+          order,
+          () => widget.onUpdateStatus(orderId, 'delivering', '🛵 Out for Delivery'),
+        ),
+        child: const Text('Verify Balance', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'baked_payment_required') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: null,
+        child: const Text('Pending Balance', style: TextStyle(color: Colors.grey, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (status == 'delivering') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: brandCocoa),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () => AdminModals.showRiderTrackerModal(
+          context,
+          order,
+          () => widget.onUpdateStatus(orderId, 'delivered', '✓ Completed Delivery'),
+        ),
+        child: const Text('Track Rider', style: TextStyle(color: brandCocoa, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
 class StaggeredSlideIn extends StatefulWidget {

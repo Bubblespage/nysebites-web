@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -10,6 +11,8 @@ class CheckoutModal extends StatefulWidget {
   final List<Product> cartItems;
   final double totalAmount;
   final String? currentUser;
+  final String? currentPhone;
+  final String? currentAddress;
   final Function(
     String orderId,
     int itemCount,
@@ -23,6 +26,8 @@ class CheckoutModal extends StatefulWidget {
     required this.cartItems,
     required this.totalAmount,
     this.currentUser,
+    this.currentPhone,
+    this.currentAddress,
     required this.onOrderSuccess,
   });
 
@@ -59,7 +64,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
     if (now.hour < 16) slots.add('3:00 PM - 6:00 PM');
     if (now.hour < 18) slots.add('6:00 PM - 8:00 PM');
 
-    if (slots.isEmpty) return ['ASAP (Subject to GrabCar)'];
+    if (slots.isEmpty) return ['Next Available Rider'];
     return slots;
   }
 
@@ -78,6 +83,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
     super.initState();
     if (widget.currentUser != null && widget.currentUser != 'Online Guest') {
       _fullNameController.text = widget.currentUser!;
+    }
+    if (widget.currentPhone != null && widget.currentPhone!.isNotEmpty) {
+      _phoneController.text = widget.currentPhone!;
+    }
+    if (widget.currentAddress != null && widget.currentAddress!.isNotEmpty) {
+      _addressController.text = widget.currentAddress!;
     }
   }
 
@@ -161,6 +172,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
     await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
       'id': orderId,
       'orderNumber': orderId,
+      'userId': FirebaseAuth.instance.currentUser?.uid,
       'customer': _fullNameController.text.trim().isEmpty
           ? (widget.currentUser ?? 'Online Guest')
           : _fullNameController.text.trim(),
@@ -440,7 +452,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                         isSmallScreen ? 16 : 22,
                         isSmallScreen ? 12 : 24,
                         isSmallScreen ? 16 : 22,
-                        isSmallScreen ? 80 : 24, // extra bottom so Grand Total clears the sticky bar on mobile
+                        isSmallScreen ? 24 : 24,
                       ),
                       child: Form(
                         key: _formKey,
@@ -643,7 +655,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                 _targetDate == null
                                                     ? (hasCustomCake
                                                           ? 'Pick Date (Required)'
-                                                          : 'ASAP Delivery')
+                                                          : 'Same-Day Delivery')
                                                     : '${_targetDate!.month}/${_targetDate!.day}/${_targetDate!.year}',
                                                 style: TextStyle(
                                                   fontSize: 13,
@@ -662,7 +674,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       ),
                                     ),
                                   ),
-                                  if (_targetDate != null) ...[
+                                  if (_targetDate != null && 
+                                      !(_targetDate!.year == DateTime.now().year && 
+                                        _targetDate!.month == DateTime.now().month && 
+                                        _targetDate!.day == DateTime.now().day)) ...[
                                     const SizedBox(width: 8),
                                     Expanded(
                                       flex: 4,

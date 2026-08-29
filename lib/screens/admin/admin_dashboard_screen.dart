@@ -6,9 +6,11 @@ import 'tabs/dashboard_overview_tab.dart';
 import 'tabs/custom_cake_desk_tab.dart';
 import 'tabs/batch_drops_menu_tab.dart';
 import 'tabs/sweet_notes_tab.dart';
+import 'tabs/customer_reviews_tab.dart';
 import 'tabs/store_settings_tab.dart';
 import 'tabs/security_permissions_tab.dart';
 import 'admin_login_screen.dart';
+
 
 class AdminDashboardScreen extends StatefulWidget {
   final String currentRole;
@@ -47,12 +49,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   StreamSubscription<QuerySnapshot>? _ordersSubscription;
   bool _isFirstSnapshot = true;
 
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _liveOrdersStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _dashboardStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _customCakeStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _inventoryStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _sweetNotesStream;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(
-      this,
-    ); // Register lifecycle hook for mobile web tab focus recovery
+    // ── MAGICAL FIX: Removed .orderBy() from all streams to prevent Firebase crashes and missing documents! ──
+    _liveOrdersStream = _firestore.collection('orders').snapshots();
+    _dashboardStream = _firestore.collection('orders').snapshots();
+    _customCakeStream = _firestore.collection('orders').where('isCustom', isEqualTo: true).snapshots();
+    _inventoryStream = _firestore.collection('products').snapshots();
+    _sweetNotesStream = _firestore.collection('sweet_notes').snapshots();
+    
+    WidgetsBinding.instance.addObserver(this); 
+    
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -75,7 +89,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data() as Map<String, dynamic>? ?? {};
-          final orderId = data['id'] ?? 'Unknown Order';
+          final orderId = data['id'] ?? data['orderNumber'] ?? 'Unknown Order';
           
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +107,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   ],
                 ),
                 backgroundColor: const Color(0xFF10B981), // Green
-                duration: const Duration(seconds: 5),
+                duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -116,9 +130,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(
-      this,
-    ); // Clean up mobile browser observer hook
+    WidgetsBinding.instance.removeObserver(this); 
     _ordersSubscription?.cancel();
     _animController.dispose();
     _searchController.dispose();
@@ -128,7 +140,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // Forces the active StreamBuilders to re-sync when coming back from background mobile tabs/apps
     if (state == AppLifecycleState.resumed) {
       setState(() {
         debugPrint(
@@ -295,6 +306,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return 'Search menu items...';
       case 4:
         return 'Search sweet notes...';
+      case 5:
+        return 'Search reviews...';
       case 6:
         return 'Search permissions...';
       default:
@@ -404,7 +417,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final bool isDispatcher = widget.currentRole == 'Order Dispatcher';
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _firestore.collection('orders').orderBy('createdAt', descending: true).snapshots(),
+      stream: _firestore.collection('orders').snapshots(), // ── Removed .orderBy here too! ──
       builder: (context, ordersSnap) {
         final ordersDocs = ordersSnap.data?.docs ?? [];
         final int liveOrdersCount = ordersDocs.length;
@@ -514,16 +527,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       count: unreadNotesCount > 0 ? '$unreadNotesCount' : null,
                       isDrawer: isDrawer,
                     ),
+                    _buildNavItem(
+                      5,
+                      '⭐ Customer Reviews',
+                      isDrawer: isDrawer,
+                    ),
                   ],
                   if (isSuperAdmin)
                     _buildNavItem(
-                      5,
+                      6,
                       '⚙️ Storefront Settings',
                       isDrawer: isDrawer,
                     ),
                   if (!isDispatcher)
                     _buildNavItem(
-                      6,
+                      7,
                       '🛡️ Security & Roles',
                       isDrawer: isDrawer,
                     ),
@@ -586,7 +604,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               fontSize: 13,
             ),
           ),
-          trailing: count != null
+          trailing: count != null && count != '0' // Also hide badges if count is 0
               ? Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 7,
@@ -710,20 +728,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     switch (_selectedNavIndex) {
       case 0:
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _firestore
-              .collection('orders')
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
+          stream: _liveOrdersStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return _buildStreamLoader('Connecting to live order desk...');
             }
-            final docs = snapshot.data?.docs ?? [];
+            final docs = snapshot.data?.docs.toList() ?? [];
 
-            var orders = docs.map((d) => {'docId': d.id, ...d.data()}).where((
-              o,
-            ) {
+            // ── MAGICAL FIX: Sorting manually replaces .orderBy('createdAt') ──
+            try {
+              docs.sort((a, b) {
+                final aTime = a.data()['createdAt'];
+                final bTime = b.data()['createdAt'];
+                if (aTime is Timestamp && bTime is Timestamp) {
+                  return bTime.compareTo(aTime);
+                }
+                return 0;
+              });
+            } catch (_) {}
+
+            var orders = docs.map((d) => {'docId': d.id, ...d.data()}).where((o) {
               if (_searchQuery.trim().isEmpty) return true;
               final q = _searchQuery.toLowerCase();
               return (o['id'] ?? '').toString().toLowerCase().contains(q) ||
@@ -744,16 +769,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       case 1:
         // Dashboard Overview Tab
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _firestore.collection('orders').limit(50).snapshots(),
+          stream: _dashboardStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return _buildStreamLoader('Computing bakery revenue...');
             }
-            final docs = snapshot.data?.docs ?? [];
-            final orders = docs
-                .map((d) => {'docId': d.id, ...d.data()})
-                .toList();
+            final docs = snapshot.data?.docs.toList() ?? [];
+            
+            // Local sort to prevent index errors
+            try {
+              docs.sort((a, b) {
+                final aTime = a.data()['createdAt'];
+                final bTime = b.data()['createdAt'];
+                if (aTime is Timestamp && bTime is Timestamp) {
+                  return bTime.compareTo(aTime);
+                }
+                return 0;
+              });
+            } catch (_) {}
+
+            final orders = docs.map((d) => {'docId': d.id, ...d.data()}).toList();
             return DashboardOverviewTab(orders: orders);
           },
         );
@@ -761,10 +797,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       case 2:
         // Custom Cake Desk Tab
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _firestore
-              .collection('orders')
-              .where('isCustom', isEqualTo: true)
-              .snapshots(),
+          stream: _customCakeStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
@@ -787,7 +820,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       case 3:
         // Batch Drops & Menu Tab
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _firestore.collection('products').snapshots(),
+          stream: _inventoryStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
@@ -815,30 +848,40 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         );
 
       case 4:
-        // Sweet Notes Inbox Tab (Limited to recent 20 to save memory)
+        // Sweet Notes Inbox Tab
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _firestore
-              .collection('sweet_notes')
-              .orderBy('createdAt', descending: true)
-              .limit(20)
-              .snapshots(),
+          stream: _sweetNotesStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return _buildStreamLoader('Opening sweet notes inbox...');
             }
-            final docs = snapshot.data?.docs ?? [];
-            final notes = docs
-                .map((d) => {'docId': d.id, ...d.data()})
-                .toList();
+            final docs = snapshot.data?.docs.toList() ?? [];
+            
+            // Local sort to prevent index errors
+            try {
+              docs.sort((a, b) {
+                final aTime = a.data()['createdAt'];
+                final bTime = b.data()['createdAt'];
+                if (aTime is Timestamp && bTime is Timestamp) {
+                  return bTime.compareTo(aTime);
+                }
+                return 0;
+              });
+            } catch (_) {}
+
+            final notes = docs.map((d) => {'docId': d.id, ...d.data()}).toList();
             return SweetNotesTab(sweetNotes: notes);
           },
         );
 
       case 5:
-        return const StoreSettingsTab();
+        return const CustomerReviewsTab();
 
       case 6:
+        return const StoreSettingsTab();
+
+      case 7:
         return SecurityPermissionsTab(
           currentRole: widget.currentRole,
           adminEmail: widget.adminEmail,

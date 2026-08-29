@@ -35,6 +35,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
   static const Color wellBg = Color(0xFFF4EDE6);
 
   String _currentFilter = 'All';
+  Set<String> _selectedExportIds = {};
 
 
   String _formatTimestamp(dynamic timestamp) {
@@ -208,10 +209,50 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                               ),
                             ),
                           ),
+                        if (_selectedExportIds.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Container(
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF5F5),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFFFE5E5)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () => _showBatchDeleteConfirmation(context),
+                                    icon: const Icon(Icons.delete_outline, size: 16),
+                                    label: Text('Delete (${_selectedExportIds.length})'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFFD32F2F),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    ),
+                                  ),
+                                  Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                                  TextButton(
+                                    onPressed: () => setState(() => _selectedExportIds.clear()),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFF9CA3AF),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    ),
+                                    child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ElevatedButton.icon(
                           onPressed: () async {
+                            final ordersToExport = _selectedExportIds.isEmpty
+                                ? filtered
+                                : filtered.where((o) => _selectedExportIds.contains((o['id'] ?? o['docId']).toString())).toList();
                             final bytes = await PdfReportGenerator.generateLiveOrdersReport(
-                              filtered, 
+                              ordersToExport, 
                               filterInfo: _currentFilter,
                             );
                             final filename = 'live_orders_${_currentFilter.toLowerCase().replaceAll(' ', '_')}.pdf';
@@ -267,9 +308,25 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
               bottom: BorderSide(color: borderLight),
             ),
           ),
-          child: const Row(
+          child: Row(
             children: [
               SizedBox(
+                width: 40,
+                child: Checkbox(
+                  value: _selectedExportIds.length == filteredOrders.length && filteredOrders.isNotEmpty,
+                  activeColor: brandCocoa,
+                  onChanged: (val) {
+                    setState(() {
+                      if (val == true) {
+                        _selectedExportIds.addAll(filteredOrders.map((o) => (o['id'] ?? o['docId']).toString()));
+                      } else {
+                        _selectedExportIds.clear();
+                      }
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(
                 width: 110,
                 child: Text('ORDER ID', style: _headerStyle),
               ),
@@ -328,6 +385,23 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  SizedBox(
+                    width: 40,
+                    child: Checkbox(
+                      value: _selectedExportIds.contains((order['id'] ?? order['docId']).toString()),
+                      activeColor: brandCocoa,
+                      onChanged: (val) {
+                        setState(() {
+                          final id = (order['id'] ?? order['docId']).toString();
+                          if (val == true) {
+                            _selectedExportIds.add(id);
+                          } else {
+                            _selectedExportIds.remove(id);
+                          }
+                        });
+                      },
+                    ),
+                  ),
                   SizedBox(
                     width: 110,
                     child: Column(
@@ -414,12 +488,14 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                               children: [
                                 const Icon(Icons.access_time, size: 12, color: brandCocoa),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '${order['targetDate'] != null ? _formatTimestamp(order['targetDate']) + ' at ' : ''}${order['targetTimeSlot']}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: brandCocoa,
+                                Expanded(
+                                  child: Text(
+                                    '${order['targetDate'] != null ? _formatTimestamp(order['targetDate']).split(' - ').first + ' • ' : ''}${order['targetTimeSlot']}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: brandCocoa,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -487,16 +563,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                             AdminModals.showPrintSlipDialog(context, printData);
                           },
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: Color(0xFFD32F2F),
-                          ),
-                          tooltip: 'Delete Order',
-                          visualDensity: VisualDensity.compact,
-                          onPressed: () => _showDeleteConfirmation(context, (order['id'] ?? order['docId'] ?? '').toString()),
-                        ),
+                        // Removed redundant individual delete button
                         const SizedBox(width: 4),
                         _buildPrimaryStepButton(context, order),
                       ],
@@ -544,20 +611,40 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      Text(
-                        order['id'] ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: darkEspresso,
-                          fontSize: 13,
-                        ),
+                      Checkbox(
+                        value: _selectedExportIds.contains((order['id'] ?? order['docId']).toString()),
+                        activeColor: brandCocoa,
+                        visualDensity: VisualDensity.compact,
+                        onChanged: (val) {
+                          setState(() {
+                            final id = (order['id'] ?? order['docId']).toString();
+                            if (val == true) {
+                              _selectedExportIds.add(id);
+                            } else {
+                              _selectedExportIds.remove(id);
+                            }
+                          });
+                        },
                       ),
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(fontSize: 10, color: textMuted),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order['id'] ?? '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: darkEspresso,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            formattedDate,
+                            style: const TextStyle(fontSize: 10, color: textMuted),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -660,15 +747,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                           AdminModals.showPrintSlipDialog(context, printData);
                         },
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          size: 18,
-                          color: Color(0xFFD32F2F),
-                        ),
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => _showDeleteConfirmation(context, (order['id'] ?? order['docId'] ?? '').toString()),
-                      ),
+                      // Removed redundant individual delete button
                       const SizedBox(width: 4),
                       _buildPrimaryStepButton(context, order),
                     ],
@@ -930,6 +1009,47 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     }
 
     if (status == 'quote_received') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(105, 30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        onPressed: null,
+        child: const Text(
+          'Awaiting Signature',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 10.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (status == 'contract_signed') {
+      return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minimumSize: const Size(105, 30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        onPressed: null,
+        child: const Text(
+          'Awaiting Payment',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 10.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (status == 'pending_retainer_verification') {
+      final bool isFull = order['paymentType'] == 'full';
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFC27803),
@@ -942,9 +1062,9 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           order,
           () => widget.onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven'),
         ),
-        child: const Text(
-          'Verify GCash',
-          style: TextStyle(
+        child: Text(
+          isFull ? 'Verify Full Payment' : 'Verify Retainer',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 10.5,
             fontWeight: FontWeight.bold,
@@ -962,7 +1082,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         onPressed: () =>
-            widget.onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Packing'),
+            widget.onUpdateStatus(targetDocId, 'baking', '🍪 Baking & Preparation'),
         child: const Text(
           'Start Bake',
           style: TextStyle(
@@ -984,7 +1104,12 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
         ),
         onPressed: () {
           if (isCustom) {
-            widget.onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance');
+            final bool isFullyPaid = order['paymentType'] == 'full';
+            if (isFullyPaid) {
+              widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
+            } else {
+              widget.onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance');
+            }
           } else {
             widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
           }
@@ -1068,6 +1193,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
   }
 
   Widget _buildStatusPill(String label, String status) {
+    label = label.replaceAll('Packing', 'Preparation');
     Color bg = wellBg;
     Color fg = textDark;
     if (status == 'baking') {
@@ -1275,6 +1401,65 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                 }
               },
               child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBatchDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          title: Text(
+            'Delete ${_selectedExportIds.length} Orders?',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+          ),
+          content: const Text(
+            'Are you sure you want to permanently delete the selected orders? This action cannot be undone.',
+            style: TextStyle(color: textDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: textMuted)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  final batch = FirebaseFirestore.instance.batch();
+                  for (final id in _selectedExportIds) {
+                    final docRef = FirebaseFirestore.instance.collection('orders').doc(id);
+                    batch.delete(docRef);
+                  }
+                  await batch.commit();
+                  
+                  if (context.mounted) {
+                    setState(() {
+                      _selectedExportIds.clear();
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Orders successfully deleted'), backgroundColor: Color(0xFF4CAF50)),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: const Color(0xFFD32F2F)),
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete All', style: TextStyle(color: Colors.white)),
             ),
           ],
         );

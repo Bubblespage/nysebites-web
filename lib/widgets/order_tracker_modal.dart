@@ -248,7 +248,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            statusLabel,
+                            statusLabel.replaceAll('Packing', 'Preparation'),
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF8E4A23),
@@ -428,17 +428,20 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     final bool isQuote =
         cleanStatus == 'quote_received' ||
         cleanStatus == 'contract_signed' ||
+        cleanStatus == 'pending_retainer_verification' ||
         cleanStatus == 'ready_to_bake' ||
         cleanStatus == 'baking' ||
         cleanStatus == 'delivering' ||
         cleanStatus == 'delivered';
     final bool isContract =
         cleanStatus == 'contract_signed' ||
+        cleanStatus == 'pending_retainer_verification' ||
         cleanStatus == 'ready_to_bake' ||
         cleanStatus == 'baking' ||
         cleanStatus == 'delivering' ||
         cleanStatus == 'delivered';
     final bool isDownPayment =
+        cleanStatus == 'pending_retainer_verification' ||
         cleanStatus == 'ready_to_bake' ||
         cleanStatus == 'baking' ||
         cleanStatus == 'delivering' ||
@@ -470,6 +473,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     final double balance =
         double.tryParse((data['balance'] ?? (total / 2)).toString()) ??
         (total / 2);
+
+    final bool isFullyPaid = data['paymentType'] == 'full';
 
     return Column(
       children: [
@@ -511,10 +516,14 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Base Design',
-                            style: TextStyle(fontSize: 11),
+                          Expanded(
+                            child: Text(
+                              (data['item'] ?? 'Custom Cake').toString(),
+                              style: const TextStyle(fontSize: 11),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             '₱${baseCakePrice.toStringAsFixed(2)}',
                             style: const TextStyle(fontSize: 11),
@@ -556,7 +565,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Payment Terms:',
+                        'Payment Options:',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -564,11 +573,11 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Down Payment Due Now: ₱${downPayment.toStringAsFixed(2)}',
+                        'Retainer Required to Secure Slot: ₱${downPayment.toStringAsFixed(2)} (50%)',
                         style: const TextStyle(fontSize: 11),
                       ),
                       Text(
-                        'Balance Due: ₱${balance.toStringAsFixed(2)} (Due 2 weeks before delivery)',
+                        'Or Full Settlement: ₱${total.toStringAsFixed(2)} (100%)',
                         style: const TextStyle(fontSize: 11),
                       ),
                       const SizedBox(height: 16),
@@ -615,7 +624,15 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
           title: 'Contract Signed',
           subtitle: 'Digital contract signed and agreed upon.',
           isDone: isContract,
-          isActive: cleanStatus == 'contract_signed',
+          isActive: false,
+        ),
+        _buildStepConnector(isDownPayment),
+        _buildActionableStep(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Awaiting Payment',
+          subtitle: 'Please settle your retainer or full balance to reserve your slot.',
+          isDone: isDownPayment,
+          isActive: cleanStatus == 'contract_signed' || cleanStatus == 'pending_retainer_verification',
           child: cleanStatus == 'contract_signed'
               ? Container(
                   margin: const EdgeInsets.only(top: 12),
@@ -629,6 +646,48 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
+                        'Order Summary',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              (data['item'] ?? 'Custom Cake').toString(),
+                              style: const TextStyle(fontSize: 11),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('₱${baseCakePrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Custom Materials & Add-ons', style: TextStyle(fontSize: 11)),
+                          Text('₱${customAddonPrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Divider(color: Color(0xFFE8D5C4)),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Total Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                          Text('₱${total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
                         'Payment Selection: GCash',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -637,7 +696,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Scan the QR code to securely pay the down payment and secure your delivery slot.',
+                        'Choose your preferred payment method. Scan the QR code to pay securely and reserve your slot.',
                         style: TextStyle(fontSize: 11),
                       ),
                       const SizedBox(height: 12),
@@ -659,8 +718,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                               qrAssetPath: 'assets/images/qr_code.jpg',
                               onSubmit: (ref, screenshot) async {
                                 setState(() {
-                                  _localStatus = 'ready_to_bake';
-                                  _localStatusLabel = '💰 Down Payment Paid';
+                                  _localStatus = 'pending_retainer_verification';
+                                  _localStatusLabel = '⏳ Verifying Retainer';
                                 });
                                 try {
                                   await FirebaseFirestore.instance
@@ -669,8 +728,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                                       .set({
                                         'downPaymentReference': ref,
                                         'downpaymentProofBase64': screenshot,
-                                        'status': 'ready_to_bake',
-                                        'statusLabel': '💰 Down Payment Paid',
+                                        'paymentType': 'retainer',
+                                        'status': 'pending_retainer_verification',
+                                        'statusLabel': '⏳ Verifying Retainer',
                                       }, SetOptions(merge: true));
                                 } catch (e) {
                                   debugPrint('Optimistic update failed: $e');
@@ -680,10 +740,59 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                           },
                           icon: const Icon(Icons.qr_code_scanner, size: 20),
                           label: const Text(
-                            'Pay with GCash',
+                            'Pay 50% Retainer (GCash)',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF0053E0),
+                            side: const BorderSide(color: Color(0xFF0053E0), width: 1.5),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            GCashPortalModal.show(
+                              context: context,
+                              amount: total,
+                              qrAssetPath: 'assets/images/qr_code.jpg',
+                              onSubmit: (ref, screenshot) async {
+                                setState(() {
+                                  _localStatus = 'pending_retainer_verification';
+                                  _localStatusLabel = '⏳ Verifying Full Payment';
+                                });
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('orders')
+                                      .doc(widget.orderNumber)
+                                      .set({
+                                        'fullPaymentReference': ref,
+                                        'fullPaymentProofBase64': screenshot,
+                                        'paymentType': 'full',
+                                        'status': 'pending_retainer_verification',
+                                        'statusLabel': '⏳ Verifying Full Payment',
+                                      }, SetOptions(merge: true));
+                                } catch (e) {
+                                  debugPrint('Optimistic update failed: $e');
+                                }
+                              },
+                            );
+                          },
+                          icon: const Icon(Icons.qr_code_scanner, size: 20),
+                          label: const Text(
+                            'Pay Full Amount (GCash)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
                         ),
@@ -696,9 +805,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         _buildStepConnector(isDownPayment),
         _buildActionableStep(
           icon: Icons.payments_outlined,
-          title: 'Down Payment Paid',
+          title: isFullyPaid ? 'Fully Paid' : 'Retainer Paid',
           subtitle:
-              'Down payment received. We have secured your baking slot and are preparing for your sweet celebration!',
+              'Payment received. We have secured your baking slot and are preparing for your sweet celebration!',
           isDone: isDownPayment,
           isActive: cleanStatus == 'ready_to_bake',
         ),
@@ -714,9 +823,10 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         _buildStepConnector(isBakedPayment),
         _buildActionableStep(
           icon: Icons.receipt_long_outlined,
-          title: 'Baked & Final Balance',
-          subtitle:
-              'Your cake is baked to perfection! Please settle the final balance before delivery.',
+          title: isFullyPaid ? 'Baked to Perfection' : 'Baked & Final Balance',
+          subtitle: isFullyPaid 
+              ? 'Your cake is baked to perfection and ready for dispatch!'
+              : 'Your cake is baked to perfection! Please settle the final balance before delivery.',
           isDone: isBakedPayment,
           isActive: cleanStatus == 'baked_payment_required',
           child: cleanStatus == 'baked_payment_required'

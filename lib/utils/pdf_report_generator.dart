@@ -70,10 +70,11 @@ class PdfReportGenerator {
     );
   }
 
-  static pw.Widget _buildTable(List<String> headers, List<List<String>> data) {
+  static pw.Widget _buildTable(List<String> headers, List<List<String>> data, {Map<int, pw.TableColumnWidth>? columnWidths}) {
     return pw.TableHelper.fromTextArray(
       headers: headers,
       data: data,
+      columnWidths: columnWidths,
       headerStyle: _headerStyle,
       headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF8E4A23)),
       cellStyle: _cellStyle,
@@ -180,8 +181,8 @@ class PdfReportGenerator {
     final headers = ['Date', 'Sender', 'Subject', 'Message'];
     final data = notes.map((note) {
       return [
-        _formatDate(note['timestamp']),
-        _clean((note['sender'] ?? '').toString()),
+        _formatDate(note['createdAt'] ?? note['date']),
+        _clean((note['name'] ?? note['sender'] ?? '').toString()),
         _clean((note['subject'] ?? '').toString()),
         _clean((note['message'] ?? '').toString()),
       ];
@@ -192,7 +193,16 @@ class PdfReportGenerator {
         pageTheme: _landscapePageTheme(),
         build: (context) => [
           _buildHeader('Sweet Notes Inbox${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
-          _buildTable(headers, data),
+          _buildTable(
+            headers, 
+            data,
+            columnWidths: {
+              0: const pw.FlexColumnWidth(15), // Date
+              1: const pw.FlexColumnWidth(20), // Sender
+              2: const pw.FlexColumnWidth(15), // Subject
+              3: const pw.FlexColumnWidth(50), // Message
+            }
+          ),
         ],
       ),
     );

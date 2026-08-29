@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '../data/mock_products.dart';
 import '../models/product.dart';
 import '../widgets/app_bar_header.dart';
@@ -12,6 +14,7 @@ import '../widgets/footer.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/mobile_nav_drawer.dart';
 import '../widgets/product_card.dart';
+import '../widgets/customer_profile_modal.dart';
 import '../widgets/reviews_slideshow.dart';
 import '../widgets/order_tracker_modal.dart';
 import '../widgets/oven_gallery_section.dart';
@@ -44,6 +47,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   DateTime? _activeOrderPlacedAt;
 
   String? _currentUser;
+  String? _currentUserPhone;
+  String? _currentUserAddress;
+  StreamSubscription<User?>? _authSubscription;
+  bool _isAuthChecking = true;
+  String? _lastAddedItemName;
+  Timer? _lastAddedTimer;
+  Set<String> _favorites = {};
 
   static const Map<String, int> _productOrderMap = {
     'Biscoff Nocciola Swirl': 1,
@@ -62,10 +72,81 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Use a persistent stream subscription to safely handle browser reloads
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (!mounted) return;
+
+      if (user != null) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+
+          if (!mounted) return;
+
+          if (doc.exists) {
+            final data = doc.data() as Map<String, dynamic>;
+            final rawRole = (data['role'] ?? '').toString();
+            
+            // Prevent staff/admins from accessing storefront UI session
+            if (rawRole.isNotEmpty &&
+                [
+                  'super_admin',
+                  'Super Admin',
+                  'order_dispatcher',
+                  'rider',
+                  'baker_admin',
+                  'Baker Admin',
+                ].contains(rawRole)) {
+              setState(() {
+                _currentUser = null;
+                _isAuthChecking = false;
+                _favorites.clear();
+              });
+              return;
+            }
+
+            final List<dynamic> rawFavorites = data['favorites'] ?? [];
+            final Set<String> userFavorites = rawFavorites
+                .map((e) => e.toString())
+                .toSet();
+
+            setState(() {
+              _currentUser =
+                  data['name'] ?? user.email?.split('@').first ?? 'Guest';
+              _currentUserPhone = data['phone'] ?? '';
+              _currentUserAddress = data['address'] ?? '';
+              _favorites = userFavorites;
+              _isAuthChecking = false;
+            });
+          } else {
+            setState(() {
+              _currentUser = user.email?.split('@').first ?? 'Guest';
+              _currentUserPhone = '';
+              _currentUserAddress = '';
+              _favorites.clear();
+              _isAuthChecking = false;
+            });
+          }
+        } catch (e) {
+          debugPrint('Error fetching user data: $e');
+          if (mounted) setState(() => _isAuthChecking = false);
+        }
+      } else {
+        setState(() {
+          _currentUser = null;
+          _isAuthChecking = false;
+          _favorites.clear();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _scrollController.dispose();
@@ -81,8 +162,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           'App resumed from background: Re-syncing Firestore connection streams and refreshing UI.',
         );
       });
-      // Firestore automatically handles reconnections.
-      // Calling clearPersistence() here throws [cloud_firestore/failed-precondition]
     }
   }
 
@@ -150,12 +229,121 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _logout() {
-    setState(() => _currentUser = null);
+  void _openCustomerProfileModal(bool acceptCustomCakes) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss Profile',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: CustomerProfileModal(
+            favorites: _favorites,
+            onAddToCart: _addToCart,
+            onLogout: _logout,
+            onToggleFavorite: _toggleFavorite,
+            onCustomize: _openCustomCakeBuilder,
+            acceptCustomCakes: acceptCustomCakes,
+            onOpenCart: () => _scaffoldKey.currentState?.openEndDrawer(),
+            currentName: _currentUser ?? '',
+            currentPhone: _currentUserPhone ?? '',
+            currentAddress: _currentUserAddress ?? '',
+            onProfileUpdated: (name, phone, address) {
+              if (mounted) {
+                setState(() {
+                  _currentUser = name;
+                  _currentUserPhone = phone;
+                  _currentUserAddress = address;
+                });
+              }
+            },
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        );
+      },
+    );
+  }
+
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    setState(() {
+      _currentUser = null;
+      _favorites.clear();
+    });
+  }
+
+  Future<void> _toggleFavorite(Product product) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _openAuthModal();
+      return;
+    }
+
+    final prodId = product.id.toString();
+    final isFav = _favorites.contains(prodId);
+    
+    setState(() {
+      if (isFav) {
+        _favorites.remove(prodId);
+      } else {
+        _favorites.add(prodId);
+      }
+    });
+
+    try {
+      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final doc = await docRef.get();
+      if (!doc.exists) {
+        await docRef.set({
+          'name': user.email?.split('@').first ?? 'Guest',
+          'email': user.email ?? '',
+          'favorites': [if (!isFav) prodId],
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        await docRef.set({
+          'favorites': isFav
+              ? FieldValue.arrayRemove([prodId])
+              : FieldValue.arrayUnion([prodId]),
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Error updating favorites: $e');
+      if (mounted) {
+        setState(() {
+          if (isFav) {
+            _favorites.add(prodId);
+          } else {
+            _favorites.remove(prodId);
+          }
+        });
+      }
+    }
   }
 
   void _addToCart(Product product) {
-    setState(() => _cart.add(product));
+    setState(() {
+      _cart.add(product);
+      _lastAddedItemName = product.name;
+    });
+    
+    _lastAddedTimer?.cancel();
+    _lastAddedTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _lastAddedItemName = null);
+    });
   }
 
   void _removeSingleItem(Product product) {
@@ -234,8 +422,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768;
+    // ── TRUE DEVICE WIDTH CHECK (Bypasses Chrome Desktop Site Mode) ──
+    final flutterView = View.of(context);
+    final physicalWidth = flutterView.physicalSize.width / flutterView.devicePixelRatio;
+    final isMobile = physicalWidth < 768;
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
@@ -279,6 +469,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             cartItems: _cart,
             totalPrice: _cartTotal,
             currentUser: _currentUser,
+            currentPhone: _currentUserPhone,
+            currentAddress: _currentUserAddress,
             onAddToCart: _addToCart,
             onRemoveSingleItem: _removeSingleItem,
             onRemoveAllOfProduct: _removeAllOfProduct,
@@ -289,9 +481,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           appBar: AppBarHeader(
             currentUser: _currentUser,
+            isAuthChecking: _isAuthChecking,
             onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
             onOpenAuth: _openAuthModal,
             onLogout: _logout,
+            onProfileClick: () => _openCustomerProfileModal(acceptCustomCakes),
             onLogoClick: _scrollToTop,
             onMenuClick: _onMenuClick,
             onCustomCakesClick: _onCustomCakesClick,
@@ -359,16 +553,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     onBuildCustomCake: _onCustomCakesClick,
                   ),
                   _buildMenuSection(isMobile, acceptCustomCakes),
+                  
+                  // ── FIX: Added responsive breathing room between the product grid and reviews! ──
+                  SizedBox(height: isMobile ? 48 : 80),
+                  
                   Container(
                     key: _reviewsKey,
-                    constraints: BoxConstraints(
-                      minHeight: isMobile
-                          ? 0
-                          : MediaQuery.of(context).size.height * 0.7,
-                    ),
                     alignment: Alignment.center,
                     child: const ReviewsSlideshow(),
                   ),
+                  
                   OvenGallerySection(key: _galleryKey),
                   ContactSection(key: _sweetNoteKey),
                   Footer(key: _footerKey),
@@ -383,29 +577,48 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildIconOnlyFloatingTrayButton() {
     final hasItems = _cart.isNotEmpty;
+    final isGlowing = _lastAddedItemName != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, right: 12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-          borderRadius: BorderRadius.circular(28),
-          child: Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2E1B10),
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFDCC8B8), width: 1.2),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, 0.28),
-                  blurRadius: 12,
-                  offset: Offset(0, 5),
+      child: AnimatedScale(
+        scale: isGlowing ? 1.15 : 1.0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.elasticOut,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+            borderRadius: BorderRadius.circular(28),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutBack,
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E1B10),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isGlowing ? const Color(0xFFF2E3C6) : const Color(0xFFDCC8B8), 
+                  width: isGlowing ? 3.0 : 1.2
                 ),
-              ],
-            ),
+                boxShadow: isGlowing
+                    ? const [
+                        BoxShadow(
+                          color: Color.fromRGBO(212, 163, 115, 0.85), // Rich Caramel Glow for contrast
+                          blurRadius: 28,
+                          spreadRadius: 10,
+                          offset: Offset(0, 0),
+                        ),
+                      ]
+                    : const [
+                        BoxShadow(
+                          color: Color.fromRGBO(0, 0, 0, 0.28),
+                          blurRadius: 12,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+              ),
             child: Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none,
@@ -450,6 +663,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -458,6 +672,59 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.2),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+          child: _lastAddedItemName != null
+              ? Padding(
+                  key: ValueKey(_lastAddedItemName),
+                  padding: const EdgeInsets.only(bottom: 12, right: 12),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3C2216),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.favorite_rounded, color: Color(0xFFF2E3C6), size: 16),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            '+1 $_lastAddedItemName',
+                            style: const TextStyle(
+                              color: Color(0xFFF2E3C6),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(key: ValueKey('empty')),
+        ),
         if (_activeOrderNumber != null) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 10, right: 12),
@@ -495,7 +762,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       constraints: const BoxConstraints(maxWidth: 1200),
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 24,
-        vertical: isMobile ? 32 : 48,
+        vertical: isMobile ? 8 : 10,
       ),
       child: Column(
         children: [
@@ -511,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               color: const Color(0xFF2E1B10),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             _selectedCategory == 'daily_batches'
                 ? 'Small-batch cookies and fudge brownies baked fresh this morning.'
@@ -519,7 +786,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             textAlign: TextAlign.center,
             style: const TextStyle(color: Color(0xFF756256), fontSize: 13),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 540),
             child: TextField(
@@ -558,14 +825,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           CategoryFilter(
             selectedCategory: _selectedCategory == 'daily_batches'
                 ? 'all'
                 : _selectedCategory,
             onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
                 .collection('products')
@@ -638,7 +905,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columnCount,
                       childAspectRatio: cardWidth < 220 ? 0.62 : 0.76,
-                      mainAxisExtent: availableWidth < 900 ? 310 : null,
+                      // ── FIX: Capped height so Desktop view on mobile doesn't stretch cards! ──
+                      mainAxisExtent: availableWidth < 900 ? 310 : 320, 
                       crossAxisSpacing: spacing,
                       mainAxisSpacing: spacing,
                     ),
@@ -646,6 +914,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       final product = products[index];
                       return ProductCard(
                         product: product,
+                        isFavorite: _favorites.contains(product.id.toString()),
+                        onFavoriteToggle: () => _toggleFavorite(product),
                         onAddToCart: _addToCart,
                         onCustomize: (prod) =>
                             _openCustomCakeBuilder(prod, acceptCustomCakes),

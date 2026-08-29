@@ -45,6 +45,7 @@ class _GCashDialog extends StatefulWidget {
 class _GCashDialogState extends State<_GCashDialog> {
   final _refNumberController = TextEditingController();
   String? _paymentProofBase64;
+  String? _paymentProofFileName;
   bool _isSubmitting = false;
   bool _isSuccess = false;
   String? _errorMessage;
@@ -61,6 +62,7 @@ class _GCashDialogState extends State<_GCashDialog> {
         final bytes = await image.readAsBytes();
         setState(() {
           _paymentProofBase64 = base64Encode(bytes);
+          _paymentProofFileName = image.name;
           _errorMessage = null; // Clear error if they select an image
         });
       }
@@ -307,34 +309,95 @@ class _GCashDialogState extends State<_GCashDialog> {
                         ),
                         const SizedBox(height: 16),
 
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF0053E0),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: const BorderSide(color: Color(0xFF0053E0)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        if (_paymentProofBase64 == null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF0053E0),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                side: const BorderSide(color: Color(0xFF0053E0)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _pickScreenshot,
+                              icon: const Icon(Icons.add_photo_alternate),
+                              label: const Text(
+                                'Upload Screenshot Instead',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                            onPressed: _pickScreenshot,
-                            icon: Icon(
-                              _paymentProofBase64 == null
-                                  ? Icons.add_photo_alternate
-                                  : Icons.check_circle,
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F4F6),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE5E7EB)),
                             ),
-                            label: Text(
-                              _paymentProofBase64 == null
-                                  ? 'Upload Screenshot Instead'
-                                  : 'Screenshot Attached',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: const Color(0xFFD1D5DB)),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(7),
+                                    child: Image.memory(
+                                      base64Decode(_paymentProofBase64!),
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _paymentProofFileName ?? 'screenshot.png',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: Color(0xFF1F2937),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Text(
+                                        'Ready to submit',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF10B981),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _paymentProofBase64 = null;
+                                      _paymentProofFileName = null;
+                                    });
+                                  },
+                                  icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                                  tooltip: 'Remove',
+                                ),
+                              ],
                             ),
                           ),
-                        ),
                         
                         if (_errorMessage != null) ...[
                           const SizedBox(height: 12),
