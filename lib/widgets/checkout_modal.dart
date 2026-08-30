@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'gcash_portal_modal.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/product.dart';
+import '../../utils/storage_uploader.dart'; // adjust path to match your project structure
 
 class CheckoutModal extends StatefulWidget {
   final List<Product> cartItems;
@@ -47,7 +47,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
   final String _selectedPaymentMethod = 'GCash';
   final double _packagingFee = 15.0;
   bool _isSubmitting = false;
-  String? _paymentProofBase64;
   DateTime? _targetDate;
   String? _targetTimeSlot;
 
@@ -66,16 +65,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
 
     if (slots.isEmpty) return ['Next Available Rider'];
     return slots;
-  }
-
-  Future<void> _pickPaymentProof() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      setState(() => _paymentProofBase64 = base64Image);
-    }
   }
 
   @override
@@ -105,7 +94,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
   Future<void> _submitOrderToFirestore({
     required double calculatedGrandTotal,
     String? referenceNumber,
-    String? paymentProofBase64,
+    String? paymentProofUrl,
     bool shouldPop = true,
   }) async {
     final String orderId =
@@ -138,14 +127,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
         ? rawPhone
         : '+63 $rawPhone';
 
-    String? referenceImageBase64;
-    for (final item in widget.cartItems) {
-      if (item.customImageBytes != null) {
-        referenceImageBase64 = base64Encode(item.customImageBytes!);
-        break; // Still keep for backwards compatibility
-      }
-    }
-
+    // Upload each unique custom cake's reference photo to Firebase Storage
+    // instead of embedding it as base64 directly in the order document —
+    // large embedded images were pushing whole order docs past Firestore's
+    // 1 MiB per-document limit once payment screenshots stacked up too.
     final Map<String, Map<String, dynamic>> customCakesMap = {};
     for (final item in widget.cartItems) {
       if (item.category.toLowerCase() == 'cakes') {
@@ -154,12 +139,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
           customCakesMap[key]!['quantity'] =
               (customCakesMap[key]!['quantity'] as int) + 1;
         } else {
+          String? referenceImageUrl;
+          if (item.customImageBytes != null) {
+            referenceImageUrl = await StorageUploader.uploadBytes(
+              bytes: item.customImageBytes,
+              path:
+                  'order_references/$orderId/${item.name.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            );
+          }
           customCakesMap[key] = {
             'name': item.name,
             'description': item.description,
-            'referenceImageBase64': item.customImageBytes != null
-                ? base64Encode(item.customImageBytes!)
-                : null,
+            'referenceImageUrl': referenceImageUrl,
             'price': item.price,
             'quantity': 1,
           };
@@ -168,6 +159,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
     }
     final List<Map<String, dynamic>> customCakes = customCakesMap.values
         .toList();
+
+    // Kept for any older UI path that still reads a single top-level field.
+    final String? referenceImageUrl = customCakes.isNotEmpty
+        ? customCakes.first['referenceImageUrl'] as String?
+        : null;
 
     await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
       'id': orderId,
@@ -200,9 +196,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
           ? Timestamp.fromDate(_targetDate!)
           : FieldValue.serverTimestamp(),
       'targetTimeSlot': _targetTimeSlot,
-      'referenceImageBase64': referenceImageBase64,
+      'referenceImageUrl': referenceImageUrl,
       'customCakes': customCakes,
-      'paymentProofBase64': paymentProofBase64,
+      'paymentProofUrl': paymentProofUrl,
     });
 
     // Trigger Admin Email Notification via EmailJS
@@ -293,11 +289,19 @@ class _CheckoutModalState extends State<CheckoutModal> {
         context: context,
         amount: calculatedGrandTotal,
         qrAssetPath: gcashQrPath,
-        onSubmit: (ref, screenshot) async {
+        onSubmit: (ref, screenshotBytes) async {
+          String? proofUrl;
+          if (screenshotBytes != null) {
+            proofUrl = await StorageUploader.uploadBytes(
+              bytes: screenshotBytes,
+              path:
+                  'payment_proofs/${DateTime.now().millisecondsSinceEpoch}_checkout.jpg',
+            );
+          }
           await _submitOrderToFirestore(
             calculatedGrandTotal: calculatedGrandTotal,
             referenceNumber: ref,
-            paymentProofBase64: screenshot,
+            paymentProofUrl: proofUrl,
             shouldPop:
                 false, // GCash modal handles its own success state and pop
           );
@@ -1067,8 +1071,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     : null,
                               ),
                               const SizedBox(height: 28),
-
-                              // Rider / Bake Notes
                               _sectionLabel('RIDER / BAKE NOTES (Optional)'),
                               const SizedBox(height: 10),
                               TextFormField(
@@ -1204,7 +1206,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ),
                                 ),
                                 const SizedBox(height: 14),
-
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(14),
@@ -1238,7 +1239,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ),
                                 ),
                               ],
-
                               if (hasCustomCake) ...[
                                 const SizedBox(height: 20),
                                 _sectionLabel('CUSTOM CAKE PAYMENT'),
@@ -1285,10 +1285,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ),
                                 ),
                               ],
-
                               const SizedBox(height: 20),
-
-                              // Payment Breakdown
                               _sectionLabel('PAYMENT BREAKDOWN'),
                               const SizedBox(height: 8),
                               Container(
@@ -1356,9 +1353,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFFFFF9F5,
-                                  ), // Cute soft peach background
+                                  color: const Color(0xFFFFF9F5),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: const Color(0xFFFFE4D6),
@@ -1498,8 +1493,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
                       ),
                     ),
                   ),
-
-                  // Persistent Bottom Action Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -1670,22 +1663,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
         ),
       ),
     );
-  }
-
-  Widget _buildQrImage(String pathOrUrl) {
-    if (pathOrUrl.startsWith('http')) {
-      return Image.network(
-        pathOrUrl,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _qrFallback(),
-      );
-    } else {
-      return Image.asset(
-        pathOrUrl,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _qrFallback(),
-      );
-    }
   }
 
   Widget _qrFallback() {

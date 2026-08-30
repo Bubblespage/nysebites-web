@@ -124,18 +124,23 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
               children: [
                 const Text('Dashboard Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textDark)),
                 ElevatedButton.icon(
-                  onPressed: () async {
-                    final stats = {
-                      'totalSales': realizedRevenue.toStringAsFixed(2),
-                      'totalOrders': widget.orders.length.toString(),
-                      'pendingOrders': (widget.orders.length - completedOrders.length).toString(),
-                      'completedOrders': completedOrders.length.toString(),
-                    };
-                    final bytes = await PdfReportGenerator.generateDashboardReport(stats);
-                    await Printing.sharePdf(bytes: bytes, filename: 'dashboard_report.pdf');
-                  },
-                  icon: const Icon(Icons.download_rounded, size: 16),
-                  label: Text(isMobile ? 'PDF' : 'Export PDF'),
+  onPressed: () async {
+    final stats = {
+      'totalSales': realizedRevenue.toStringAsFixed(2),
+      'totalOrders': widget.orders.length.toString(),
+      'pendingOrders': (widget.orders.length - completedOrders.length).toString(),
+      'completedOrders': completedOrders.length.toString(),
+      // Add these new metrics!
+      'customCakesCount': customCakesCount.toString(),
+      'bakingOrders': bakingOrders.length.toString(),
+    };
+    
+    // Pass BOTH the stats and the full orders list
+    final bytes = await PdfReportGenerator.generateDashboardReport(stats, widget.orders);
+    await Printing.sharePdf(bytes: bytes, filename: 'dashboard_report.pdf');
+  },
+  icon: const Icon(Icons.download_rounded, size: 16),
+  label: Text(isMobile ? 'PDF' : 'Export PDF'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: brandCocoa,
                     foregroundColor: Colors.white,

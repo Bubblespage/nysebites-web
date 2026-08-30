@@ -7,12 +7,18 @@ class ProductCard extends StatefulWidget {
   final Function(Product) onCustomize;
   final bool isFavorite;
   final VoidCallback? onFavoriteToggle;
+  // The actual rendered width this card will be given by the grid.
+  // Driving the internal layout off this (instead of device width) means
+  // the card looks identical for any device/browser that ends up giving
+  // it the same width — desktop 4-col, tablet 3-col, or mobile 2-col.
+  final double cardWidth;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onAddToCart,
     required this.onCustomize,
+    required this.cardWidth,
     this.isFavorite = false,
     this.onFavoriteToggle,
   });
@@ -56,11 +62,12 @@ class _ProductCardState extends State<ProductCard> {
   Widget build(BuildContext context) {
     final isCake = widget.product.category == 'cakes';
     final isCookie = widget.product.category == 'cookies';
-    
-    // ── RELIABLE WIDTH CHECK FOR DESKTOP SITE MODE ──
-    final flutterView = View.of(context);
-    final physicalWidth = flutterView.physicalSize.width / flutterView.devicePixelRatio;
-    final isNarrowCard = physicalWidth < 900;
+
+    // ── LAYOUT DRIVEN BY ACTUAL CARD WIDTH, NOT DEVICE WIDTH ──
+    // This is what keeps the card's internal proportions (image height,
+    // description line count, chip sizing) consistent no matter how many
+    // columns the grid ends up rendering, or which device/browser it's on.
+    final bool isNarrowCard = widget.cardWidth < 230;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -95,8 +102,7 @@ class _ProductCardState extends State<ProductCard> {
                     top: Radius.circular(19),
                   ),
                   child: SizedBox(
-                    // FIX: Reduced from 180 to 165 to give the text area vertical breathing room!
-                    height: isNarrowCard ? 125 : 165, 
+                    height: isNarrowCard ? 125 : 150,
                     width: double.infinity,
                     child: widget.product.imgSrc.startsWith('http')
                         ? Image.network(
@@ -138,51 +144,28 @@ class _ProductCardState extends State<ProductCard> {
                     ),
                   ),
                 ),
-                if (isCake)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8E4A23),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            color: Colors.white,
-                            size: 11,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'CUSTOMIZABLE',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                
               ],
             ),
-            
+
             // ── UNIFIED RESPONSIVE CONTENT AREA ──
             Expanded(
               child: Padding(
-                // FIX: Clean, strict margins pushing the content slightly higher
-                padding: const EdgeInsets.only(left: 15, right: 15, top: 14, bottom: 14),
+                padding: const EdgeInsets.only(
+                  left: 15,
+                  right: 15,
+                  top: 12,
+                  bottom: 7,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Perfect distribution
+                  // Was MainAxisAlignment.spaceBetween — that pushed the price/
+                  // button row all the way to the bottom of the card, so cards
+                  // with shorter descriptions or no size chips (cakes/brownies)
+                  // ended up with a big gap and the buttons floating low.
+                  // MainAxisAlignment.start + a fixed gap keeps the button row
+                  // sitting right under the text every time, consistently.
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     // --- TOP: Titles and Description ---
                     Column(
@@ -195,24 +178,39 @@ class _ProductCardState extends State<ProductCard> {
                             fontSize: 14.5,
                             color: Color(0xFF2E1B10),
                             letterSpacing: -0.2,
+                            height: 1.15,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          widget.product.description,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 1.35,
-                            color: Color(0xFF756256),
+                        // Fixed-height box (not just maxLines: 3) so a short
+                        // 1-line description and a full 3-line description
+                        // both occupy the same vertical space. Without this,
+                        // cards with shorter text end their description
+                        // block earlier, which shifts everything below it
+                        // (badges, price, buttons) up relative to neighboring
+                        // cards in the same grid row.
+                        SizedBox(
+                          height: 12 * 1.25 * 3, // fontSize * lineHeight * maxLines
+                          child: Text(
+                            widget.product.description,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.3,
+                              color: Color(0xFF756256),
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: isNarrowCard ? 3 : 2, 
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                    
+
+                    // Fixed gap instead of Spacer()/spaceBetween — keeps the
+                    // bottom block anchored just under the description.
+                    const SizedBox(height: 12),
+
                     // --- BOTTOM: Options, Price, and Buttons ---
                     SizedBox(
                       width: double.infinity,
@@ -221,23 +219,38 @@ class _ProductCardState extends State<ProductCard> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // 1. Serving Size / Box Size Chips (ALWAYS ON TOP of Price)
-                          if (isCookie)
-                            Row(
-                              children: [
-                                _buildBoxSizeChip(4, 'Box of 4', compact: isNarrowCard),
-                                const SizedBox(width: 6),
-                                _buildBoxSizeChip(6, 'Box of 6', compact: isNarrowCard),
-                              ],
-                            )
-                          else if (widget.product.servingSize != null && widget.product.servingSize!.isNotEmpty)
-                            _buildServingBadge(),
-                            
-                          const SizedBox(height: 10), // Clean gap 
-                          
-                          // 2. Inline Price and Actions Row 
+                          // Wrapped in a fixed-height SizedBox so cards with
+                          // no chips/badge (e.g. cakes) still reserve the same
+                          // vertical space as cards that do (cookies) — this
+                          // is what keeps the price/button row aligned across
+                          // every card in the same grid row.
+                          SizedBox(
+                            height: isNarrowCard ? 22 : 24,
+                            child: isCookie
+                                ? Row(
+                                    children: [
+                                      _buildBoxSizeChip(4, 'Box of 4',
+                                          compact: isNarrowCard),
+                                      const SizedBox(width: 6),
+                                      _buildBoxSizeChip(6, 'Box of 6',
+                                          compact: isNarrowCard),
+                                    ],
+                                  )
+                                : (widget.product.servingSize != null &&
+                                        widget.product.servingSize!.isNotEmpty
+                                    ? Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: _buildServingBadge(),
+                                      )
+                                    : const SizedBox.shrink()),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // 2. Inline Price and Actions Row
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center, // Center aligns icons and text horizontally!
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 '₱${_currentPrice.toStringAsFixed(2)}',
@@ -245,7 +258,7 @@ class _ProductCardState extends State<ProductCard> {
                                   fontWeight: FontWeight.w900,
                                   fontSize: 16.5,
                                   color: Color(0xFF8E4A23),
-                                  height: 1.0, // Strict height keeps baseline aligned with icons
+                                  height: 1.0,
                                 ),
                               ),
                               _buildActionButton(isCake),
@@ -294,31 +307,39 @@ class _ProductCardState extends State<ProductCard> {
       children: [
         // Favorite Button
         Material(
-          color: widget.isFavorite ? const Color(0xFFFDE8E8) : const Color(0xFFFAF4ED),
+          color: widget.isFavorite
+              ? const Color(0xFFFDE8E8)
+              : const Color(0xFFFAF4ED),
           borderRadius: BorderRadius.circular(10),
           child: InkWell(
             onTap: widget.onFavoriteToggle,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: widget.isFavorite ? const Color(0xFFE88B8B) : const Color(0xFFEFE4D6),
+                  color: widget.isFavorite
+                      ? const Color(0xFFE88B8B)
+                      : const Color(0xFFEFE4D6),
                   width: 1.2,
                 ),
               ),
               child: Icon(
-                widget.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: widget.isFavorite ? const Color(0xFFE53935) : const Color(0xFFDCC8B8),
+                widget.isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: widget.isFavorite
+                    ? const Color(0xFFE53935)
+                    : const Color(0xFFDCC8B8),
                 size: 16,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         // Add / Build Button
         Material(
           color: isCake ? const Color(0xFF8E4A23) : const Color(0xFF2E1B10),
@@ -327,8 +348,8 @@ class _ProductCardState extends State<ProductCard> {
             onTap: onTap,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               alignment: Alignment.center,
               child: Icon(
                 isCake ? Icons.auto_awesome : Icons.add_shopping_cart,
@@ -353,7 +374,8 @@ class _ProductCardState extends State<ProductCard> {
           vertical: compact ? 3 : 4,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8E4A23) : const Color(0xFFF9F5F0),
+          color:
+              isSelected ? const Color(0xFF8E4A23) : const Color(0xFFF9F5F0),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected

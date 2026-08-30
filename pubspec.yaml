@@ -23,10 +23,13 @@ dependencies:
   fl_chart: ^1.2.0
   http: ^1.6.0
   intl: ^0.20.3
+  shared_preferences: ^2.5.5
+  firebase_storage: ^13.5.0
+
 
 dependency_overrides:
   firebase_core_web: 3.10.0
-
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

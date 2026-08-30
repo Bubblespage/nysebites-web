@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:convert';
+import 'dart:typed_data';
 
 class GCashPortalModal {
   static Future<bool?> show({
@@ -9,7 +9,7 @@ class GCashPortalModal {
     required String qrAssetPath,
     required Future<void> Function(
       String? referenceNumber,
-      String? base64Screenshot,
+      Uint8List? paymentProofBytes,
     ) onSubmit,
   }) {
     return showDialog<bool>(
@@ -29,7 +29,7 @@ class _GCashDialog extends StatefulWidget {
   final String qrAssetPath;
   final Future<void> Function(
     String? referenceNumber,
-    String? base64Screenshot,
+    Uint8List? paymentProofBytes,
   ) onSubmit;
 
   const _GCashDialog({
@@ -44,10 +44,11 @@ class _GCashDialog extends StatefulWidget {
 
 class _GCashDialogState extends State<_GCashDialog> {
   final _refNumberController = TextEditingController();
-  String? _paymentProofBase64;
+  Uint8List? _paymentProofBytes;
   String? _paymentProofFileName;
   bool _isSubmitting = false;
   bool _isSuccess = false;
+  bool _isImageProcessing = false;
   String? _errorMessage;
   final ImagePicker _picker = ImagePicker();
 
@@ -55,25 +56,45 @@ class _GCashDialogState extends State<_GCashDialog> {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1200,
-        imageQuality: 80,
+        // ── FIX: Compress the image so it fits inside Firestore's 1 MiB limit! ──
+        maxWidth: 600,
+        imageQuality: 50,
       );
+
       if (image != null) {
-        final bytes = await image.readAsBytes();
         setState(() {
-          _paymentProofBase64 = base64Encode(bytes);
-          _paymentProofFileName = image.name;
-          _errorMessage = null; // Clear error if they select an image
+          _isImageProcessing = true;
+          _errorMessage = null;
         });
+
+        final bytes = await image.readAsBytes();
+
+        if (mounted) {
+          setState(() {
+            _paymentProofBytes = bytes;
+            _paymentProofFileName = image.name;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error picking screenshot: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load image. Please try again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isImageProcessing = false;
+        });
+      }
     }
   }
 
   void _handleSubmit() async {
     final ref = _refNumberController.text.trim();
-    if (ref.isEmpty && _paymentProofBase64 == null) {
+    if (ref.isEmpty && _paymentProofBytes == null) {
       setState(() {
         _errorMessage = 'Please provide a Reference Number or upload a screenshot.';
       });
@@ -84,9 +105,9 @@ class _GCashDialogState extends State<_GCashDialog> {
       _errorMessage = null;
       _isSubmitting = true;
     });
-    
+
     try {
-      await widget.onSubmit(ref.isEmpty ? null : ref, _paymentProofBase64);
+      await widget.onSubmit(ref.isEmpty ? null : ref, _paymentProofBytes);
       if (mounted) {
         setState(() => _isSuccess = true);
       }
@@ -111,12 +132,11 @@ class _GCashDialogState extends State<_GCashDialog> {
       backgroundColor: const Color(0xFFF4F5F7),
       child: Column(
         children: [
-          // Header (Full width)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF0053E0), // GCash Blue
+              color: Color(0xFF0053E0),
             ),
             child: SafeArea(
               bottom: false,
@@ -143,19 +163,17 @@ class _GCashDialogState extends State<_GCashDialog> {
                     ),
                   ),
                   const Spacer(),
-                  const SizedBox(width: 48), // balance space for the close button
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
           ),
-
-
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: isMobile ? 12.0 : 24.0),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800), // wider card
+                  constraints: const BoxConstraints(maxWidth: 800),
                   child: Container(
                     padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, isMobile ? 16 : 20, isMobile ? 16 : 24, 16),
                     decoration: BoxDecoration(
@@ -245,8 +263,6 @@ class _GCashDialogState extends State<_GCashDialog> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
-                        
-                        // QR Code (Cropped and Zoomed)
                         Container(
                           width: 200,
                           height: 200,
@@ -258,9 +274,9 @@ class _GCashDialogState extends State<_GCashDialog> {
                           clipBehavior: Clip.hardEdge,
                           child: FittedBox(
                             fit: BoxFit.none,
-                            alignment: const Alignment(0, -0.05), // adjust vertical center
+                            alignment: const Alignment(0, -0.05),
                             child: Transform.scale(
-                              scale: 2.2, // zoom in on the QR
+                              scale: 2.2,
                               child: Image.asset(
                                 widget.qrAssetPath,
                                 width: 220,
@@ -278,8 +294,6 @@ class _GCashDialogState extends State<_GCashDialog> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Inputs
                         TextField(
                           controller: _refNumberController,
                           style: const TextStyle(
@@ -308,8 +322,38 @@ class _GCashDialogState extends State<_GCashDialog> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        if (_paymentProofBase64 == null)
+                        if (_isImageProcessing)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F6FF),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF0053E0).withOpacity(0.3)),
+                            ),
+                            child: const Column(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF0053E0),
+                                    strokeWidth: 2.5,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Processing Image...',
+                                  style: TextStyle(
+                                    color: Color(0xFF0053E0),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (_paymentProofBytes == null)
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
@@ -351,7 +395,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(7),
                                     child: Image.memory(
-                                      base64Decode(_paymentProofBase64!),
+                                      _paymentProofBytes!,
                                       width: 48,
                                       height: 48,
                                       fit: BoxFit.cover,
@@ -388,7 +432,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                 IconButton(
                                   onPressed: () {
                                     setState(() {
-                                      _paymentProofBase64 = null;
+                                      _paymentProofBytes = null;
                                       _paymentProofFileName = null;
                                     });
                                   },
@@ -398,7 +442,6 @@ class _GCashDialogState extends State<_GCashDialog> {
                               ],
                             ),
                           ),
-                        
                         if (_errorMessage != null) ...[
                           const SizedBox(height: 12),
                           Container(
@@ -426,10 +469,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                             ),
                           ),
                         ],
-                        
                         const SizedBox(height: 12),
-
-                        // Actions
                         if (isMobile) ...[
                           SizedBox(
                             width: double.infinity,
@@ -538,12 +578,12 @@ class _GCashDialogState extends State<_GCashDialog> {
                             ],
                           ),
                         ],
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           ),
         ],
       ),

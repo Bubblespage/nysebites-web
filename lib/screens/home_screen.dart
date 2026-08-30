@@ -74,7 +74,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     // Use a persistent stream subscription to safely handle browser reloads
-    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
+    _authSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (!mounted) return;
 
       if (user != null) {
@@ -89,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (doc.exists) {
             final data = doc.data() as Map<String, dynamic>;
             final rawRole = (data['role'] ?? '').toString();
-            
+
             // Prevent staff/admins from accessing storefront UI session
             if (rawRole.isNotEmpty &&
                 [
@@ -104,14 +105,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 _currentUser = null;
                 _isAuthChecking = false;
                 _favorites.clear();
+                _activeOrderNumber = null;
               });
               return;
             }
 
             final List<dynamic> rawFavorites = data['favorites'] ?? [];
-            final Set<String> userFavorites = rawFavorites
-                .map((e) => e.toString())
-                .toSet();
+            final Set<String> userFavorites =
+                rawFavorites.map((e) => e.toString()).toSet();
 
             setState(() {
               _currentUser =
@@ -121,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _favorites = userFavorites;
               _isAuthChecking = false;
             });
+            _fetchActiveOrder(user.uid);
           } else {
             setState(() {
               _currentUser = user.email?.split('@').first ?? 'Guest';
@@ -129,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _favorites.clear();
               _isAuthChecking = false;
             });
+            _fetchActiveOrder(user.uid);
           }
         } catch (e) {
           debugPrint('Error fetching user data: $e');
@@ -139,10 +142,92 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _currentUser = null;
           _isAuthChecking = false;
           _favorites.clear();
+          _activeOrderNumber = null;
         });
       }
     });
   }
+
+  // Looks up the current user's most recent order and, if it hasn't reached
+  // a final status yet, restores it into the Track Order button — so the
+  // tracker survives page reloads and re-logins instead of only appearing
+  // right after an order is freshly placed in this session.
+  Future<void> _fetchActiveOrder(String uid) async {
+  try {
+    final snap = await FirebaseFirestore.instance
+        .collection('orders')
+        .where('userId', isEqualTo: uid)
+        .limit(20) // pull a handful, then sort/pick the newest locally
+        .get();
+
+    if (!mounted) return;
+
+    if (snap.docs.isEmpty) {
+      setState(() => _activeOrderNumber = null);
+      return;
+    }
+
+    // Sort client-side by createdAt descending — avoids needing a
+    // composite Firestore index for where + orderBy on different fields.
+    final docs = snap.docs.toList()
+      ..sort((a, b) {
+        final aTime = (a.data()['createdAt'] as Timestamp?) ?? Timestamp(0, 0);
+        final bTime = (b.data()['createdAt'] as Timestamp?) ?? Timestamp(0, 0);
+        return bTime.compareTo(aTime);
+      });
+
+    final data = docs.first.data();
+    final String status = (data['status'] ?? '').toString();
+
+    const doneStatuses = {
+      'completed',
+      'delivered',
+      'cancelled',
+      'rejected',
+      'declined',
+    };
+
+    if (doneStatuses.contains(status)) {
+      setState(() => _activeOrderNumber = null);
+      return;
+    }
+
+    final String orderNumber =
+        (data['orderNumber'] ?? data['id'] ?? docs.first.id).toString();
+
+    int itemCount = (data['itemCount'] as num?)?.toInt() ?? 0;
+    if (itemCount == 0) {
+      final itemSummary = (data['item'] ?? '').toString();
+      for (final part in itemSummary.split(',')) {
+        final match = RegExp(r'^\s*(\d+)x').firstMatch(part);
+        if (match != null) {
+          itemCount += int.tryParse(match.group(1) ?? '0') ?? 0;
+        }
+      }
+    }
+
+    final String totalStr = (data['total'] ?? '').toString();
+    final double totalAmount =
+        double.tryParse(totalStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+
+    DateTime placedAt = DateTime.now();
+    final createdAt = data['createdAt'];
+    if (createdAt is Timestamp) {
+      placedAt = createdAt.toDate();
+    }
+
+    setState(() {
+      _activeOrderNumber = orderNumber;
+      _activeOrderItemCount = itemCount;
+      _activeOrderTotal = totalAmount;
+      _activeOrderPlacedAt = placedAt;
+    });
+  } catch (e, stack) {
+    // Surface this loudly instead of a silent debugPrint — this was
+    // masking the real failure (missing composite index) before.
+    debugPrint('Error fetching active order: $e\n$stack');
+  }
+}
 
   @override
   void dispose() {
@@ -286,6 +371,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _toggleFavorite(Product product) async {
+    // Guests must sign in before favoriting anything — checked first and
+    // returns immediately, so no local or visual state ever changes for a
+    // logged-out user.
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       _openAuthModal();
@@ -294,7 +382,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final prodId = product.id.toString();
     final isFav = _favorites.contains(prodId);
-    
+
     setState(() {
       if (isFav) {
         _favorites.remove(prodId);
@@ -304,7 +392,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
 
     try {
-      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final docRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
       final doc = await docRef.get();
       if (!doc.exists) {
         await docRef.set({
@@ -339,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _cart.add(product);
       _lastAddedItemName = product.name;
     });
-    
+
     _lastAddedTimer?.cancel();
     _lastAddedTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => _lastAddedItemName = null);
@@ -423,8 +512,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     // ── TRUE DEVICE WIDTH CHECK (Bypasses Chrome Desktop Site Mode) ──
+    // Kept for page-level chrome only (paddings / section title sizes).
+    // Per-card layout no longer uses this — see ProductCard.cardWidth.
     final flutterView = View.of(context);
-    final physicalWidth = flutterView.physicalSize.width / flutterView.devicePixelRatio;
+    final physicalWidth =
+        flutterView.physicalSize.width / flutterView.devicePixelRatio;
     final isMobile = physicalWidth < 768;
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -441,13 +533,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
         final String announcement1 =
             settingsData['announcement1']?.toString() ??
-            settingsData['announcementText']?.toString() ??
-            '';
+                settingsData['announcementText']?.toString() ??
+                '';
         final String announcement2 =
             settingsData['announcement2']?.toString() ?? '';
         final String announcement3 =
             settingsData['announcement3']?.toString() ??
-            '🎂 Custom cakes require a 2-week reservation notice in advance!';
+                '🎂 Custom cakes require a 2-week reservation notice in advance!';
 
         return Scaffold(
           key: _scaffoldKey,
@@ -553,16 +645,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     onBuildCustomCake: _onCustomCakesClick,
                   ),
                   _buildMenuSection(isMobile, acceptCustomCakes),
-                  
-                  // ── FIX: Added responsive breathing room between the product grid and reviews! ──
+
                   SizedBox(height: isMobile ? 48 : 80),
-                  
+
                   Container(
                     key: _reviewsKey,
                     alignment: Alignment.center,
                     child: const ReviewsSlideshow(),
                   ),
-                  
+
                   OvenGallerySection(key: _galleryKey),
                   ContactSection(key: _sweetNoteKey),
                   Footer(key: _footerKey),
@@ -599,13 +690,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 color: const Color(0xFF2E1B10),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isGlowing ? const Color(0xFFF2E3C6) : const Color(0xFFDCC8B8), 
-                  width: isGlowing ? 3.0 : 1.2
-                ),
+                    color: isGlowing
+                        ? const Color(0xFFF2E3C6)
+                        : const Color(0xFFDCC8B8),
+                    width: isGlowing ? 3.0 : 1.2),
                 boxShadow: isGlowing
                     ? const [
                         BoxShadow(
-                          color: Color.fromRGBO(212, 163, 115, 0.85), // Rich Caramel Glow for contrast
+                          color: Color.fromRGBO(212, 163, 115, 0.85),
                           blurRadius: 28,
                           spreadRadius: 10,
                           offset: Offset(0, 0),
@@ -619,50 +711,50 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ],
               ),
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(
-                  Icons.shopping_bag_outlined,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                if (hasItems)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8E4A23),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Text(
-                        '${_cart.length}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(
+                    Icons.shopping_bag_outlined,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  if (hasItems)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8E4A23),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          '${_cart.length}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -690,7 +782,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   padding: const EdgeInsets.only(bottom: 12, right: 12),
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3C2216),
                       borderRadius: BorderRadius.circular(20),
@@ -705,7 +798,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.favorite_rounded, color: Color(0xFFF2E3C6), size: 16),
+                        const Icon(Icons.favorite_rounded,
+                            color: Color(0xFFF2E3C6), size: 16),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -865,11 +959,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   matchesCategory = cat == _selectedCategory.toLowerCase();
                 }
 
-                final matchesSearch =
-                    p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                    p.description.toLowerCase().contains(
-                      _searchQuery.toLowerCase(),
-                    );
+                final matchesSearch = p.name
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase()) ||
+                    p.description
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase());
 
                 return matchesCategory && matchesSearch && p.active;
               }).toList();
@@ -891,12 +986,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   final columnCount = availableWidth < 900
                       ? 2
                       : availableWidth < 1060
-                      ? 3
-                      : 4;
+                          ? 3
+                          : 4;
                   final spacing = availableWidth < 760 ? 12.0 : 20.0;
                   final cardWidth =
                       (availableWidth - (columnCount - 1) * spacing) /
-                      columnCount;
+                          columnCount;
+
+                  // ── ROW HEIGHT DRIVEN BY ACTUAL CARD WIDTH ──
+                  // This must stay in lockstep with ProductCard's own
+                  // `isNarrowCard` threshold (cardWidth < 230) so the fixed
+                  // grid row height always has enough room for whichever
+                  // internal layout the card picks — this is what removes
+                  // the overflow, and it now holds true at every column
+                  // count / device / browser combination.
+                  final bool isCompactCard = cardWidth < 230;
+                  final double gridMainAxisExtent =
+                      isCompactCard ? 292.0 : 322.0;
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -904,9 +1010,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     itemCount: products.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columnCount,
-                      childAspectRatio: cardWidth < 220 ? 0.62 : 0.76,
-                      // ── FIX: Capped height so Desktop view on mobile doesn't stretch cards! ──
-                      mainAxisExtent: availableWidth < 900 ? 310 : 320, 
+                      mainAxisExtent: gridMainAxisExtent,
                       crossAxisSpacing: spacing,
                       mainAxisSpacing: spacing,
                     ),
@@ -914,7 +1018,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       final product = products[index];
                       return ProductCard(
                         product: product,
-                        isFavorite: _favorites.contains(product.id.toString()),
+                        cardWidth: cardWidth,
+                        isFavorite: _currentUser != null &&
+                            _favorites.contains(product.id.toString()),
                         onFavoriteToggle: () => _toggleFavorite(product),
                         onAddToCart: _addToCart,
                         onCustomize: (prod) =>
@@ -1033,7 +1139,8 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
             children: [
               const SizedBox(width: 24),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFF8E4A23),
                   borderRadius: BorderRadius.circular(6),
@@ -1058,8 +1165,7 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
               const SizedBox(width: 10),
               Text(
                 item['body']!,
-                style:
-                    widget.style ??
+                style: widget.style ??
                     const TextStyle(
                       color: Color(0xFFFAFAFA),
                       fontSize: 11.5,

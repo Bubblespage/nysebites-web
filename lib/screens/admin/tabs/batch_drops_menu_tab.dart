@@ -79,12 +79,10 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
         final bool isDesktop = width >= 850;
         final bool isMobile = width < 600;
 
-        // Metric Card Breakpoint: 4 columns on desktop, 2 columns on mobile/tablet
         final double cardWidth = isDesktop
             ? (width - (3 * 12)) / 4
             : (width >= 380 ? (width - 12) / 2 : width);
 
-        // Product Cards Grid Breakpoint
         final int columns = width < 680 ? 1 : (width < 1120 ? 2 : 3);
         const double spacing = 14.0;
         final double productCardWidth = (width - (columns - 1) * spacing) / columns;
@@ -150,10 +148,10 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                             ),
                           ],
                         ),
-                        if (isSuperAdmin) ...[
-                          const SizedBox(height: 14),
-                          Row(
-                            children: [
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            if (isSuperAdmin) ...[
                               Expanded(
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
@@ -168,41 +166,24 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () async {
-                                  final bytes = await PdfReportGenerator.generateBatchMenuReport(
-                                    _filteredInventory,
-                                    filterInfo: _activeCategory,
-                                  );
-                                  final filename = 'batch_menu_${_activeCategory.toLowerCase()}.pdf';
-                                  await Printing.sharePdf(bytes: bytes, filename: filename);
-                                },
-                                icon: const Icon(Icons.download_rounded, color: brandCocoa),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFBF7F2),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
-                                ),
-                              ),
                             ],
-                          ),
-                        ] else ...[
-                          const SizedBox(height: 14),
-                          IconButton(
-                            onPressed: () async {
-                              final bytes = await PdfReportGenerator.generateBatchMenuReport(
-                                _filteredInventory,
-                                filterInfo: _activeCategory,
-                              );
-                              final filename = 'batch_menu_${_activeCategory.toLowerCase()}.pdf';
-                              await Printing.sharePdf(bytes: bytes, filename: filename);
-                            },
-                            icon: const Icon(Icons.download_rounded, color: brandCocoa),
-                            style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFFBF7F2),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+                            IconButton(
+                              onPressed: () async {
+                                final bytes = await PdfReportGenerator.generateBatchMenuReport(
+                                  _filteredInventory,
+                                  filterInfo: _activeCategory,
+                                );
+                                final filename = 'batch_menu_${_activeCategory.toLowerCase()}.pdf';
+                                await Printing.sharePdf(bytes: bytes, filename: filename);
+                              },
+                              icon: const Icon(Icons.download_rounded, color: brandCocoa),
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFFBF7F2),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ],
                     )
                   : Row(
@@ -589,7 +570,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                     onTap: () => widget.onAdjustStock(originalIndex, 1),
                                     borderRadius: BorderRadius.circular(6),
                                     child: const Padding(
-                                      padding: const EdgeInsets.all(4),
+                                      padding: EdgeInsets.all(4),
                                       child: Icon(Icons.add, size: 15, color: brandCocoa),
                                     ),
                                   ),

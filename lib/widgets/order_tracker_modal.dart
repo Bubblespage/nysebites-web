@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
+import 'dart:async';
+import 'dart:typed_data';
 import 'gcash_portal_modal.dart';
+// ── FIX: Removed StorageUploader because Firebase Storage is locked behind a billing wall
 
 class OrderTrackerModal extends StatefulWidget {
   final String orderNumber;
@@ -65,6 +68,63 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     );
   }
 
+  // ── FIX: UNIFIED PAYMENT PROCESSOR TO PREVENT INFINITE LOADING AND USE BASE64 ──
+  Future<void> _processPayment({
+    required String? ref,
+    required Uint8List? screenshot,
+    required String stepKey,
+    required String statusValue,
+    required String statusLabelValue,
+    required String referenceField,
+    required String proofField,
+  }) async {
+    setState(() {
+      _localStatus = statusValue;
+      _localStatusLabel = statusLabelValue;
+    });
+
+    try {
+      String? base64Image;
+
+      // Encode directly to text to bypass Firebase Storage completely
+      if (screenshot != null) {
+        base64Image = base64Encode(screenshot);
+      }
+
+      final updateData = <String, dynamic>{
+        'status': statusValue,
+        'statusLabel': statusLabelValue,
+      };
+
+      if (ref != null && ref.isNotEmpty) {
+        updateData[referenceField] = ref;
+      }
+      if (base64Image != null) {
+        updateData[proofField] = base64Image;
+      }
+      if (stepKey == 'retainer' || stepKey == 'full') {
+        updateData['paymentType'] = stepKey;
+      }
+
+      // Safe Firestore upload with a timeout to catch network hangs
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(widget.orderNumber)
+          .set(updateData, SetOptions(merge: true))
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw TimeoutException('Database update timed out. Check network connection.'),
+          );
+          
+    } catch (e) {
+      debugPrint('Payment update failed: $e');
+      setState(() {
+        _localStatus = null; // Revert optimistic UI on failure
+      });
+      rethrow; // Forces the GCash modal to catch the error and STOP loading
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -97,7 +157,6 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 debugPrint('Stream Error: ${snapshot.error}');
-                // Fallthrough to use last known data instead of returning an error screen
               }
 
               if (snapshot.connectionState == ConnectionState.waiting &&
@@ -424,7 +483,6 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     String payment,
     String riderName,
   ) {
-    // Determine milestone booleans
     final bool isQuote =
         cleanStatus == 'quote_received' ||
         cleanStatus == 'contract_signed' ||
@@ -601,9 +659,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                                   .collection('orders')
                                   .doc(widget.orderNumber)
                                   .set({
-                                    'status': 'contract_signed',
-                                    'statusLabel': '✅ Contract Signed',
-                                  }, SetOptions(merge: true));
+                                'status': 'contract_signed',
+                                'statusLabel': '✅ Contract Signed',
+                              }, SetOptions(merge: true));
                             } catch (e) {
                               debugPrint('Optimistic update failed: $e');
                             }
@@ -700,52 +758,34 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         style: TextStyle(fontSize: 11),
                       ),
                       const SizedBox(height: 12),
+                      
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0053E0), // GCash blue
+                            backgroundColor: const Color(0xFF0053E0), 
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () {
                             GCashPortalModal.show(
                               context: context,
                               amount: downPayment,
                               qrAssetPath: 'assets/images/qr_code.jpg',
-                              onSubmit: (ref, screenshot) async {
-                                setState(() {
-                                  _localStatus = 'pending_retainer_verification';
-                                  _localStatusLabel = '⏳ Verifying Retainer';
-                                });
-                                try {
-                                  await FirebaseFirestore.instance
-                                      .collection('orders')
-                                      .doc(widget.orderNumber)
-                                      .set({
-                                        'downPaymentReference': ref,
-                                        'downpaymentProofBase64': screenshot,
-                                        'paymentType': 'retainer',
-                                        'status': 'pending_retainer_verification',
-                                        'statusLabel': '⏳ Verifying Retainer',
-                                      }, SetOptions(merge: true));
-                                } catch (e) {
-                                  debugPrint('Optimistic update failed: $e');
-                                }
-                              },
+                              onSubmit: (ref, screenshot) => _processPayment(
+                                ref: ref,
+                                screenshot: screenshot,
+                                stepKey: 'retainer',
+                                statusValue: 'pending_retainer_verification',
+                                statusLabelValue: '⏳ Verifying Retainer',
+                                referenceField: 'downPaymentReference',
+                                proofField: 'downpaymentProofBase64', // Note the Base64 field name
+                              ),
                             );
                           },
                           icon: const Icon(Icons.qr_code_scanner, size: 20),
-                          label: const Text(
-                            'Pay 50% Retainer (GCash)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
+                          label: const Text('Pay 50% Retainer (GCash)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -756,45 +796,26 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                             foregroundColor: const Color(0xFF0053E0),
                             side: const BorderSide(color: Color(0xFF0053E0), width: 1.5),
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () {
                             GCashPortalModal.show(
                               context: context,
                               amount: total,
                               qrAssetPath: 'assets/images/qr_code.jpg',
-                              onSubmit: (ref, screenshot) async {
-                                setState(() {
-                                  _localStatus = 'pending_retainer_verification';
-                                  _localStatusLabel = '⏳ Verifying Full Payment';
-                                });
-                                try {
-                                  await FirebaseFirestore.instance
-                                      .collection('orders')
-                                      .doc(widget.orderNumber)
-                                      .set({
-                                        'fullPaymentReference': ref,
-                                        'fullPaymentProofBase64': screenshot,
-                                        'paymentType': 'full',
-                                        'status': 'pending_retainer_verification',
-                                        'statusLabel': '⏳ Verifying Full Payment',
-                                      }, SetOptions(merge: true));
-                                } catch (e) {
-                                  debugPrint('Optimistic update failed: $e');
-                                }
-                              },
+                              onSubmit: (ref, screenshot) => _processPayment(
+                                ref: ref,
+                                screenshot: screenshot,
+                                stepKey: 'full',
+                                statusValue: 'pending_retainer_verification',
+                                statusLabelValue: '⏳ Verifying Full Payment',
+                                referenceField: 'fullPaymentReference',
+                                proofField: 'fullPaymentProofBase64',
+                              ),
                             );
                           },
                           icon: const Icon(Icons.qr_code_scanner, size: 20),
-                          label: const Text(
-                            'Pay Full Amount (GCash)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
+                          label: const Text('Pay Full Amount (GCash)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
                       ),
                     ],
@@ -802,21 +823,11 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 )
               : null,
         ),
-        _buildStepConnector(isDownPayment),
-        _buildActionableStep(
-          icon: Icons.payments_outlined,
-          title: isFullyPaid ? 'Fully Paid' : 'Retainer Paid',
-          subtitle:
-              'Payment received. We have secured your baking slot and are preparing for your sweet celebration!',
-          isDone: isDownPayment,
-          isActive: cleanStatus == 'ready_to_bake',
-        ),
         _buildStepConnector(isBaking),
         _buildActionableStep(
           icon: Icons.cookie_outlined,
           title: 'Baking & Preparation',
-          subtitle:
-              'Your custom cake is currently being baked fresh and hand-decorated by our expert bakers.',
+          subtitle: 'Your custom cake is currently being baked fresh and hand-decorated by our expert bakers.',
           isDone: isBaking,
           isActive: cleanStatus == 'baking',
         ),
@@ -841,59 +852,35 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Scan to pay final balance:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
+                      const Text('Scan to pay final balance:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0053E0), // GCash blue
+                            backgroundColor: const Color(0xFF0053E0), 
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () {
                             GCashPortalModal.show(
                               context: context,
                               amount: balance,
                               qrAssetPath: 'assets/images/qr_code.jpg',
-                              onSubmit: (ref, screenshot) async {
-                                setState(() {
-                                  _localStatus = 'baked_payment_verifying';
-                                  _localStatusLabel = '⏳ Verifying Final Payment';
-                                });
-                                try {
-                                  await FirebaseFirestore.instance
-                                      .collection('orders')
-                                      .doc(widget.orderNumber)
-                                      .set({
-                                        'balanceReference': ref,
-                                        'finalPaymentProofBase64': screenshot,
-                                        'status': 'baked_payment_verifying',
-                                        'statusLabel': '⏳ Verifying Final Payment',
-                                      }, SetOptions(merge: true));
-                                } catch (e) {
-                                  debugPrint('Optimistic update failed: $e');
-                                }
-                              },
+                              onSubmit: (ref, screenshot) => _processPayment(
+                                ref: ref,
+                                screenshot: screenshot,
+                                stepKey: 'balance',
+                                statusValue: 'baked_payment_verifying',
+                                statusLabelValue: '⏳ Verifying Final Payment',
+                                referenceField: 'balanceReference',
+                                proofField: 'finalPaymentProofBase64',
+                              ),
                             );
                           },
                           icon: const Icon(Icons.qr_code_scanner, size: 20),
-                          label: const Text(
-                            'Pay Final Balance via GCash',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
+                          label: const Text('Pay Final Balance via GCash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
                       ),
                     ],
@@ -905,8 +892,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         _buildActionableStep(
           icon: Icons.local_taxi_outlined,
           title: 'Out for Delivery',
-          subtitle:
-              'Your custom cake is safely packed and out for delivery straight to your doorstep!',
+          subtitle: 'Your custom cake is safely packed and out for delivery straight to your doorstep!',
           isDone: isDelivering,
           isActive: cleanStatus == 'delivering',
           child: cleanStatus == 'delivering'
@@ -918,32 +904,18 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Color(0xFF8E4A23)),
                         foregroundColor: const Color(0xFF8E4A23),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text(
-                              'Contact Admin',
-                              style: TextStyle(
-                                color: Color(0xFF8E4A23),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            content: const Text(
-                              'Please contact the Kitchen Admin at:\n\n09950829180',
-                              style: TextStyle(fontSize: 16),
-                            ),
+                            title: const Text('Contact Admin', style: TextStyle(color: Color(0xFF8E4A23), fontWeight: FontWeight.bold)),
+                            content: const Text('Please contact the Kitchen Admin at:\n\n09950829180', style: TextStyle(fontSize: 16)),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text(
-                                  'Close',
-                                  style: TextStyle(color: Color(0xFF8E4A23)),
-                                ),
+                                child: const Text('Close', style: TextStyle(color: Color(0xFF8E4A23))),
                               ),
                             ],
                           ),
@@ -986,11 +958,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             color: isDone ? const Color(0xFF8E4A23) : const Color(0xFFF0E5DA),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isDone ? Colors.white : const Color(0xFF9E8E84),
-          ),
+          child: Icon(icon, size: 18, color: isDone ? Colors.white : const Color(0xFF9E8E84)),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -1002,15 +970,10 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: isDone
-                      ? const Color(0xFF2E1B10)
-                      : const Color(0xFF9E8E84),
+                  color: isDone ? const Color(0xFF2E1B10) : const Color(0xFF9E8E84),
                 ),
               ),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
-              ),
+              Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF756256))),
               if (child != null) child,
             ],
           ),
