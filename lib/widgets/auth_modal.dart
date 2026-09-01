@@ -575,8 +575,8 @@ class _AuthModalState extends State<AuthModal>
                                   height: 60,
                                   child: Text(
                                     _isSignUp
-                                        ? 'Join our community of sweet tooth lovers. Save custom cakes, track fresh oven batches, and satisfy your cravings seamlessly.'
-                                        : 'Handcrafted small-batch cookies & fudgy brownies baked fresh daily. Sign in to check on your active tray and orders.',
+                                        ? 'Join our community of sweet tooth lovers and satisfy your cravings seamlessly.'
+                                        : 'Handcrafted cookies & fudgy brownies baked fresh daily. Sign in to check on your active orders.',
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       color: Colors.white.withOpacity(0.85),
@@ -839,7 +839,7 @@ class _AuthModalState extends State<AuthModal>
                           _buildCleanField(
                             controller: _emailController,
                             label: 'Email Address',
-                            hint: 'mclegey@gmail.com',
+                            hint: 'maihart@gmail.com',
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             showCheck: _isValidEmail(_emailController.text),

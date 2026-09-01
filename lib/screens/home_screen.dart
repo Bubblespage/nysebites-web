@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import '../data/mock_products.dart';
 import '../models/product.dart';
 import '../widgets/app_bar_header.dart';
@@ -55,6 +58,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Timer? _lastAddedTimer;
   Set<String> _favorites = {};
 
+  // ── FIX: Declared here inside _HomeScreenState so it tracks profile picture updates ──
+  Uint8List? _globalProfileBytes;
+
+  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _settingsStream;
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _productsStream;
+
   static const Map<String, int> _productOrderMap = {
     'Biscoff Nocciola Swirl': 1,
     'Snicker-Doodle Hug': 2,
@@ -68,12 +77,54 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     'Lavender Noir Velvet': 10,
   };
 
+  static int _countItemsFromOrderData(Map<String, dynamic> data) {
+    final direct = (data['itemCount'] as num?)?.toInt() ?? 0;
+    if (direct > 0) return direct;
+
+    if (data['items'] is List) return (data['items'] as List).length;
+    if (data['cart'] is List) return (data['cart'] as List).length;
+
+    int count = 0;
+    final itemSummary = (data['item'] ?? '').toString();
+    for (final part in itemSummary.split(',')) {
+      final match = RegExp(r'^\s*(\d+)x').firstMatch(part);
+      if (match != null) {
+        count += int.tryParse(match.group(1) ?? '0') ?? 0;
+      }
+    }
+    return count > 0 ? count : 1;
+  }
+
+  static bool _isOrderDone(Map<String, dynamic> data) {
+    final status = (data['status'] ?? '').toString().toLowerCase();
+    final label = (data['statusLabel'] ?? '').toString().toLowerCase();
+    return status.contains('complet') ||
+        status.contains('reject') ||
+        status.contains('cancel') ||
+        status.contains('declin') ||
+        status == 'delivered' ||
+        label.contains('complet') ||
+        label.contains('reject') ||
+        label.contains('declin') ||
+        label.contains('cancel');
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Listen for Web Push Notifications while the app is actively open!
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        if (!mounted) return;
+        _showTopNotification(message);
+      }
+    });
 
-    // Use a persistent stream subscription to safely handle browser reloads
+    _settingsStream = FirebaseFirestore.instance.collection('settings').doc('storefront').snapshots();
+    _productsStream = FirebaseFirestore.instance.collection('products').snapshots();
+
     _authSubscription =
         FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (!mounted) return;
@@ -91,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             final data = doc.data() as Map<String, dynamic>;
             final rawRole = (data['role'] ?? '').toString();
 
-            // Prevent staff/admins from accessing storefront UI session
             if (rawRole.isNotEmpty &&
                 [
                   'super_admin',
@@ -114,12 +164,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             final Set<String> userFavorites =
                 rawFavorites.map((e) => e.toString()).toSet();
 
+            final photoBase64 = data['photoBase64'] as String?;
+            Uint8List? profileBytes;
+            if (photoBase64 != null && photoBase64.isNotEmpty) {
+              try {
+                profileBytes = base64Decode(photoBase64);
+              } catch (e) {
+                debugPrint('Error decoding profile image: $e');
+              }
+            }
+
             setState(() {
               _currentUser =
                   data['name'] ?? user.email?.split('@').first ?? 'Guest';
               _currentUserPhone = data['phone'] ?? '';
               _currentUserAddress = data['address'] ?? '';
               _favorites = userFavorites;
+              _globalProfileBytes = profileBytes;
               _isAuthChecking = false;
             });
             _fetchActiveOrder(user.uid);
@@ -129,6 +190,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _currentUserPhone = '';
               _currentUserAddress = '';
               _favorites.clear();
+              _globalProfileBytes = null;
               _isAuthChecking = false;
             });
             _fetchActiveOrder(user.uid);
@@ -138,96 +200,142 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (mounted) setState(() => _isAuthChecking = false);
         }
       } else {
-        setState(() {
-          _currentUser = null;
-          _isAuthChecking = false;
-          _favorites.clear();
-          _activeOrderNumber = null;
-        });
+        final needsUpdate = _currentUser != null ||
+            _isAuthChecking != false ||
+            _favorites.isNotEmpty ||
+            _activeOrderNumber != null ||
+            _currentUserPhone != null ||
+            _currentUserAddress != null ||
+            _globalProfileBytes != null;
+
+        if (needsUpdate) {
+          setState(() {
+            _currentUser = null;
+            _currentUserPhone = null;
+            _currentUserAddress = null;
+            _globalProfileBytes = null;
+            _isAuthChecking = false;
+            _favorites.clear();
+            _activeOrderNumber = null;
+          });
+        } else if (_isAuthChecking) {
+          setState(() => _isAuthChecking = false);
+        }
       }
     });
   }
 
-  // Looks up the current user's most recent order and, if it hasn't reached
-  // a final status yet, restores it into the Track Order button — so the
-  // tracker survives page reloads and re-logins instead of only appearing
-  // right after an order is freshly placed in this session.
   Future<void> _fetchActiveOrder(String uid) async {
-  try {
-    final snap = await FirebaseFirestore.instance
-        .collection('orders')
-        .where('userId', isEqualTo: uid)
-        .limit(20) // pull a handful, then sort/pick the newest locally
-        .get();
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('orders')
+          .where('userId', isEqualTo: uid)
+          .limit(20)
+          .get();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (snap.docs.isEmpty) {
-      setState(() => _activeOrderNumber = null);
-      return;
-    }
+      final activeDocs =
+          snap.docs.where((d) => !_isOrderDone(d.data())).toList();
 
-    // Sort client-side by createdAt descending — avoids needing a
-    // composite Firestore index for where + orderBy on different fields.
-    final docs = snap.docs.toList()
-      ..sort((a, b) {
-        final aTime = (a.data()['createdAt'] as Timestamp?) ?? Timestamp(0, 0);
-        final bTime = (b.data()['createdAt'] as Timestamp?) ?? Timestamp(0, 0);
+      if (activeDocs.isEmpty) {
+        setState(() => _activeOrderNumber = null);
+        return;
+      }
+
+      activeDocs.sort((a, b) {
+        final aRaw = a.data()['createdAt'];
+        final bRaw = b.data()['createdAt'];
+        final aTime = aRaw is Timestamp ? aRaw.toDate() : DateTime.now();
+        final bTime = bRaw is Timestamp ? bRaw.toDate() : DateTime.now();
         return bTime.compareTo(aTime);
       });
 
-    final data = docs.first.data();
-    final String status = (data['status'] ?? '').toString();
+      final data = activeDocs.first.data();
+      final String orderNumber =
+          (data['orderNumber'] ?? data['id'] ?? activeDocs.first.id).toString();
 
-    const doneStatuses = {
-      'completed',
-      'delivered',
-      'cancelled',
-      'rejected',
-      'declined',
-    };
+      final String totalStr = (data['total'] ?? '').toString();
+      final double totalAmount =
+          double.tryParse(totalStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 
-    if (doneStatuses.contains(status)) {
-      setState(() => _activeOrderNumber = null);
-      return;
-    }
-
-    final String orderNumber =
-        (data['orderNumber'] ?? data['id'] ?? docs.first.id).toString();
-
-    int itemCount = (data['itemCount'] as num?)?.toInt() ?? 0;
-    if (itemCount == 0) {
-      final itemSummary = (data['item'] ?? '').toString();
-      for (final part in itemSummary.split(',')) {
-        final match = RegExp(r'^\s*(\d+)x').firstMatch(part);
-        if (match != null) {
-          itemCount += int.tryParse(match.group(1) ?? '0') ?? 0;
-        }
+      DateTime placedAt = DateTime.now();
+      final createdAt = data['createdAt'];
+      if (createdAt is Timestamp) {
+        placedAt = createdAt.toDate();
       }
+
+      if (!mounted) return;
+      setState(() {
+        _activeOrderNumber = orderNumber;
+        _activeOrderItemCount = _countItemsFromOrderData(data);
+        _activeOrderTotal = totalAmount;
+        _activeOrderPlacedAt = placedAt;
+      });
+    } catch (e, stack) {
+      debugPrint('Error fetching active order: $e\n$stack');
     }
-
-    final String totalStr = (data['total'] ?? '').toString();
-    final double totalAmount =
-        double.tryParse(totalStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
-
-    DateTime placedAt = DateTime.now();
-    final createdAt = data['createdAt'];
-    if (createdAt is Timestamp) {
-      placedAt = createdAt.toDate();
-    }
-
-    setState(() {
-      _activeOrderNumber = orderNumber;
-      _activeOrderItemCount = itemCount;
-      _activeOrderTotal = totalAmount;
-      _activeOrderPlacedAt = placedAt;
-    });
-  } catch (e, stack) {
-    // Surface this loudly instead of a silent debugPrint — this was
-    // masking the real failure (missing composite index) before.
-    debugPrint('Error fetching active order: $e\n$stack');
   }
-}
+
+  void _showTopNotification(RemoteMessage message) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 20.0, // Safely below the status bar
+        left: 16.0,
+        right: 16.0,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3C2216),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
+                )
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.notifications_active_rounded, color: Color(0xFFFBEBE4)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message.notification!.title ?? 'Nyse Bites Update',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        message.notification!.body ?? '',
+                        style: const TextStyle(color: Color(0xFFFBEBE4), fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 5), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -242,11 +350,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      setState(() {
-        debugPrint(
-          'App resumed from background: Re-syncing Firestore connection streams and refreshing UI.',
-        );
-      });
+      debugPrint(
+        'App resumed from background: Re-syncing Firestore connection streams and refreshing UI.',
+      );
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        _fetchActiveOrder(user.uid);
+      }
     }
   }
 
@@ -335,6 +446,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             currentName: _currentUser ?? '',
             currentPhone: _currentUserPhone ?? '',
             currentAddress: _currentUserAddress ?? '',
+            initialImageBytes: _globalProfileBytes,
+            onImageUpdated: (newBytes) {
+              setState(() {
+                _globalProfileBytes = newBytes;
+              });
+            },
             onProfileUpdated: (name, phone, address) {
               if (mounted) {
                 setState(() {
@@ -366,14 +483,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     await FirebaseAuth.instance.signOut();
     setState(() {
       _currentUser = null;
+      _currentUserPhone = null;
+      _currentUserAddress = null;
+      _globalProfileBytes = null;
       _favorites.clear();
+      _activeOrderNumber = null;
     });
   }
 
   Future<void> _toggleFavorite(Product product) async {
-    // Guests must sign in before favoriting anything — checked first and
-    // returns immediately, so no local or visual state ever changes for a
-    // logged-out user.
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       _openAuthModal();
@@ -462,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() => _cart.clear());
   }
 
-  void _savePlacedOrder(String orderId, int itemCount, double totalAmount) {
+  void _savePlacedOrder(String orderId, int itemCount, double totalAmount) async {
     setState(() {
       _activeOrderNumber = orderId;
       _activeOrderItemCount = itemCount;
@@ -511,19 +629,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // ── TRUE DEVICE WIDTH CHECK (Bypasses Chrome Desktop Site Mode) ──
-    // Kept for page-level chrome only (paddings / section title sizes).
-    // Per-card layout no longer uses this — see ProductCard.cardWidth.
-    final flutterView = View.of(context);
-    final physicalWidth =
-        flutterView.physicalSize.width / flutterView.devicePixelRatio;
-    final isMobile = physicalWidth < 768;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 768;
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('settings')
-          .doc('storefront')
-          .snapshots(),
+      stream: _settingsStream,
       builder: (context, settingsSnapshot) {
         final settingsData = settingsSnapshot.data?.data() ?? {};
 
@@ -547,6 +657,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           backgroundColor: const Color(0xFFFAF4ED),
           drawer: MobileNavDrawer(
             currentUser: _currentUser,
+            profileImageBytes: _globalProfileBytes,
+            onProfileClick: () => _openCustomerProfileModal(acceptCustomCakes),
             onMenuClick: _onMenuClick,
             onCustomCakesClick: _onCustomCakesClick,
             onDailyBatchesClick: _onDailyBatchesClick,
@@ -573,6 +685,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           appBar: AppBarHeader(
             currentUser: _currentUser,
+            profileImageBytes: _globalProfileBytes,
             isAuthChecking: _isAuthChecking,
             onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
             onOpenAuth: _openAuthModal,
@@ -928,9 +1041,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 16),
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('products')
-                .snapshots(),
+            stream: _productsStream,
             builder: (context, snapshot) {
               List<Product> rawList = [];
 
@@ -983,26 +1094,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final availableWidth = constraints.maxWidth;
-                  final columnCount = availableWidth < 900
+
+                  final columnCount = availableWidth <= 550
                       ? 2
-                      : availableWidth < 1060
+                      : availableWidth <= 850
                           ? 3
                           : 4;
+
                   final spacing = availableWidth < 760 ? 12.0 : 20.0;
                   final cardWidth =
                       (availableWidth - (columnCount - 1) * spacing) /
                           columnCount;
-
-                  // ── ROW HEIGHT DRIVEN BY ACTUAL CARD WIDTH ──
-                  // This must stay in lockstep with ProductCard's own
-                  // `isNarrowCard` threshold (cardWidth < 230) so the fixed
-                  // grid row height always has enough room for whichever
-                  // internal layout the card picks — this is what removes
-                  // the overflow, and it now holds true at every column
-                  // count / device / browser combination.
-                  final bool isCompactCard = cardWidth < 230;
-                  final double gridMainAxisExtent =
-                      isCompactCard ? 292.0 : 322.0;
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -1010,13 +1112,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     itemCount: products.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columnCount,
-                      mainAxisExtent: gridMainAxisExtent,
+                      mainAxisExtent: ProductCard.computeHeight(cardWidth),
                       crossAxisSpacing: spacing,
                       mainAxisSpacing: spacing,
                     ),
                     itemBuilder: (context, index) {
                       final product = products[index];
                       return ProductCard(
+                        key: ValueKey(product.name),
                         product: product,
                         cardWidth: cardWidth,
                         isFavorite: _currentUser != null &&
@@ -1072,24 +1175,29 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
     if (!mounted) return;
     _isScrolling = true;
 
+    await Future.delayed(const Duration(milliseconds: 500));
+
     while (mounted && _isScrolling) {
       if (_scrollController.hasClients) {
         final maxScroll = _scrollController.position.maxScrollExtent;
-        if (maxScroll > 0) {
-          final int durationSec = (maxScroll / widget.velocity)
-              .clamp(10, 45)
-              .toInt();
-          await _scrollController.animateTo(
-            maxScroll,
-            duration: Duration(seconds: durationSec),
-            curve: Curves.linear,
-          );
+
+        if (maxScroll > 2.0) {
+          final int durationSec = (maxScroll / widget.velocity).clamp(10.0, 60.0).toInt();
+
+          try {
+            await _scrollController.animateTo(
+              maxScroll,
+              duration: Duration(seconds: durationSec),
+              curve: Curves.linear,
+            );
+          } catch (_) {}
+
           if (mounted && _scrollController.hasClients) {
             _scrollController.jumpTo(0.0);
           }
         }
       }
-      await Future.delayed(const Duration(milliseconds: 50));
+      await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 

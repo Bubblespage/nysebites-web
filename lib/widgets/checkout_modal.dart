@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'gcash_portal_modal.dart';
 import '../models/product.dart';
-import '../../utils/storage_uploader.dart'; // adjust path to match your project structure
+// ── FIX: Removed StorageUploader — Firebase Storage requires the Blaze
+// billing plan, which isn't enabled on this project. Reverted to base64,
+// matching the same fix already applied in order_tracker_modal.dart.
 
 class CheckoutModal extends StatefulWidget {
   final List<Product> cartItems;
@@ -94,7 +96,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
   Future<void> _submitOrderToFirestore({
     required double calculatedGrandTotal,
     String? referenceNumber,
-    String? paymentProofUrl,
+    String? paymentProofBase64,
     bool shouldPop = true,
   }) async {
     final String orderId =
@@ -127,10 +129,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
         ? rawPhone
         : '+63 $rawPhone';
 
-    // Upload each unique custom cake's reference photo to Firebase Storage
-    // instead of embedding it as base64 directly in the order document —
-    // large embedded images were pushing whole order docs past Firestore's
-    // 1 MiB per-document limit once payment screenshots stacked up too.
+    // ── FIX: base64-encode reference photos directly instead of uploading
+    // to Firebase Storage (unavailable — requires the paid Blaze plan).
     final Map<String, Map<String, dynamic>> customCakesMap = {};
     for (final item in widget.cartItems) {
       if (item.category.toLowerCase() == 'cakes') {
@@ -139,18 +139,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
           customCakesMap[key]!['quantity'] =
               (customCakesMap[key]!['quantity'] as int) + 1;
         } else {
-          String? referenceImageUrl;
-          if (item.customImageBytes != null) {
-            referenceImageUrl = await StorageUploader.uploadBytes(
-              bytes: item.customImageBytes,
-              path:
-                  'order_references/$orderId/${item.name.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg',
-            );
-          }
           customCakesMap[key] = {
             'name': item.name,
             'description': item.description,
-            'referenceImageUrl': referenceImageUrl,
+            'referenceImageBase64': item.customImageBytes != null
+                ? base64Encode(item.customImageBytes!)
+                : null,
             'price': item.price,
             'quantity': 1,
           };
@@ -161,8 +155,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
         .toList();
 
     // Kept for any older UI path that still reads a single top-level field.
-    final String? referenceImageUrl = customCakes.isNotEmpty
-        ? customCakes.first['referenceImageUrl'] as String?
+    final String? referenceImageBase64 = customCakes.isNotEmpty
+        ? customCakes.first['referenceImageBase64'] as String?
         : null;
 
     await FirebaseFirestore.instance.collection('orders').doc(orderId).set({
@@ -196,9 +190,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
           ? Timestamp.fromDate(_targetDate!)
           : FieldValue.serverTimestamp(),
       'targetTimeSlot': _targetTimeSlot,
-      'referenceImageUrl': referenceImageUrl,
+      'referenceImageBase64': referenceImageBase64,
       'customCakes': customCakes,
-      'paymentProofUrl': paymentProofUrl,
+      'paymentProofBase64': paymentProofBase64,
     });
 
     // Trigger Admin Email Notification via EmailJS
@@ -290,18 +284,15 @@ class _CheckoutModalState extends State<CheckoutModal> {
         amount: calculatedGrandTotal,
         qrAssetPath: gcashQrPath,
         onSubmit: (ref, screenshotBytes) async {
-          String? proofUrl;
-          if (screenshotBytes != null) {
-            proofUrl = await StorageUploader.uploadBytes(
-              bytes: screenshotBytes,
-              path:
-                  'payment_proofs/${DateTime.now().millisecondsSinceEpoch}_checkout.jpg',
-            );
-          }
+          // ── FIX: base64-encode directly instead of uploading to
+          // Firebase Storage (unavailable — requires billing).
+          final String? proofBase64 = screenshotBytes != null
+              ? base64Encode(screenshotBytes)
+              : null;
           await _submitOrderToFirestore(
             calculatedGrandTotal: calculatedGrandTotal,
             referenceNumber: ref,
-            paymentProofUrl: proofUrl,
+            paymentProofBase64: proofBase64,
             shouldPop:
                 false, // GCash modal handles its own success state and pop
           );

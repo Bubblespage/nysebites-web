@@ -20,6 +20,16 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
 
   Set<String> _selectedExportIds = {};
 
+  Future<void> _exportPdf() async {
+    final notesToExport = _selectedExportIds.isEmpty
+        ? widget.sweetNotes
+        : widget.sweetNotes
+            .where((n) => _selectedExportIds.contains((n['docId']).toString()))
+            .toList();
+    final bytes = await PdfReportGenerator.generateSweetNotesReport(notesToExport);
+    await Printing.sharePdf(bytes: bytes, filename: 'sweet_notes_report.pdf');
+  }
+
   String _formatDate(dynamic timestamp) {
     if (timestamp is Timestamp) {
       final date = timestamp.toDate();
@@ -40,90 +50,109 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+            isSmallMobile
+    ? Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Sweet Notes & Customer Inquiries', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
+          const SizedBox(height: 3),
+          const Text('Messages and customer catering inquiries received from the Sweet Note form', style: TextStyle(fontSize: 11.5, color: textMuted)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              if (_selectedExportIds.isNotEmpty) ...[
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Sweet Notes & Customer Inquiries',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textDark,
+                  child: Container(
+                    height: 38,
+                    decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => _showBatchDeleteConfirmation(context),
+                          icon: const Icon(Icons.delete_outline, size: 16),
+                          label: Text('Delete (${_selectedExportIds.length})'),
+                          style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         ),
+                        Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                        TextButton(
+                          onPressed: () => setState(() => _selectedExportIds.clear()),
+                          style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ] else
+                const Spacer(),
+              IconButton(
+                onPressed: _exportPdf,
+                icon: const Icon(Icons.download_rounded, color: brandCocoa),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFBF7F2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      )
+    : Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Sweet Notes & Customer Inquiries', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
+              const SizedBox(height: 3),
+              const Text('Messages and customer catering inquiries received from the Sweet Note form', style: TextStyle(fontSize: 11.5, color: textMuted)),
+            ],
+          ),
+          Row(
+            children: [
+              if (_selectedExportIds.isNotEmpty) ...[
+                Container(
+                  height: 38,
+                  decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => _showBatchDeleteConfirmation(context),
+                        icon: const Icon(Icons.delete_outline, size: 16),
+                        label: Text('Delete (${_selectedExportIds.length})'),
+                        style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                       ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'Messages and customer catering inquiries received from the Sweet Note form',
-                        style: TextStyle(fontSize: 11.5, color: textMuted),
+                      Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                      TextButton(
+                        onPressed: () => setState(() => _selectedExportIds.clear()),
+                        style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                       ),
                     ],
                   ),
                 ),
-                Row(
-                  children: [
-                    if (_selectedExportIds.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Container(
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF5F5),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFFFE5E5)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () => _showBatchDeleteConfirmation(context),
-                                icon: const Icon(Icons.delete_outline, size: 16),
-                                label: Text('Delete (${_selectedExportIds.length})'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFFD32F2F),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                ),
-                              ),
-                              Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
-                              TextButton(
-                                onPressed: () => setState(() => _selectedExportIds.clear()),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF9CA3AF),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                ),
-                                child: const Text('Cancel', style: TextStyle(fontSize: 12)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final notesToExport = _selectedExportIds.isEmpty
-                            ? widget.sweetNotes
-                            : widget.sweetNotes.where((n) => _selectedExportIds.contains((n['docId']).toString())).toList();
-                        final bytes = await PdfReportGenerator.generateSweetNotesReport(notesToExport);
-                        await Printing.sharePdf(bytes: bytes, filename: 'sweet_notes_report.pdf');
-                      },
-                      icon: const Icon(Icons.download_rounded, size: 16),
-                      label: Text(isSmallMobile ? 'PDF' : 'Export PDF'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: brandCocoa,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(width: 12),
               ],
-            ),
+              ElevatedButton.icon(
+                onPressed: _exportPdf,
+                icon: const Icon(Icons.download_rounded, size: 16),
+                label: const Text('Export PDF'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: brandCocoa,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
             const SizedBox(height: 18),
             if (widget.sweetNotes.isEmpty)
               Container(

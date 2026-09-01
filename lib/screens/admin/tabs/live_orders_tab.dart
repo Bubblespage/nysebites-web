@@ -37,6 +37,29 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
   String _currentFilter = 'All';
   Set<String> _selectedExportIds = {};
 
+  Future<void> _exportPdf() async {
+    try {
+      final ordersToExport = _selectedExportIds.isEmpty
+          ? _filteredOrders
+          : _filteredOrders
+              .where((o) =>
+                  _selectedExportIds.contains((o['id'] ?? o['docId']).toString()))
+              .toList();
+      final bytes = await PdfReportGenerator.generateLiveOrdersReport(
+        ordersToExport,
+        filterInfo: _currentFilter,
+      );
+      final filename =
+          'live_orders_${_currentFilter.toLowerCase().replaceAll(' ', '_')}.pdf';
+      await Printing.sharePdf(bytes: bytes, filename: filename);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting PDF: $e')),
+        );
+      }
+    }
+  }
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return 'Just now';
@@ -113,25 +136,22 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
 
   Widget _buildFilterButton(String title) {
     final isSelected = _currentFilter == title;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: InkWell(
-        onTap: () => setState(() => _currentFilter = title),
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected ? brandCocoa : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isSelected ? brandCocoa : borderLight),
-          ),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : textMuted,
-            ),
+    return InkWell(
+      onTap: () => setState(() => _currentFilter = title),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? brandCocoa : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? brandCocoa : borderLight),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : textMuted,
           ),
         ),
       ),
@@ -145,11 +165,6 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // We assume _buildMetricsRow() is defined somewhere in the class or as a standalone function.
-        // It's called in original code, so let's keep it if it exists, but wait, original had _buildMetricsRow().
-        // If it's undefined, it will cause an error, but it must be defined further down.
-        // wait, I don't see _buildMetricsRow in the snippet... Ah, it must be lower down.
-        // Actually, let me just replace the build method accurately.
         _buildMetricsRow(),
         const SizedBox(height: 20),
         Container(
@@ -169,110 +184,141 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+  padding: const EdgeInsets.all(18),
+  child: widget.isDesktop
+      ? Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text('Live Kitchen Pipeline', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark)),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                if (widget.searchQuery.isNotEmpty)
+                  Text('Found ${filtered.length} orders', style: const TextStyle(fontSize: 12, color: brandCocoa, fontWeight: FontWeight.bold)),
+                if (_selectedExportIds.isNotEmpty)
+                  Container(
+                    height: 38,
+                    decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Live Kitchen Pipeline',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: textDark,
-                          ),
+                        TextButton.icon(
+                          onPressed: () => _showBatchDeleteConfirmation(context),
+                          icon: const Icon(Icons.delete_outline, size: 16),
+                          label: Text('Delete (${_selectedExportIds.length})'),
+                          style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            _buildFilterButton('All'),
-                            _buildFilterButton('Due Today'),
-                            _buildFilterButton('Due Tomorrow'),
-                            _buildFilterButton('Upcoming'),
-                          ],
+                        Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                        TextButton(
+                          onPressed: () => setState(() => _selectedExportIds.clear()),
+                          style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        if (widget.searchQuery.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Text(
-                              'Found ${filtered.length} orders',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: brandCocoa,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        if (_selectedExportIds.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Container(
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF5F5),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFFFE5E5)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextButton.icon(
-                                    onPressed: () => _showBatchDeleteConfirmation(context),
-                                    icon: const Icon(Icons.delete_outline, size: 16),
-                                    label: Text('Delete (${_selectedExportIds.length})'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFFD32F2F),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    ),
-                                  ),
-                                  Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
-                                  TextButton(
-                                    onPressed: () => setState(() => _selectedExportIds.clear()),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFF9CA3AF),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    ),
-                                    child: const Text('Cancel', style: TextStyle(fontSize: 12)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final ordersToExport = _selectedExportIds.isEmpty
-                                ? filtered
-                                : filtered.where((o) => _selectedExportIds.contains((o['id'] ?? o['docId']).toString())).toList();
-                            final bytes = await PdfReportGenerator.generateLiveOrdersReport(
-                              ordersToExport, 
-                              filterInfo: _currentFilter,
-                            );
-                            final filename = 'live_orders_${_currentFilter.toLowerCase().replaceAll(' ', '_')}.pdf';
-                            await Printing.sharePdf(bytes: bytes, filename: filename);
-                          },
-                          icon: const Icon(Icons.download_rounded, size: 16),
-                          label: const Text('Export PDF'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: brandCocoa,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
+                // Filter pills grouped in one pill container, like the Custom Cake sub-tabs
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(10), border: Border.all(color: borderLight)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildFilterButton('All'),
+                      _buildFilterButton('Due Today'),
+                      _buildFilterButton('Due Tomorrow'),
+                      _buildFilterButton('Upcoming'),
+                    ],
+                  ),
                 ),
+                ElevatedButton.icon(
+                  onPressed: _exportPdf,
+                  icon: const Icon(Icons.download_rounded, size: 16),
+                  label: const Text('Export PDF'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: brandCocoa,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        )
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Live Kitchen Pipeline', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textDark)),
+                IconButton(
+                  onPressed: _exportPdf,
+                  icon: const Icon(Icons.download_rounded, color: brandCocoa),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFFBF7F2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterButton('All'),
+                  const SizedBox(width: 8),
+                  _buildFilterButton('Due Today'),
+                  const SizedBox(width: 8),
+                  _buildFilterButton('Due Tomorrow'),
+                  const SizedBox(width: 8),
+                  _buildFilterButton('Upcoming'),
+                ],
               ),
+            ),
+            if (widget.searchQuery.isNotEmpty || _selectedExportIds.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  if (widget.searchQuery.isNotEmpty)
+                    Text('Found ${filtered.length} orders', style: const TextStyle(fontSize: 12, color: brandCocoa, fontWeight: FontWeight.bold)),
+                  if (_selectedExportIds.isNotEmpty)
+                    Container(
+                      height: 38,
+                      decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _showBatchDeleteConfirmation(context),
+                            icon: const Icon(Icons.delete_outline, size: 16),
+                            label: Text('Delete (${_selectedExportIds.length})'),
+                            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          ),
+                          Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                          TextButton(
+                            onPressed: () => setState(() => _selectedExportIds.clear()),
+                            style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                            child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+),
               if (filtered.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(36),
@@ -545,8 +591,11 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                   const SizedBox(width: 12),
                   SizedBox(
                     width: 190,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 4,
+                      runSpacing: 4,
                       children: [
                         IconButton(
                           icon: const Icon(
@@ -563,8 +612,6 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                             AdminModals.showPrintSlipDialog(context, printData);
                           },
                         ),
-                        // Removed redundant individual delete button
-                        const SizedBox(width: 4),
                         _buildPrimaryStepButton(context, order),
                       ],
                     ),
@@ -608,10 +655,14 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Checkbox(
                         value: _selectedExportIds.contains((order['id'] ?? order['docId']).toString()),
@@ -659,10 +710,16 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                 ],
               ),
               const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
-                  Expanded(
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.55,
+                    ),
                     child: Text(
                       '${order['customer'] ?? 'Online Guest'} • ${order['contact'] ?? ''}',
                       style: const TextStyle(
@@ -673,7 +730,6 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
                   _buildPaymentBadge(order['payment'] ?? 'Cash on Delivery'),
                 ],
               ),
@@ -731,8 +787,10 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                     order['statusLabel'] ?? 'Pending',
                     order['status'] ?? '',
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       IconButton(
                         icon: const Icon(
@@ -747,8 +805,6 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                           AdminModals.showPrintSlipDialog(context, printData);
                         },
                       ),
-                      // Removed redundant individual delete button
-                      const SizedBox(width: 4),
                       _buildPrimaryStepButton(context, order),
                     ],
                   ),

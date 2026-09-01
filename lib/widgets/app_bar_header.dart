@@ -1,8 +1,10 @@
+import 'dart:typed_data'; // Add this import for Uint8List
 import 'package:flutter/material.dart';
 
 class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? currentUser;
   final bool isAuthChecking;
+  final Uint8List? profileImageBytes; // Added parameter for real-time image bytes
   final VoidCallback onOpenDrawer;
   final VoidCallback onOpenAuth;
   final VoidCallback onLogout;
@@ -20,6 +22,7 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.currentUser,
     this.isAuthChecking = false,
+    this.profileImageBytes, // Include in constructor
     required this.onOpenDrawer,
     required this.onOpenAuth,
     required this.onLogout,
@@ -159,90 +162,104 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
             ),
 
           // Right Profile / Auth & Preferences Action
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isAuthChecking)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8E4A23)),
-                  ),
-                )
-              else if (currentUser != null)
-                InkWell(
-                  onTap: onProfileClick,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 5,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Row(
+              key: ValueKey<String>(isAuthChecking ? 'loading' : (currentUser ?? 'guest')),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isAuthChecking)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8E4A23)),
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFAF2E9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5D5C5)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 11,
-                          backgroundColor: const Color(0xFF8E4A23),
-                          child: Text(
-                            currentUser![0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.bold,
+                  )
+                else if (currentUser != null)
+                  InkWell(
+                    onTap: onProfileClick,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF2E9),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE5D5C5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Updated Avatar Container with Real-time Image Support
+                          SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: ClipOval(
+                              child: profileImageBytes != null
+                                  ? Image.memory(profileImageBytes!, fit: BoxFit.cover)
+                                  : Container(
+                                      color: const Color(0xFF8E4A23),
+                                      child: Center(
+                                        child: Text(
+                                          currentUser!.isNotEmpty ? currentUser![0].toUpperCase() : 'R',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
-                        ),
-                        if (!isMobile) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            currentUser!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF2E1B10),
+                          if (!isMobile) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              currentUser!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF2E1B10),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
+                    ),
+                  )
+                else
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2E1B10),
+                      side: const BorderSide(color: Color(0xFFDCC8B8)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 8 : 12,
+                        vertical: 6,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: onOpenAuth,
+                    icon: const Icon(
+                      Icons.person_outline_rounded,
+                      size: 16,
+                      color: Color(0xFF8E4A23),
+                    ),
+                    label: Text(
+                      isMobile ? 'Sign In' : 'Sign In / Join',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                )
-              else
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E1B10),
-                    side: const BorderSide(color: Color(0xFFDCC8B8)),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 8 : 12,
-                      vertical: 6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onPressed: onOpenAuth,
-                  icon: const Icon(
-                    Icons.person_outline_rounded,
-                    size: 16,
-                    color: Color(0xFF8E4A23),
-                  ),
-                  label: Text(
-                    isMobile ? 'Sign In' : 'Sign In / Join',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

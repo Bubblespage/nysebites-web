@@ -70,6 +70,24 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
     return 0.0;
   }
 
+  Future<void> _exportPdf(
+    double realizedRevenue,
+    List<Map<String, dynamic>> completedOrders,
+    int customCakesCount,
+    List<Map<String, dynamic>> bakingOrders,
+  ) async {
+    final stats = {
+      'totalSales': realizedRevenue.toStringAsFixed(2),
+      'totalOrders': widget.orders.length.toString(),
+      'pendingOrders': (widget.orders.length - completedOrders.length).toString(),
+      'completedOrders': completedOrders.length.toString(),
+      'customCakesCount': customCakesCount.toString(),
+      'bakingOrders': bakingOrders.length.toString(),
+    };
+    final bytes = await PdfReportGenerator.generateDashboardReport(stats, widget.orders);
+    await Printing.sharePdf(bytes: bytes, filename: 'dashboard_report.pdf');
+  }
+
   @override
   Widget build(BuildContext context) {
     // 1. Completed Deliveries & Realized Revenue
@@ -119,38 +137,44 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Dashboard Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textDark)),
-                ElevatedButton.icon(
-  onPressed: () async {
-    final stats = {
-      'totalSales': realizedRevenue.toStringAsFixed(2),
-      'totalOrders': widget.orders.length.toString(),
-      'pendingOrders': (widget.orders.length - completedOrders.length).toString(),
-      'completedOrders': completedOrders.length.toString(),
-      // Add these new metrics!
-      'customCakesCount': customCakesCount.toString(),
-      'bakingOrders': bakingOrders.length.toString(),
-    };
-    
-    // Pass BOTH the stats and the full orders list
-    final bytes = await PdfReportGenerator.generateDashboardReport(stats, widget.orders);
-    await Printing.sharePdf(bytes: bytes, filename: 'dashboard_report.pdf');
-  },
-  icon: const Icon(Icons.download_rounded, size: 16),
-  label: Text(isMobile ? 'PDF' : 'Export PDF'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: brandCocoa,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ],
+            isMobile
+    ? Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Dashboard Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textDark)),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: () => _exportPdf(realizedRevenue, completedOrders, customCakesCount, bakingOrders),
+              icon: const Icon(Icons.download_rounded, color: brandCocoa),
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFFBF7F2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
+              ),
             ),
+          ),
+        ],
+      )
+    : Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text('Dashboard Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textDark)),
+          ElevatedButton.icon(
+            onPressed: () => _exportPdf(realizedRevenue, completedOrders, customCakesCount, bakingOrders),
+            icon: const Icon(Icons.download_rounded, size: 16),
+            label: const Text('Export PDF'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: brandCocoa,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
             const SizedBox(height: 16),
             // Section 1: Responsive Metrics Grid
             Wrap(

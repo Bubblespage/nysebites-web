@@ -4,6 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
 import '../data/mock_products.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'order_tracker_modal.dart';
+import 'dart:convert';
+import 'dart:typed_data'; // Add this for Uint8List
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class CustomerProfileModal extends StatefulWidget {
   final Set<String> favorites;
@@ -17,6 +22,10 @@ class CustomerProfileModal extends StatefulWidget {
   final String currentPhone;
   final String currentAddress;
   final Function(String, String, String) onProfileUpdated;
+  
+  // Add these two properties:
+  final Uint8List? initialImageBytes;
+  final Function(Uint8List?)? onImageUpdated;
 
   const CustomerProfileModal({
     super.key,
@@ -31,6 +40,8 @@ class CustomerProfileModal extends StatefulWidget {
     required this.currentPhone,
     required this.currentAddress,
     required this.onProfileUpdated,
+    this.initialImageBytes,
+    this.onImageUpdated,
   });
 
   @override
@@ -86,281 +97,105 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
   String _selectedBarangay = '';
   String? _activeDropdownField;
 
+  // Web-safe image byte states (avoids Image.file crashes on web)
+  Uint8List? _profileImageBytes;
+  Uint8List? _coverImageBytes;
+
+  // Web and mobile safe image picker method
+  Future<void> _pickImage(bool isCover) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+    
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      setState(() {
+        if (isCover) {
+          _coverImageBytes = bytes;
+        } else {
+          _profileImageBytes = bytes;
+          // Instantly send the new bytes back to your main screen parent widget!
+          widget.onImageUpdated?.call(bytes);
+        }
+      });
+
+      if (!isCover && _userId.isNotEmpty) {
+        try {
+          final base64String = base64Encode(bytes);
+          await FirebaseFirestore.instance.collection('users').doc(_userId).set({
+            'photoBase64': base64String,
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Error saving profile photo to Firestore: $e');
+        }
+      }
+    }
+  }
+
   final Map<String, Map<String, List<String>>> _deliveryData = {
     'Cavite': {
       'Imus': [
-        'Alapan I-A',
-        'Alapan I-B',
-        'Alapan I-C',
-        'Alapan II-A',
-        'Alapan II-B',
-        'Anabu I-A',
-        'Anabu I-B',
-        'Anabu I-C',
-        'Anabu I-D',
-        'Anabu I-E',
-        'Anabu I-F',
-        'Anabu I-G',
-        'Anabu II-A',
-        'Anabu II-B',
-        'Anabu II-C',
-        'Anabu II-D',
-        'Anabu II-E',
-        'Anabu II-F',
-        'Bagong Silang (Bahayang Pag-Asa)',
-        'Bayan Luma I',
-        'Bayan Luma II',
-        'Bayan Luma III',
-        'Bayan Luma IV',
-        'Bayan Luma V',
-        'Bayan Luma VI',
-        'Bayan Luma VII',
-        'Bayan Luma VIII',
-        'Bayan Luma IX',
-        'Bucandala I',
-        'Bucandala II',
-        'Bucandala III',
-        'Bucandala IV',
-        'Bucandala V',
-        'Buhay na Tubig',
-        'Carsadang Bago I',
-        'Carsadang Bago II',
-        'Magdalo',
-        'Maharlika',
-        'Malagasang I-A',
-        'Malagasang I-B',
-        'Malagasang I-C',
-        'Malagasang I-D',
-        'Malagasang I-E',
-        'Malagasang I-F',
-        'Malagasang I-G',
-        'Malagasang II-A',
-        'Malagasang II-B',
-        'Malagasang II-C',
-        'Malagasang II-D',
-        'Malagasang II-E',
-        'Malagasang II-F',
-        'Malagasang II-G',
-        'Mariano Espeleta I',
-        'Mariano Espeleta II',
-        'Mariano Espeleta III',
-        'Medicion I-A',
-        'Medicion I-B',
-        'Medicion I-C',
-        'Medicion I-D',
-        'Medicion II-A',
-        'Medicion II-B',
-        'Medicion II-C',
-        'Medicion II-D',
-        'Medicion II-E',
-        'Medicion II-F',
-        'Pag-Asa I',
-        'Pag-Asa II',
-        'Pag-Asa III',
-        'Palico I',
-        'Palico II',
-        'Palico III',
-        'Palico IV',
-        'Pasong Buaya I',
-        'Pasong Buaya II',
-        'Pinagbuklod',
-        'Poblacion I-A',
-        'Poblacion I-B',
-        'Poblacion I-C',
-        'Poblacion II-A',
-        'Poblacion II-B',
-        'Poblacion III-A',
-        'Poblacion III-B',
-        'Poblacion IV-A',
-        'Poblacion IV-B',
-        'Poblacion IV-C',
-        'Poblacion IV-D',
-        'Tanzang Luma I',
-        'Tanzang Luma II',
-        'Tanzang Luma III',
-        'Tanzang Luma IV (Southern City)',
-        'Tanzang Luma V',
-        'Tanzang Luma VI',
-        'Toclong I-A',
-        'Toclong I-B',
-        'Toclong I-C',
-        'Toclong II-A',
-        'Toclong II-B',
+        'Alapan I-A', 'Alapan I-B', 'Alapan I-C', 'Alapan II-A', 'Alapan II-B',
+        'Anabu I-A', 'Anabu I-B', 'Anabu I-C', 'Anabu I-D', 'Anabu I-E', 'Anabu I-F', 'Anabu I-G',
+        'Anabu II-A', 'Anabu II-B', 'Anabu II-C', 'Anabu II-D', 'Anabu II-E', 'Anabu II-F',
+        'Bagong Silang (Bahayang Pag-Asa)', 'Bayan Luma I', 'Bayan Luma II', 'Bayan Luma III',
+        'Bayan Luma IV', 'Bayan Luma V', 'Bayan Luma VI', 'Bayan Luma VII', 'Bayan Luma VIII', 'Bayan Luma IX',
+        'Bucandala I', 'Bucandala II', 'Bucandala III', 'Bucandala IV', 'Bucandala V',
+        'Buhay na Tubig', 'Carsadang Bago I', 'Carsadang Bago II', 'Magdalo', 'Maharlika',
+        'Malagasang I-A', 'Malagasang I-B', 'Malagasang I-C', 'Malagasang I-D', 'Malagasang I-E', 'Malagasang I-F', 'Malagasang I-G',
+        'Malagasang II-A', 'Malagasang II-B', 'Malagasang II-C', 'Malagasang II-D', 'Malagasang II-E', 'Malagasang II-F', 'Malagasang II-G',
+        'Mariano Espeleta I', 'Mariano Espeleta II', 'Mariano Espeleta III',
+        'Medicion I-A', 'Medicion I-B', 'Medicion I-C', 'Medicion I-D',
+        'Medicion II-A', 'Medicion II-B', 'Medicion II-C', 'Medicion II-D', 'Medicion II-E', 'Medicion II-F',
+        'Pag-Asa I', 'Pag-Asa II', 'Pag-Asa III', 'Palico I', 'Palico II', 'Palico III', 'Palico IV',
+        'Pasong Buaya I', 'Pasong Buaya II', 'Pinagbuklod',
+        'Poblacion I-A', 'Poblacion I-B', 'Poblacion I-C', 'Poblacion II-A', 'Poblacion II-B',
+        'Poblacion III-A', 'Poblacion III-B', 'Poblacion IV-A', 'Poblacion IV-B', 'Poblacion IV-C', 'Poblacion IV-D',
+        'Tanzang Luma I', 'Tanzang Luma II', 'Tanzang Luma III', 'Tanzang Luma IV (Southern City)', 'Tanzang Luma V', 'Tanzang Luma VI',
+        'Toclong I-A', 'Toclong I-B', 'Toclong I-C', 'Toclong II-A', 'Toclong II-B',
         'Other (Specify in Street)',
       ],
       'Bacoor': [
-        'Alima',
-        'Aniban I',
-        'Aniban II',
-        'Bayanan',
-        'Camposanto',
-        'Daang Bukid',
-        'Digman',
-        'Dulong Bayan',
-        'Habay I',
-        'Habay II',
-        'Kaingin',
-        'Ligas I',
-        'Ligas II',
-        'Mabolo',
-        'Maliksi',
-        'Mambog I',
-        'Mambog II',
-        'Molino I',
-        'Molino II',
-        'Molino III',
-        'Molino IV',
-        'Molino V',
-        'Molino VI',
-        'Molino VII',
-        'Niog I',
-        'Niog II',
-        'Panapaan I',
-        'Panapaan II',
-        'Queens Row Central',
-        'Queens Row East',
-        'Queens Row West',
-        'Real I',
-        'Real II',
-        'Salinas I',
-        'Salinas II',
-        'San Nicolas',
-        'Sineguelasan',
-        'Tabing Dagat',
-        'Talaba I',
-        'Talaba II',
-        'Zapote I',
-        'Zapote II',
-        'Other (Specify in Street)',
+        'Alima', 'Aniban I', 'Aniban II', 'Bayanan', 'Camposanto', 'Daang Bukid', 'Digman', 'Dulong Bayan',
+        'Habay I', 'Habay II', 'Kaingin', 'Ligas I', 'Ligas II', 'Mabolo', 'Maliksi', 'Mambog I', 'Mambog II',
+        'Molino I', 'Molino II', 'Molino III', 'Molino IV', 'Molino V', 'Molino VI', 'Molino VII',
+        'Niog I', 'Niog II', 'Panapaan I', 'Panapaan II', 'Queens Row Central', 'Queens Row East', 'Queens Row West',
+        'Real I', 'Real II', 'Salinas I', 'Salinas II', 'San Nicolas', 'Sineguelasan', 'Tabing Dagat',
+        'Talaba I', 'Talaba II', 'Zapote I', 'Zapote II', 'Other (Specify in Street)',
       ],
       'Dasmariñas': [
-        'Burol',
-        'Datu Esmael',
-        'Emmanuel Bergado',
-        'Fatima',
-        'Langkaan I',
-        'Langkaan II',
-        'Luzviminda',
-        'Paliparan I',
-        'Paliparan II',
-        'Paliparan III',
-        'Sabang',
-        'Salawag',
-        'Salitran I',
-        'Salitran II',
-        'Salitran III',
-        'Salitran IV',
-        'Sampaloc I',
-        'Sampaloc II',
-        'San Agustin',
-        'San Antonio',
-        'San Dionisio',
-        'San Jose',
-        'San Simon',
-        'Other (Specify in Street)',
+        'Burol', 'Datu Esmael', 'Emmanuel Bergado', 'Fatima', 'Langkaan I', 'Langkaan II', 'Luzviminda',
+        'Paliparan I', 'Paliparan II', 'Paliparan III', 'Sabang', 'Salawag', 'Salitran I', 'Salitran II',
+        'Salitran III', 'Salitran IV', 'Sampaloc I', 'Sampaloc II', 'San Agustin', 'San Antonio',
+        'San Dionisio', 'San Jose', 'San Simon', 'Other (Specify in Street)',
       ],
       'General Trias': [
-        'Bacao I',
-        'Bacao II',
-        'Biclatan',
-        'Buenavista I',
-        'Buenavista II',
-        'Corregidor',
-        'Manggahan',
-        'Navarro',
-        'Panungyanan',
-        'Pasong Camachile I',
-        'Pasong Camachile II',
-        'Pasong Kawayan I',
-        'Pasong Kawayan II',
-        'Pinagtipunan',
-        'San Francisco',
-        'San Juan I',
-        'San Juan II',
-        'Tejero',
-        'Other (Specify in Street)',
+        'Bacao I', 'Bacao II', 'Biclatan', 'Buenavista I', 'Buenavista II', 'Corregidor', 'Manggahan',
+        'Navarro', 'Panungyanan', 'Pasong Camachile I', 'Pasong Camachile II', 'Pasong Kawayan I',
+        'Pasong Kawayan II', 'Pinagtipunan', 'San Francisco', 'San Juan I', 'San Juan II', 'Tejero', 'Other (Specify in Street)',
       ],
       'Kawit': [
-        'Batong Dalig',
-        'Binakayan',
-        'Congbalay',
-        'Gahak',
-        'Manggahan',
-        'Marulas',
-        'Panamitan',
-        'Poblacion',
-        'Putol',
-        'San Sebastian',
-        'Santa Isabel',
-        'Toclong',
-        'Tramo',
-        'Wakasi',
-        'Other (Specify in Street)',
+        'Batong Dalig', 'Binakayan', 'Congbalay', 'Gahak', 'Manggahan', 'Marulas', 'Panamitan', 'Poblacion',
+        'Putol', 'San Sebastian', 'Santa Isabel', 'Toclong', 'Tramo', 'Wakasi', 'Other (Specify in Street)',
       ],
       'Silang': [
-        'Adlas',
-        'Balite',
-        'Biga',
-        'Biluso',
-        'Bucal',
-        'Bulihan',
-        'Cabangaan',
-        'Carmen',
-        'Hoyo',
-        'Inchican',
-        'Lalaan I',
-        'Lalaan II',
-        'Litlit',
-        'Lucsuhin',
-        'Lumil',
-        'Maguyam',
-        'Munting Ilog',
-        'Paligawan',
-        'Pasong Langka',
-        'Pooc',
-        'Puting Kahoy',
-        'Sabutan',
-        'San Miguel',
-        'San Vicente',
-        'Tartaria',
-        'Tibig',
-        'Tubuan I',
-        'Tubuan II',
-        'Other (Specify in Street)',
+        'Adlas', 'Balite', 'Biga', 'Biluso', 'Bucal', 'Bulihan', 'Cabangaan', 'Carmen', 'Hoyo', 'Inchican',
+        'Lalaan I', 'Lalaan II', 'Litlit', 'Lucsuhin', 'Lumil', 'Maguyam', 'Munting Ilog', 'Paligawan',
+        'Pasong Langka', 'Pooc', 'Puting Kahoy', 'Sabutan', 'San Miguel', 'San Vicente', 'Tartaria',
+        'Tibig', 'Tubuan I', 'Tubuan II', 'Other (Specify in Street)',
       ],
       'Tagaytay': [
-        'Asisan',
-        'Bagong Tubig',
-        'Calabuso',
-        'Dapdap',
-        'Guinhawa',
-        'Iruhin',
-        'Mag-Asawang Ilat',
-        'Maharlika',
-        'Mendez Crossing East',
-        'Mendez Crossing West',
-        'Neogan',
-        'Patutong Malaki',
-        'Sambong',
-        'San Jose',
-        'Silang Junction',
-        'Sungay',
-        'Tolentino',
-        'Zambal',
-        'Other (Specify in Street)',
+        'Asisan', 'Bagong Tubig', 'Calabuso', 'Dapdap', 'Guinhawa', 'Iruhin', 'Mag-Asawang Ilat', 'Maharlika',
+        'Mendez Crossing East', 'Mendez Crossing West', 'Neogan', 'Patutong Malaki', 'Sambong', 'San Jose',
+        'Silang Junction', 'Sungay', 'Tolentino', 'Zambal', 'Other (Specify in Street)',
       ],
       'Trece Martires': [
-        'Aguado',
-        'Cabezas',
-        'Conchu',
-        'De Ocampo',
-        'Gregorio',
-        'Inocencio',
-        'Lallana',
-        'Osorio',
-        'Perez',
-        'San Agustin',
-        'Other (Specify in Street)',
+        'Aguado', 'Cabezas', 'Conchu', 'De Ocampo', 'Gregorio', 'Inocencio', 'Lallana', 'Osorio',
+        'Perez', 'San Agustin', 'Other (Specify in Street)',
       ],
       'Alfonso': ['Other (Specify in Street)'],
       'Amadeo': ['Other (Specify in Street)'],
@@ -380,137 +215,38 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     },
     'Metro Manila': {
       'Las Piñas': [
-        'Almanza Dos',
-        'Almanza Uno',
-        'B.F. International Village',
-        'Daniel Fajardo',
-        'Elias Aldana',
-        'Ilaya',
-        'Manuyo Dos',
-        'Manuyo Uno',
-        'Pamplona Dos',
-        'Pamplona Tres',
-        'Pamplona Uno',
-        'Pilar',
-        'Pulang Lupa Dos',
-        'Pulang Lupa Uno',
-        'Talon Dos',
-        'Talon Kuatro',
-        'Talon Singko',
-        'Talon Tres',
-        'Talon Uno',
-        'Zapote',
-        'Other (Specify in Street)',
+        'Almanza Dos', 'Almanza Uno', 'B.F. International Village', 'Daniel Fajardo', 'Elias Aldana', 'Ilaya',
+        'Manuyo Dos', 'Manuyo Uno', 'Pamplona Dos', 'Pamplona Tres', 'Pamplona Uno', 'Pilar',
+        'Pulang Lupa Dos', 'Pulang Lupa Uno', 'Talon Dos', 'Talon Kuatro', 'Talon Singko', 'Talon Tres', 'Talon Uno', 'Zapote', 'Other (Specify in Street)',
       ],
       'Makati': [
-        'Bangkal',
-        'Bel-Air',
-        'Carmona',
-        'Cembo',
-        'Comembo',
-        'Dasmariñas',
-        'East Rembo',
-        'Forbes Park',
-        'Guadalupe Nuevo',
-        'Guadalupe Viejo',
-        'Kasilawan',
-        'La Paz',
-        'Magallanes',
-        'Olympia',
-        'Palanan',
-        'Pembo',
-        'Pinagkaisahan',
-        'Pio del Pilar',
-        'Pitogo',
-        'Poblacion',
-        'Post Proper Northside',
-        'Post Proper Southside',
-        'Rizal',
-        'San Antonio',
-        'San Isidro',
-        'San Lorenzo',
-        'Santa Cruz',
-        'Singkamas',
-        'South Cembo',
-        'Tejeros',
-        'Urdaneta',
-        'Valenzuela',
-        'West Rembo',
-        'Other (Specify in Street)',
+        'Bangkal', 'Bel-Air', 'Carmona', 'Cembo', 'Comembo', 'Dasmariñas', 'East Rembo', 'Forbes Park',
+        'Guadalupe Nuevo', 'Guadalupe Viejo', 'Kasilawan', 'La Paz', 'Magallanes', 'Olympia', 'Palanan', 'Pembo',
+        'Pinagkaisahan', 'Pio del Pilar', 'Pitogo', 'Poblacion', 'Post Proper Northside', 'Post Proper Southside',
+        'Rizal', 'San Antonio', 'San Isidro', 'San Lorenzo', 'Santa Cruz', 'Singkamas', 'South Cembo', 'Tejeros',
+        'Urdaneta', 'Valenzuela', 'West Rembo', 'Other (Specify in Street)',
       ],
       'Manila': [
-        'Ermita',
-        'Malate',
-        'Paco',
-        'Pandacan',
-        'San Andres',
-        'Other (Specify in Street)',
+        'Ermita', 'Malate', 'Paco', 'Pandacan', 'San Andres', 'Other (Specify in Street)',
       ],
       'Muntinlupa': [
-        'Alabang',
-        'Ayala Alabang',
-        'Bayanan',
-        'Buli',
-        'Cupang',
-        'Poblacion',
-        'Putatan',
-        'Sucat',
-        'Tunasan',
-        'Other (Specify in Street)',
+        'Alabang', 'Ayala Alabang', 'Bayanan', 'Buli', 'Cupang', 'Poblacion', 'Putatan', 'Sucat', 'Tunasan', 'Other (Specify in Street)',
       ],
       'Parañaque': [
-        'B.F. Homes',
-        'Baclaran',
-        'Don Bosco',
-        'Don Galo',
-        'La Huerta',
-        'Marcelo Green',
-        'Merville',
-        'Moonwalk',
-        'San Antonio',
-        'San Dionisio',
-        'San Isidro',
-        'San Martin de Porres',
-        'Santo Niño',
-        'Sun Valley',
-        'Tambo',
-        'Vitalez',
-        'Other (Specify in Street)',
+        'B.F. Homes', 'Baclaran', 'Don Bosco', 'Don Galo', 'La Huerta', 'Marcelo Green', 'Merville',
+        'Moonwalk', 'San Antonio', 'San Dionisio', 'San Isidro', 'San Martin de Porres', 'Santo Niño',
+        'Sun Valley', 'Tambo', 'Vitalez', 'Other (Specify in Street)',
       ],
       'Pasay': [
         ...List.generate(201, (i) => 'Barangay ${i + 1}'),
         'Other (Specify in Street)',
       ],
       'Taguig (BGC)': [
-        'Bagumbayan',
-        'Bambang',
-        'Calzada',
-        'Central Bicutan',
-        'Central Signal Village',
-        'Fort Bonifacio',
-        'Hagonoy',
-        'Ibayo-Tipas',
-        'Katuparan',
-        'Ligid-Tipas',
-        'Lower Bicutan',
-        'Maharlika Village',
-        'Napindan',
-        'New Lower Bicutan',
-        'North Daang Hari',
-        'North Signal Village',
-        'Palingon',
-        'Pinagsama',
-        'San Miguel',
-        'Santa Ana',
-        'South Daang Hari',
-        'South Signal Village',
-        'Tanyag',
-        'Tuktukan',
-        'Upper Bicutan',
-        'Ususan',
-        'Wawa',
-        'Western Bicutan',
-        'Other (Specify in Street)',
+        'Bagumbayan', 'Bambang', 'Calzada', 'Central Bicutan', 'Central Signal Village', 'Fort Bonifacio',
+        'Hagonoy', 'Ibayo-Tipas', 'Katuparan', 'Ligid-Tipas', 'Lower Bicutan', 'Maharlika Village', 'Napindan',
+        'New Lower Bicutan', 'North Daang Hari', 'North Signal Village', 'Palingon', 'Pinagsama', 'San Miguel',
+        'Santa Ana', 'South Daang Hari', 'South Signal Village', 'Tanyag', 'Tuktukan', 'Upper Bicutan', 'Ususan',
+        'Wawa', 'Western Bicutan', 'Other (Specify in Street)',
       ],
     },
   };
@@ -518,8 +254,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
   String _reviewOrderId = '';
   String _reviewProductName = '';
   int _reviewRating = 0;
-  final TextEditingController _reviewCommentController =
-      TextEditingController();
+  final TextEditingController _reviewCommentController = TextEditingController();
   bool _isSubmittingReview = false;
 
   @override
@@ -528,6 +263,32 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     _tabController = TabController(length: 2, vsync: this);
     _nameController = TextEditingController(text: widget.currentName);
     _phoneController = TextEditingController(text: widget.currentPhone);
+
+    // Initialize with passed image bytes if available
+    _profileImageBytes = widget.initialImageBytes;
+
+    if (_profileImageBytes == null && _userId.isNotEmpty) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .get()
+          .then((doc) {
+        if (doc.exists && doc.data() != null) {
+          final photoBase64 = doc.data()!['photoBase64'] as String?;
+          if (photoBase64 != null && photoBase64.isNotEmpty && mounted) {
+            try {
+              final bytes = base64Decode(photoBase64);
+              setState(() {
+                _profileImageBytes = bytes;
+              });
+              widget.onImageUpdated?.call(bytes);
+            } catch (e) {
+              debugPrint('Error decoding photoBase64: $e');
+            }
+          }
+        }
+      }).catchError((_) {});
+    }
 
     _streetController = TextEditingController();
     _zipCodeController = TextEditingController();
@@ -539,7 +300,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
 
       for (String region in _deliveryData.keys) {
         for (String city in _deliveryData[region]!.keys) {
-          for (String brgy in _deliveryData[region]![city]!) {
+          List<String> brgys = List.from(_deliveryData[region]![city]!);
+          brgys.sort((a, b) => b.length.compareTo(a.length));
+
+          for (String brgy in brgys) {
             if (widget.currentAddress.contains(brgy) &&
                 widget.currentAddress.contains(city)) {
               _selectedRegion = region;
@@ -570,6 +334,83 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     }
 
     _loadProducts();
+    _loadSettings();
+  }
+
+  void _loadSettings() async {
+    if (_userId.isEmpty) return;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(_userId).get();
+      if (doc.exists && mounted) {
+        setState(() {
+          _pushNotifications = doc.data()?['pushEnabled'] ?? false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+    }
+  }
+
+  Future<void> _togglePushNotifications(bool value) async {
+    if (_userId.isEmpty) return;
+
+    setState(() => _pushNotifications = value);
+
+    try {
+      if (value) {
+        FirebaseMessaging messaging = FirebaseMessaging.instance;
+        NotificationSettings settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+        if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+            settings.authorizationStatus == AuthorizationStatus.provisional) {
+          
+          // Get the FCM token
+          String? token = await messaging.getToken(
+            vapidKey: 'BNzZLFx_EE4fwl7FVkg-K2aDZtUfYfM5Nd6VUqQgjTkr8uwiLvjk4eIYBTCUjrrU0VFR4IVFE3u9pkWo2lI_d60',
+          );
+          
+          if (token != null) {
+            await FirebaseFirestore.instance.collection('users').doc(_userId).set({
+              'pushEnabled': true,
+              'fcmToken': token,
+            }, SetOptions(merge: true));
+          } else {
+            if (mounted) setState(() => _pushNotifications = false);
+          }
+        } else {
+          // User denied permission
+          if (mounted) setState(() => _pushNotifications = false);
+        }
+      } else {
+        await FirebaseFirestore.instance.collection('users').doc(_userId).set({
+          'pushEnabled': false,
+          'fcmToken': FieldValue.delete(),
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Error toggling push notifications: $e');
+      if (mounted) setState(() => _pushNotifications = !value);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomerProfileModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialImageBytes != oldWidget.initialImageBytes) {
+      setState(() {
+        _profileImageBytes = widget.initialImageBytes;
+      });
+    }
+    if (widget.currentName != oldWidget.currentName) {
+      _nameController.text = widget.currentName;
+    }
+    if (widget.currentPhone != oldWidget.currentPhone) {
+      _phoneController.text = widget.currentPhone;
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -602,9 +443,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
   }
 
   String _getFormattedAddress() {
-    String brgy = _selectedBarangay.startsWith('Other')
-        ? ''
-        : _selectedBarangay;
+    String brgy = _selectedBarangay.startsWith('Other') ? '' : _selectedBarangay;
     String city = _selectedCity.startsWith('Other') ? '' : _selectedCity;
     String region = _selectedRegion.startsWith('Other') ? '' : _selectedRegion;
 
@@ -655,11 +494,19 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     final newAddress = _getFormattedAddress();
 
     try {
-      await FirebaseFirestore.instance.collection('users').doc(_userId).set({
+      final Map<String, dynamic> updateData = {
         'name': newName,
         'phone': newPhone,
         'address': newAddress,
-      }, SetOptions(merge: true));
+      };
+      if (_profileImageBytes != null) {
+        updateData['photoBase64'] = base64Encode(_profileImageBytes!);
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .set(updateData, SetOptions(merge: true));
 
       widget.onProfileUpdated(newName, newPhone, newAddress);
 
@@ -678,7 +525,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final drawerWidth = isMobile ? screenWidth * 0.92 : 420.0;
+    final drawerWidth = isMobile ? screenWidth : 420.0;
+    final leftRadius = isMobile ? 0.0 : 24.0;
 
     return SizedBox(
       width: drawerWidth,
@@ -686,10 +534,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
         color: Colors.transparent,
         elevation: 24,
         shadowColor: Colors.black26,
-        borderRadius: const BorderRadius.horizontal(left: Radius.circular(24)),
+        borderRadius: BorderRadius.horizontal(left: Radius.circular(leftRadius)),
         child: ClipRRect(
-          borderRadius: const BorderRadius.horizontal(
-            left: Radius.circular(24),
+          borderRadius: BorderRadius.horizontal(
+            left: Radius.circular(leftRadius),
           ),
           child: ScaffoldMessenger(
             child: Scaffold(
@@ -698,8 +546,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 children: [
                   Container(
                     height: MediaQuery.of(context).size.height,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
@@ -709,7 +557,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                         ],
                       ),
                       borderRadius: BorderRadius.horizontal(
-                        left: Radius.circular(24),
+                        left: Radius.circular(leftRadius),
                       ),
                     ),
                     child: SafeArea(
@@ -724,19 +572,18 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                               switchOutCurve: Curves.easeInCubic,
                               transitionBuilder:
                                   (Widget child, Animation<double> animation) {
-                                    final offsetAnimation = Tween<Offset>(
-                                      begin:
-                                          child.key ==
-                                              const ValueKey('mainView')
+                                final offsetAnimation = Tween<Offset>(
+                                  begin:
+                                      child.key == const ValueKey('mainView')
                                           ? const Offset(-1.0, 0.0)
                                           : const Offset(1.0, 0.0),
-                                      end: Offset.zero,
-                                    ).animate(animation);
-                                    return SlideTransition(
-                                      position: offsetAnimation,
-                                      child: child,
-                                    );
-                                  },
+                                  end: Offset.zero,
+                                ).animate(animation);
+                                return SlideTransition(
+                                  position: offsetAnimation,
+                                  child: child,
+                                );
+                              },
                               child: switch (_currentView) {
                                 ProfileViewState.settings =>
                                   _buildSettingsView(),
@@ -1040,8 +887,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                           ),
                                           backgroundColor:
                                               _pendingNotificationState
-                                              ? _cocoa
-                                              : _espresso,
+                                                  ? _cocoa
+                                                  : _espresso,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               12,
@@ -1092,6 +939,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
         ),
         child: Row(
           children: [
+            // Real-time updating avatar container
             Container(
               width: 42,
               height: 42,
@@ -1099,17 +947,22 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 color: const Color(0xFFE5B976),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Center(
-                child: Text(
-                  widget.currentName.isNotEmpty
-                      ? widget.currentName[0].toUpperCase()
-                      : 'G',
-                  style: const TextStyle(
-                    color: Color(0xFF3C2216),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                  ),
-                ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _profileImageBytes != null
+                    ? Image.memory(_profileImageBytes!, fit: BoxFit.cover)
+                    : Center(
+                        child: Text(
+                          widget.currentName.isNotEmpty
+                              ? widget.currentName[0].toUpperCase()
+                              : 'G',
+                          style: const TextStyle(
+                            color: Color(0xFF3C2216),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -1229,7 +1082,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     );
   }
 
-  // ── SETTINGS VIEW (Non-scrollable, balanced heights, sign-out fully visible) ──
+  // ── SETTINGS VIEW (Optimized for Mobile Spacing) ──
   Widget _buildSettingsView() {
     return Column(
       key: const ValueKey('settingsView'),
@@ -1271,170 +1124,164 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Expanded(
-          child: Padding(
+          child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment
-                  .spaceEvenly, // Distributes layout evenly without scrolling!
-              children: [
-                _buildSettingsSection(
-                  title: 'Personal Information',
-                  children: [
-                    _buildSettingsTile(
-                      icon: Icons.person_outline_rounded,
-                      title: 'Edit Profile',
-                      subtitle: 'Email, address, and contact details',
-                      onTap: () => setState(
-                        () => _currentView = ProfileViewState.editProfile,
-                      ),
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.lock_outline_rounded,
-                      title: 'Change Password',
-                      subtitle: 'Temporarily unavailable',
-                      disabled: true,
-                      onTap: null,
-                    ),
-                  ],
-                ),
-
-                _buildSettingsSection(
-                  title: 'App Settings',
-                  children: [
-                    // Unified padding matching standard tiles perfectly
-                    Opacity(
-                      opacity: 0.6,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8.5,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.notifications_active_rounded,
-                                color: _muted,
-                                size: 16,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Push Notifications',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: _espresso,
-                                    ),
-                                  ),
-                                  SizedBox(height: 1),
-                                  Text(
-                                    'Temporarily unavailable',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: _muted,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Transform.scale(
-                              scale: 0.8,
-                              child: Switch(
-                                value: false,
-                                activeColor: Colors.white,
-                                activeTrackColor: _cocoa,
-                                inactiveThumbColor: Colors.white,
-                                inactiveTrackColor: _border,
-                                onChanged: null,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(height: 1, color: _border),
-                    _buildSettingsTile(
-                      icon: Icons.palette_rounded,
-                      title: 'Theme & Appearance',
-                      subtitle: 'Temporarily unavailable',
-                      disabled: true,
-                      onTap: null,
-                    ),
-                  ],
-                ),
-
-                _buildSettingsSection(
-                  title: 'Help & Support',
-                  children: [
-                    _buildSettingsTile(
-                      icon: Icons.support_agent_rounded,
-                      title: 'Contact NyseBites',
-                      onTap: () => setState(() => _showContactOverlay = true),
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.info_outline_rounded,
-                      title: 'About NyseBites',
-                      onTap: () =>
-                          setState(() => _currentView = ProfileViewState.about),
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.help_outline_rounded,
-                      title: 'Help Center & FAQs',
-                      onTap: () =>
-                          setState(() => _currentView = ProfileViewState.faq),
-                    ),
-                  ],
-                ),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      widget.onLogout();
-                    },
-                    icon: const Icon(
-                      Icons.logout_rounded,
-                      size: 16,
-                      color: _muted,
-                    ),
-                    label: const Text(
-                      'Sign Out',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: _espresso,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: _border, width: 1.5),
-                      ),
-                      elevation: 0,
+            children: [
+              _buildSettingsSection(
+                title: 'Personal Information',
+                children: [
+                  _buildSettingsTile(
+                    icon: Icons.person_outline_rounded,
+                    title: 'Edit Profile',
+                    subtitle: 'Email, address, and contact details',
+                    onTap: () => setState(
+                      () => _currentView = ProfileViewState.editProfile,
                     ),
                   ),
+                  _buildSettingsTile(
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Change Password',
+                    subtitle: 'Temporarily unavailable',
+                    disabled: true,
+                    onTap: null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              _buildSettingsSection(
+                title: 'App Settings',
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8.5,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0E4D6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.notifications_active_rounded,
+                            color: _cocoa,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Push Notifications',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: _espresso,
+                                ),
+                              ),
+                              SizedBox(height: 1),
+                              Text(
+                                'Get updates on your order',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: _muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Transform.scale(
+                          scale: 0.8,
+                          child: Switch(
+                            value: _pushNotifications,
+                            activeColor: Colors.white,
+                            activeTrackColor: _cocoa,
+                            inactiveThumbColor: Colors.white,
+                            inactiveTrackColor: _border,
+                            onChanged: _userId.isEmpty ? null : _togglePushNotifications,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(height: 1, color: _border),
+                  _buildSettingsTile(
+                    icon: Icons.palette_rounded,
+                    title: 'Theme & Appearance',
+                    subtitle: 'Temporarily unavailable',
+                    disabled: true,
+                    onTap: null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              _buildSettingsSection(
+                title: 'Help & Support',
+                children: [
+                  _buildSettingsTile(
+                    icon: Icons.support_agent_rounded,
+                    title: 'Contact NyseBites',
+                    onTap: () => setState(() => _showContactOverlay = true),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.info_outline_rounded,
+                    title: 'About NyseBites',
+                    onTap: () =>
+                        setState(() => _currentView = ProfileViewState.about),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.help_outline_rounded,
+                    title: 'Help Center & FAQs',
+                    onTap: () =>
+                        setState(() => _currentView = ProfileViewState.faq),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    widget.onLogout();
+                  },
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    size: 16,
+                    color: _muted,
+                  ),
+                  label: const Text(
+                    'Sign Out',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: _espresso,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: _border, width: 1.5),
+                    ),
+                    elevation: 0,
+                  ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
       ],
     );
   }
@@ -1486,7 +1333,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           padding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 8.5,
-          ), // Perfectly matches switch row height
+          ),
           child: Row(
             children: [
               Container(
@@ -1637,7 +1484,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'EST. 2023 • NYSE Bites',
+                      'EST. 2024 • NYSE Bites',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -1647,7 +1494,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Nyse Bites is a local bakeshop founded in 2023, dedicated to crafting fresh, small-batch cookies, dense fudge brownies, and custom celebration cakes daily from scratch using 100% pure premium dairy butter and high-grade chocolates. 🤎✨',
+                      'Nyse Bites is a local bakeshop founded in 2024, dedicated to crafting fresh, small-batch cookies, dense fudge brownies, and custom celebration cakes daily from scratch using 100% pure premium dairy butter and high-grade chocolates. 🤎✨',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: _muted,
@@ -1659,83 +1506,130 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFaqSubView() {
-    return Column(
-      key: const ValueKey('faqSubView'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
+              const SizedBox(height: 16),
               Container(
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: _border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _espresso.withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: IconButton(
-                  onPressed: () =>
-                      setState(() => _currentView = ProfileViewState.settings),
-                  icon: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: _espresso,
-                    size: 18,
-                  ),
-                  padding: const EdgeInsets.all(6),
-                  constraints: const BoxConstraints(),
+                child: Column(
+                  children: [
+                    const Text(
+                      'LET\'S CONNECT & COLLAB 💌',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: _muted,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Follow our sweet journey on social media or reach out to us for brand collaborations and features!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: _muted,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final Uri fbUri = Uri.parse(
+                                'https://www.facebook.com/NYSEbites',
+                              );
+                              if (await canLaunchUrl(fbUri)) {
+                                await launchUrl(
+                                  fbUri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.facebook_rounded,
+                              color: Color(0xFF1877F2),
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Facebook',
+                              style: TextStyle(
+                                color: _espresso,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              side: const BorderSide(
+                                color: Color(0xFF1877F2),
+                                width: 1.2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final Uri igUri = Uri.parse(
+                                'https://www.instagram.com/nysebites',
+                              );
+                              if (await canLaunchUrl(igUri)) {
+                                await launchUrl(
+                                  igUri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.camera_alt_rounded,
+                              color: Color(0xFFE1306C),
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Instagram',
+                              style: TextStyle(
+                                color: _espresso,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              side: const BorderSide(
+                                color: Color(0xFFE1306C),
+                                width: 1.2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Help Center & FAQs ❓',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: _espresso,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: const [
-              _FaqItem(
-                question: 'How do I track my order?',
-                answer:
-                    'You can track your live baking and delivery progress in real-time by heading to your profile drawer and opening the "Orders" tab, then tapping on your active order tracker! 📋',
-              ),
-              SizedBox(height: 12),
-              _FaqItem(
-                question: 'When do fresh cookie batches drop?',
-                answer:
-                    'Our signature soft-baked cookies and fudgy brownies are baked fresh daily, with afternoon drops happening right around 02:00 PM! Turn on push notifications to catch them warm. 🍪',
-              ),
-              SizedBox(height: 12),
-              _FaqItem(
-                question: 'Can I customize my own celebration cake?',
-                answer:
-                    'Yes! Tap on "Build Custom Cake" from the main menu to choose your tiers, fillings, frostings, and personalized theme designs. ✨',
-              ),
-              SizedBox(height: 12),
-              _FaqItem(
-                question: 'What are the accepted payment methods?',
-                answer:
-                    'We securely accept GCash payments via our automated scanner portal, as well as Cash on Delivery (COD) for selected areas in Cavite and Metro Manila. 💳',
-              ),
-              SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -1787,91 +1681,443 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              const Text(
-                'PERSONAL DETAILS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                  letterSpacing: 0.5,
+              // ── UNIFIED CONTAINER CARD ──
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFEFE4D6)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF251811).withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              _buildInputField(
-                label: 'EMAIL ADDRESS',
-                initialValue: FirebaseAuth.instance.currentUser?.email ?? '',
-                icon: Icons.email_outlined,
-                readOnly: true,
-              ),
-              const SizedBox(height: 12),
-              _buildInputField(
-                label: 'DISPLAY NAME',
-                controller: _nameController,
-                icon: Icons.person_outline_rounded,
-                hintText: 'e.g. Rynne',
-              ),
-              const SizedBox(height: 12),
-              _buildInputField(
-                label: 'PHONE NUMBER',
-                controller: _phoneController,
-                icon: Icons.phone_outlined,
-                hintText: 'e.g. 927 376 9558',
-                isPhone: true,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'DELIVERY ADDRESS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () =>
-                    setState(() => _currentView = ProfileViewState.editAddress),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _getFormattedAddress().isNotEmpty
-                              ? _getFormattedAddress()
-                              : 'Add delivery address',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: _getFormattedAddress().isNotEmpty
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                            color: _getFormattedAddress().isNotEmpty
-                                ? _espresso
-                                : const Color(0xFFAAA09A),
+                child: Column(
+                  children: [
+                    // ── STOREFRONT COLOR HALF-BLOCK & OVERLAPPING AVATAR ──
+                    SizedBox(
+                      height: 85, // Half-height block matching your storefront vibe
+                      width: double.infinity,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.topCenter,
+                        children: [
+                          // Brand-colored background half-block
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(22),
+                            ),
+                            child: Container(
+                              height: 55,
+                              width: double.infinity,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Color(0xFF3C2216), Color(0xFF5A3420)], // Matches your storefront header theme
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          // Clickable Profile Avatar overlapping precisely in the center
+                          Positioned(
+                            top: 16,
+                            child: GestureDetector(
+                              onTap: () => _pickImage(false),
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Container(
+                                    width: 72,
+                                    height: 72,
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 3,
+                                      ),
+                                      color: const Color(0xFFF3E7DC),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipOval(
+                                      child: _profileImageBytes != null
+                                          ? Image.memory(
+                                              _profileImageBytes!,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Center(
+                                              child: Text(
+                                                widget.currentName.isNotEmpty
+                                                    ? widget.currentName[0].toUpperCase()
+                                                    : 'R',
+                                                style: const TextStyle(
+                                                  color: _cocoa,
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 26,
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: _cocoa,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt_rounded,
+                                      size: 11,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Live-syncing header name matching the text field
+                    SizedBox(
+                      width: double.infinity,
+                      child: ListenableBuilder(
+                        listenable: _nameController,
+                        builder: (context, _) {
+                          return Text(
+                            _nameController.text.trim().isEmpty 
+                                ? 'Mai Leonhart' 
+                                : _nameController.text,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: _espresso,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        'NYSE Bites Member 🤎',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _muted,
                         ),
                       ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Color(0xFFAAA09A),
-                        size: 20,
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF5EDDF),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+
+                    // 1. Display Name Row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _blush,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.person_outline_rounded,
+                              size: 18,
+                              color: _cocoa,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'DISPLAY NAME',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: _muted,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                TextField(
+                                  controller: _nameController,
+                                  onChanged: (_) => setState(() {}),
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: _espresso,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter your name',
+                                    hintStyle: TextStyle(
+                                      color: Color(0xFFAAA09A),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13.5,
+                                    ),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    isDense: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF5EDDF),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+
+                    // 2. Phone Number Row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _blush,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.phone_outlined,
+                              size: 18,
+                              color: _cocoa,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'PHONE NUMBER',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: _muted,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      '+63',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12.5,
+                                        color: _cocoa,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _phoneController,
+                                        keyboardType: TextInputType.phone,
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: _espresso,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          hintText: '9000000000',
+                                          hintStyle: TextStyle(
+                                            color: Color(0xFFAAA09A),
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13.5,
+                                          ),
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          contentPadding: EdgeInsets.zero,
+                                          isDense: true,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF5EDDF),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+
+                    // 2. Email Address Row (Below Name & Phone)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _blush,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.email_outlined,
+                              size: 18,
+                              color: _cocoa,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'EMAIL ADDRESS',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: _muted,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  FirebaseAuth.instance.currentUser?.email ??
+                                      'rynnepagsanjan@gmail.com',
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: _muted,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF5EDDF),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+
+                    // 3. Delivery Address Row (Tappable)
+                    InkWell(
+                      onTap: () => setState(
+                        () => _currentView = ProfileViewState.editAddress,
+                      ),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(22),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: _blush,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.location_on_outlined,
+                                size: 18,
+                                color: _cocoa,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'DELIVERY ADDRESS',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: _muted,
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _getFormattedAddress().isNotEmpty
+                                        ? _getFormattedAddress()
+                                        : 'Tap to add delivery address',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight:
+                                          _getFormattedAddress().isNotEmpty
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                      color:
+                                          _getFormattedAddress().isNotEmpty
+                                              ? _espresso
+                                              : const Color(0xFFAAA09A),
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFFAAA09A),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -1920,33 +2166,42 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     );
   }
 
-  Widget _buildEditAddressView() {
+  Widget _buildFaqSubView() {
     return Column(
-      key: const ValueKey('editAddressView'),
+      key: const ValueKey('faqSubView'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              IconButton(
-                onPressed: () =>
-                    setState(() => _currentView = ProfileViewState.editProfile),
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: _espresso,
-                  size: 18,
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _border),
                 ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                child: IconButton(
+                  onPressed: () =>
+                      setState(() => _currentView = ProfileViewState.settings),
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: _espresso,
+                    size: 18,
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  constraints: const BoxConstraints(),
+                ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Delivery Address',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: _espresso,
+              const Expanded(
+                child: Text(
+                  'Help Center & FAQs ❓',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: _espresso,
+                  ),
                 ),
               ),
             ],
@@ -1957,80 +2212,209 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              _buildDropdownTrigger(
-                hint: 'Select Region',
-                value: _selectedRegion,
-                onTap: () => setState(
-                  () => _activeDropdownField = _activeDropdownField == 'region'
-                      ? null
-                      : 'region',
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFEFE4D6)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF251811).withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: const [
+                    _FaqItem(
+                      question: 'How do I track my order?',
+                      answer:
+                          'You can track your live baking and delivery progress in real-time by heading to your profile drawer and opening the "Orders" tab, then tapping on your active order tracker! 📋',
+                      showDivider: true,
+                    ),
+                    _FaqItem(
+                      question: 'When do fresh cookie batches drop?',
+                      answer:
+                          'Our signature soft-baked cookies and fudgy brownies are baked fresh daily, with afternoon drops happening right around 02:00 PM! Turn on push notifications to catch them warm. 🍪',
+                      showDivider: true,
+                    ),
+                    _FaqItem(
+                      question: 'Can I customize my own celebration cake?',
+                      answer:
+                          'Yes! Tap on "Build Custom Cake" from the main menu to choose your tiers, fillings, frostings, and personalized theme designs. ✨',
+                      showDivider: true,
+                    ),
+                    _FaqItem(
+                      question: 'What are the payment and delivery details?',
+                      answer:
+                          'We exclusively accept GCash payments via our automated scanner portal. For delivery, we book via third-party couriers (such as GrabCar) to safely bring your treats to you. Please note that the delivery fee is not included in your app total and will be paid directly in cash to the rider upon arrival at your destination. 💳🚗',
+                      showDivider: true,
+                    ),
+                    _FaqItem(
+                      question: 'Can I cancel my order after placing it?',
+                      answer:
+                          'Since our treats are baked fresh daily and custom cakes require careful preparation, all submitted orders are final. There is no cancellation feature on the app, so please double-check your items before checking out! For any urgent concerns, please message our Facebook page directly. 🤎',
+                      showDivider: true,
+                    ),
+                    _FaqItem(
+                      question: 'How should I store my treats?',
+                      answer:
+                          'Our cookies and brownies are best enjoyed fresh, but they will stay perfectly delicious for up to 5 days in an airtight container at room temperature.',
+                      showDivider: false,
+                    ),
+                  ],
                 ),
               ),
-              if (_activeDropdownField == 'region')
-                _buildInlinePicker(
-                  title: 'Region',
-                  items: _deliveryData.keys.toList(),
-                  selectedValue: _selectedRegion,
-                  onSelect: (val) {
-                    setState(() {
-                      _selectedRegion = val;
-                      _selectedCity = '';
-                      _selectedBarangay = '';
-                      _activeDropdownField = null;
-                    });
-                  },
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditAddressView() {
+    return Column(
+      key: const ValueKey('editAddressView'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _border),
                 ),
-              const SizedBox(height: 12),
-              _buildDropdownTrigger(
-                hint: 'Select City',
-                value: _selectedCity,
-                disabled: _selectedRegion.isEmpty,
-                onTap: () => setState(
-                  () => _activeDropdownField = _activeDropdownField == 'city'
-                      ? null
-                      : 'city',
-                ),
-              ),
-              if (_activeDropdownField == 'city' && _selectedRegion.isNotEmpty)
-                _buildInlinePicker(
-                  title: 'City',
-                  items: _deliveryData[_selectedRegion]!.keys.toList(),
-                  selectedValue: _selectedCity,
-                  onSelect: (val) {
-                    setState(() {
-                      _selectedCity = val;
-                      _selectedBarangay = '';
-                      _activeDropdownField = null;
-                    });
-                  },
-                ),
-              const SizedBox(height: 12),
-              _buildDropdownTrigger(
-                hint: 'Select Area / Barangay',
-                value: _selectedBarangay,
-                disabled: _selectedCity.isEmpty,
-                onTap: () => setState(
-                  () => _activeDropdownField =
-                      _activeDropdownField == 'barangay' ? null : 'barangay',
+                child: IconButton(
+                  onPressed: () =>
+                      setState(() => _currentView = ProfileViewState.editProfile),
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: _espresso,
+                    size: 18,
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  constraints: const BoxConstraints(),
                 ),
               ),
-              if (_activeDropdownField == 'barangay' &&
-                  _selectedCity.isNotEmpty)
-                _buildInlinePicker(
-                  title: 'Area / Barangay',
-                  items: _deliveryData[_selectedRegion]![_selectedCity]!,
-                  selectedValue: _selectedBarangay,
-                  onSelect: (val) {
-                    setState(() {
-                      _selectedBarangay = val;
-                      _activeDropdownField = null;
-                    });
-                  },
+              const SizedBox(width: 12),
+              const Text(
+                'Delivery Address',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: _espresso,
                 ),
-              const SizedBox(height: 12),
-              _buildCleanAddressField(
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 13),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFEFE4D6)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF251811).withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _buildUnifiedDropdownRow(
+                      hint: 'Select Region',
+                      value: _selectedRegion,
+                      showDivider: true,
+                      onTap: () => setState(
+                        () => _activeDropdownField =
+                            _activeDropdownField == 'region' ? null : 'region',
+                      ),
+                    ),
+                    if (_activeDropdownField == 'region')
+                      _buildInlinePicker(
+                        title: 'Region',
+                        items: _deliveryData.keys.toList(),
+                        selectedValue: _selectedRegion,
+                        onSelect: (val) {
+                          setState(() {
+                            _selectedRegion = val;
+                            _selectedCity = '';
+                            _selectedBarangay = '';
+                            _activeDropdownField = null;
+                          });
+                        },
+                      ),
+                    _buildUnifiedDropdownRow(
+                      hint: 'Select City',
+                      value: _selectedCity,
+                      disabled: _selectedRegion.isEmpty,
+                      showDivider: true,
+                      onTap: () => setState(
+                        () => _activeDropdownField =
+                            _activeDropdownField == 'city' ? null : 'city',
+                      ),
+                    ),
+                    if (_activeDropdownField == 'city' &&
+                        _selectedRegion.isNotEmpty)
+                      _buildInlinePicker(
+                        title: 'City',
+                        items: _deliveryData[_selectedRegion]!.keys.toList(),
+                        selectedValue: _selectedCity,
+                        onSelect: (val) {
+                          setState(() {
+                            _selectedCity = val;
+                            _selectedBarangay = '';
+                            _activeDropdownField = null;
+                          });
+                        },
+                      ),
+                    _buildUnifiedDropdownRow(
+                      hint: 'Select Area / Barangay',
+                      value: _selectedBarangay,
+                      disabled: _selectedCity.isEmpty,
+                      showDivider: false,
+                      onTap: () => setState(
+                        () => _activeDropdownField =
+                            _activeDropdownField == 'barangay'
+                                ? null
+                                : 'barangay',
+                      ),
+                    ),
+                    if (_activeDropdownField == 'barangay' &&
+                        _selectedCity.isNotEmpty)
+                      _buildInlinePicker(
+                        title: 'Area / Barangay',
+                        items: _deliveryData[_selectedRegion]![_selectedCity]!,
+                        selectedValue: _selectedBarangay,
+                        onSelect: (val) {
+                          setState(() {
+                            _selectedBarangay = val;
+                            _activeDropdownField = null;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 13),
+
+              _buildStandaloneTextFieldCard(
+                label: 'Zip Code',
                 controller: _zipCodeController,
-                hint: 'Zip Code (Required, e.g. 4103)',
+                hint: 'Required, e.g. 4103',
                 keyboardType: TextInputType.number,
                 hasError: _showZipError,
                 onChanged: (_) {
@@ -2039,7 +2423,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
               ),
               if (_showZipError)
                 Padding(
-                  padding: const EdgeInsets.only(top: 6, left: 4, bottom: 6),
+                  padding: const EdgeInsets.only(top: 6, left: 4, bottom: 2),
                   child: Row(
                     children: const [
                       Icon(
@@ -2059,17 +2443,23 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ],
                   ),
                 ),
-              if (!_showZipError) const SizedBox(height: 12),
-              _buildCleanAddressField(
+
+              const SizedBox(height: 13),
+
+              _buildStandaloneTextFieldCard(
+                label: 'Street Address',
                 controller: _streetController,
                 hint: 'Street Name, Building, House No.',
               ),
-              const SizedBox(height: 12),
-              _buildCleanAddressField(
+
+              const SizedBox(height: 13),
+
+              _buildStandaloneTextFieldCard(
+                label: 'Landmark / Unit Details',
                 controller: _landmarkController,
-                hint: 'Landmark / Other Details (e.g. Unit No.)',
+                hint: 'e.g. Near the village gate / Unit 2B',
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 13),
             ],
           ),
         ),
@@ -2114,6 +2504,135 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildStandaloneTextFieldCard({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    TextInputType? keyboardType,
+    bool hasError = false,
+    void Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: _muted,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: hasError ? _errorRed : const Color(0xFFEFE4D6),
+              width: hasError ? 1.5 : 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF251811).withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              onChanged: onChanged,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: _espresso,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: hasError
+                      ? _errorRed.withOpacity(0.8)
+                      : const Color(0xFFAAA09A),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13.5,
+                ),
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnifiedDropdownRow({
+    required String hint,
+    required String value,
+    required VoidCallback onTap,
+    bool disabled = false,
+    bool showDivider = true,
+  }) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: disabled ? null : onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    value.isNotEmpty ? value : hint,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: value.isNotEmpty
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: disabled
+                          ? const Color(0xFFD3C8BC)
+                          : (value.isNotEmpty
+                              ? _espresso
+                              : const Color(0xFFAAA09A)),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  _activeDropdownField ==
+                          hint.toLowerCase().replaceAll('select ', '').trim()
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: disabled ? const Color(0xFFD3C8BC) : _cocoa,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFF5EDDF),
+            indent: 20,
+            endIndent: 20,
+          ),
       ],
     );
   }
@@ -2221,194 +2740,6 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     );
   }
 
-  Widget _buildDropdownTrigger({
-    required String hint,
-    required String value,
-    required VoidCallback onTap,
-    bool disabled = false,
-  }) {
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: disabled ? const Color(0xFFFDFBF7) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: disabled ? _border.withOpacity(0.5) : _border,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                value.isNotEmpty ? value : hint,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: value.isNotEmpty
-                      ? FontWeight.w600
-                      : FontWeight.w500,
-                  color: disabled
-                      ? const Color(0xFFD3C8BC)
-                      : (value.isNotEmpty
-                            ? _espresso
-                            : const Color(0xFFAAA09A)),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(
-              _activeDropdownField ==
-                      hint.toLowerCase().replaceAll('select ', '').trim()
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
-              color: disabled ? const Color(0xFFD3C8BC) : _cocoa,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCleanAddressField({
-    required TextEditingController controller,
-    required String hint,
-    TextInputType? keyboardType,
-    bool hasError = false,
-    void Function(String)? onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      onChanged: onChanged,
-      style: const TextStyle(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600,
-        color: _espresso,
-      ),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: hasError
-              ? _errorRed.withOpacity(0.8)
-              : const Color(0xFFAAA09A),
-          fontWeight: FontWeight.w500,
-          fontSize: 13.5,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: hasError ? _errorRed : _border,
-            width: hasError ? 1.5 : 1.0,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: hasError ? _errorRed : _border,
-            width: hasError ? 1.5 : 1.0,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: hasError ? _errorRed : _cocoa,
-            width: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputField({
-    required String label,
-    String? initialValue,
-    TextEditingController? controller,
-    required IconData icon,
-    bool readOnly = false,
-    bool isPhone = false,
-    String? hintText,
-  }) {
-    return TextFormField(
-      initialValue: initialValue,
-      controller: controller,
-      readOnly: readOnly,
-      style: TextStyle(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600,
-        color: readOnly ? _muted : _espresso,
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(
-          color: _muted.withValues(alpha: 0.5),
-          fontWeight: FontWeight.w500,
-        ),
-        prefixIconConstraints: isPhone
-            ? const BoxConstraints(minWidth: 0, minHeight: 0)
-            : null,
-        prefixIcon: isPhone
-            ? Padding(
-                padding: const EdgeInsets.only(left: 14, right: 10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _blush,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE8D0C3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.phone_outlined, size: 14, color: _cocoa),
-                      SizedBox(width: 4),
-                      Text(
-                        '+63',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
-                          color: _espresso,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : Icon(
-                icon,
-                size: 20,
-                color: readOnly ? _muted.withValues(alpha: 0.5) : _cocoa,
-              ),
-        filled: true,
-        fillColor: readOnly ? Colors.grey.shade50 : Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: _border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: _cocoa, width: 1.5),
-        ),
-      ),
-    );
-  }
-
   Widget _buildFavoritesTab() {
     if (widget.favorites.isEmpty) {
       return Center(
@@ -2439,7 +2770,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFE5D5C5).withValues(alpha: 0.4),
+                        color: const Color(0xFFE5D5C5).withOpacity(0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -2491,7 +2822,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             border: Border.all(color: _border),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF3C2216).withValues(alpha: 0.04),
+                color: const Color(0xFF3C2216).withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -2773,26 +3104,26 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                               await FirebaseFirestore.instance
                                   .collection('reviews')
                                   .add({
-                                    'orderId': _reviewOrderId,
-                                    'userId': _userId,
-                                    'userName': widget.currentName,
-                                    'productName': _reviewProductName,
-                                    'rating': _reviewRating,
-                                    'comment': _reviewCommentController.text
-                                        .trim(),
-                                    'createdAt': FieldValue.serverTimestamp(),
-                                    'status': 'new',
-                                  });
+                                'orderId': _reviewOrderId,
+                                'userId': _userId,
+                                'userName': widget.currentName,
+                                'productName': _reviewProductName,
+                                'rating': _reviewRating,
+                                'comment': _reviewCommentController.text
+                                    .trim(),
+                                'createdAt': FieldValue.serverTimestamp(),
+                                'status': 'new',
+                              });
 
                               await FirebaseFirestore.instance
                                   .collection('orders')
                                   .doc(_reviewOrderId)
                                   .update({
-                                    'hasReviewed': true,
-                                    'userRating': _reviewRating,
-                                    'userComment': _reviewCommentController.text
-                                        .trim(),
-                                  });
+                                'hasReviewed': true,
+                                'userRating': _reviewRating,
+                                'userComment': _reviewCommentController.text
+                                    .trim(),
+                              });
 
                               if (mounted) {
                                 setState(() => _isSubmittingReview = false);
@@ -2974,8 +3305,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             final rawTotal = data['total'];
             final totalStr = rawTotal != null
                 ? (rawTotal is num
-                      ? '₱${rawTotal.toStringAsFixed(2)}'
-                      : rawTotal.toString())
+                    ? '₱${rawTotal.toStringAsFixed(2)}'
+                    : rawTotal.toString())
                 : '₱0.00';
 
             List<Map<String, dynamic>> parsedItems = [];
@@ -3028,6 +3359,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             if (parsedItems.isNotEmpty) {
               final pName = parsedItems.first['name']
                   .toString()
+                  .split('(')
+                  .first
                   .trim()
                   .toLowerCase();
               try {
@@ -3368,12 +3701,79 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                 ),
                                 const SizedBox(width: 8),
                               ],
+                              if (!isCompleted) ...[
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    int itemCount = 1;
+                                    if (data['items'] is List) {
+                                      itemCount =
+                                          (data['items'] as List).length;
+                                    } else if (data['cart'] is List) {
+                                      itemCount = (data['cart'] as List).length;
+                                    } else if (data['itemCount'] != null) {
+                                      itemCount = (data['itemCount'] as num)
+                                          .toInt();
+                                    }
+
+                                    final rawTotal = (data['total'] ?? '0')
+                                        .toString()
+                                        .replaceAll(RegExp(r'[^0-9.]'), '');
+                                    final totalAmount =
+                                        double.tryParse(rawTotal) ?? 0.0;
+
+                                    DateTime placedAt = DateTime.now();
+                                    if (data['createdAt'] is Timestamp) {
+                                      placedAt =
+                                          (data['createdAt'] as Timestamp)
+                                              .toDate();
+                                    }
+
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => OrderTrackerModal(
+                                        orderNumber: orderNumber,
+                                        itemCount: itemCount,
+                                        totalAmount: totalAmount,
+                                        placedAt: placedAt,
+                                      ),
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: _cocoa,
+                                    side: const BorderSide(
+                                      color: _cocoa,
+                                      width: 1.2,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 0,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.local_shipping_outlined,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    'Track Order',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                               FilledButton.icon(
                                 onPressed: () {
                                   bool itemsAdded = false;
                                   for (var item in parsedItems) {
                                     final pName = item['name']
                                         .toString()
+                                        .split('(')
+                                        .first
                                         .trim()
                                         .toLowerCase();
                                     final pQty = item['quantity'] as int;
@@ -3459,8 +3859,13 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
 class _FaqItem extends StatefulWidget {
   final String question;
   final String answer;
+  final bool showDivider;
 
-  const _FaqItem({required this.question, required this.answer});
+  const _FaqItem({
+    required this.question,
+    required this.answer,
+    this.showDivider = true,
+  });
 
   @override
   State<_FaqItem> createState() => _FaqItemState();
@@ -3471,41 +3876,70 @@ class _FaqItemState extends State<_FaqItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEFE4D6)),
-      ),
-      child: Theme(
-        data: ThemeData(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          title: Text(
-            widget.question,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF251811),
-            ),
+    return Column(
+      children: [
+        Theme(
+          data: ThemeData(
+            dividerColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
           ),
-          iconColor: const Color(0xFF8C4A27),
-          collapsedIconColor: const Color(0xFF7A6559),
-          onExpansionChanged: (val) => setState(() => _expanded = val),
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text(
-                widget.answer,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Color(0xFF7A6559),
-                  height: 1.4,
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            childrenPadding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            title: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: _expanded ? const Color(0xFF8C4A27) : const Color(0xFF251811),
+                letterSpacing: -0.2,
+              ),
+              child: Text(widget.question),
+            ),
+            trailing: AnimatedRotation(
+              turns: _expanded ? 0.5 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _expanded ? const Color(0xFFFBEBE4) : const Color(0xFFFAF4ED),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: _expanded ? const Color(0xFF8C4A27) : const Color(0xFF7A6559),
+                  size: 20,
                 ),
               ),
             ),
-          ],
+            onExpansionChanged: (val) => setState(() => _expanded = val),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.answer,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF7A6559),
+                    height: 1.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        if (widget.showDivider)
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFF5EDDF),
+            indent: 20,
+            endIndent: 20,
+          ),
+      ],
     );
   }
 }

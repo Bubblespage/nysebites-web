@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:url_launcher/url_launcher.dart';
 import 'gcash_portal_modal.dart';
 // ── FIX: Removed StorageUploader because Firebase Storage is locked behind a billing wall
 
@@ -68,6 +69,134 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     );
   }
 
+  void _showContactAdminDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            constraints: const BoxConstraints(maxWidth: 340),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDFBF7),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFEFE4D6), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3C2216).withOpacity(0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFBEBE4),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFEFE4D6)),
+                  ),
+                  child: const Icon(
+                    Icons.phone_in_talk_rounded,
+                    color: Color(0xFF8E4A23),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Contact Kitchen Admin',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2E1B10),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Need help with your delivery? Give us a ring and we’ll sort it out fresh! 🥨',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF756256),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () async {
+                    final Uri telUri = Uri.parse('tel:09950829180');
+                    if (await canLaunchUrl(telUri)) {
+                      await launchUrl(telUri);
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 13,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF2E9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE8D5C4)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.call_rounded, size: 16, color: Color(0xFF8E4A23)),
+                        SizedBox(width: 10),
+                        Text(
+                          '0995 082 9180',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2E1B10),
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8E4A23),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── FIX: UNIFIED PAYMENT PROCESSOR TO PREVENT INFINITE LOADING AND USE BASE64 ──
   Future<void> _processPayment({
     required String? ref,
@@ -115,7 +244,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             const Duration(seconds: 15),
             onTimeout: () => throw TimeoutException('Database update timed out. Check network connection.'),
           );
-          
+
     } catch (e) {
       debugPrint('Payment update failed: $e');
       setState(() {
@@ -382,51 +511,54 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
   }
 
   Widget _buildTrackingStep(
-    IconData icon,
-    String title,
-    String subtitle,
-    bool isDone,
-  ) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isDone ? const Color(0xFF8E4A23) : const Color(0xFFF0E5DA),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isDone ? Colors.white : const Color(0xFF9E8E84),
-          ),
+  IconData icon,
+  String title,
+  String subtitle,
+  bool isDone, {
+  Widget? child, // ADDED
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start, // changed from default center so the child below doesn't look squished
+    children: [
+      Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDone ? const Color(0xFF8E4A23) : const Color(0xFFF0E5DA),
+          shape: BoxShape.circle,
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: isDone
-                      ? const Color(0xFF2E1B10)
-                      : const Color(0xFF9E8E84),
-                ),
-              ),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
-              ),
-            ],
-          ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isDone ? Colors.white : const Color(0xFF9E8E84),
         ),
-      ],
-    );
-  }
+      ),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: isDone
+                    ? const Color(0xFF2E1B10)
+                    : const Color(0xFF9E8E84),
+              ),
+            ),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
+            ),
+            if (child != null) child, // ADDED
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildStandardTrackerFlow(
     String cleanStatus,
@@ -461,11 +593,33 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         ),
         _buildStepConnector(isDelivering),
         _buildTrackingStep(
-          Icons.local_taxi_outlined,
-          'Out for Delivery',
-          riderName,
-          isDelivering,
-        ),
+  Icons.local_taxi_outlined,
+  'Out for Delivery',
+  riderName,
+  isDelivering,
+  child: isDelivering && !isDelivered
+      ? Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF8E4A23)),
+                foregroundColor: const Color(0xFF8E4A23),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                _showContactAdminDialog(context);
+              },
+              icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+              label: const Text('Contact Kitchen Admin'),
+            ),
+          ),
+        )
+      : null,
+),
         _buildStepConnector(isDelivered),
         _buildTrackingStep(
           Icons.home_outlined,
@@ -758,12 +912,12 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         style: TextStyle(fontSize: 11),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0053E0), 
+                            backgroundColor: const Color(0xFF0053E0),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -835,7 +989,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         _buildActionableStep(
           icon: Icons.receipt_long_outlined,
           title: isFullyPaid ? 'Baked to Perfection' : 'Baked & Final Balance',
-          subtitle: isFullyPaid 
+          subtitle: isFullyPaid
               ? 'Your cake is baked to perfection and ready for dispatch!'
               : 'Your cake is baked to perfection! Please settle the final balance before delivery.',
           isDone: isBakedPayment,
@@ -858,7 +1012,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0053E0), 
+                            backgroundColor: const Color(0xFF0053E0),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -907,19 +1061,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Contact Admin', style: TextStyle(color: Color(0xFF8E4A23), fontWeight: FontWeight.bold)),
-                            content: const Text('Please contact the Kitchen Admin at:\n\n09950829180', style: TextStyle(fontSize: 16)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Close', style: TextStyle(color: Color(0xFF8E4A23))),
-                              ),
-                            ],
-                          ),
-                        );
+                        _showContactAdminDialog(context);
                       },
                       icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
                       label: const Text('Contact Kitchen Admin'),

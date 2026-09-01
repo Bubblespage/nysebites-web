@@ -113,13 +113,13 @@ class PdfReportGenerator {
   static Future<Uint8List> generateCustomCakesReport(List<Map<String, dynamic>> cakes, {String filterInfo = ''}) async {
     final pdf = pw.Document();
     final headers = ['Order ID', 'Customer Info', 'Cake Specs (Details)', 'Amount', 'Status'];
-    
+
     final data = cakes.map((order) {
       final id = _clean((order['id'] ?? order['docId'] ?? 'N/A').toString());
       final customer = _clean((order['customerName'] ?? order['customer'] ?? 'Guest').toString());
       final phone = _clean((order['contact'] ?? order['phone'] ?? '').toString());
       final customerInfo = '$customer\n$phone';
-      
+
       String specs = '';
       if (order['customCakes'] != null && (order['customCakes'] as List).isNotEmpty) {
         final customCakesList = order['customCakes'] as List;
@@ -138,7 +138,7 @@ class PdfReportGenerator {
         final piping = order['dedication'] ?? order['pipingText'] ?? order['piping'] ?? 'No dedication';
         specs = '$item\nTier: $tier\nFrosting: $frosting\nPiping: "$piping"';
       }
-      
+
       final amount = _cleanAmount(order['total'] ?? order['totalAmount'] ?? order['subtotal']);
       final status = _clean((order['statusLabel'] ?? order['status'] ?? '').toString());
 
@@ -167,26 +167,26 @@ class PdfReportGenerator {
   static Future<Uint8List> generateBatchMenuReport(List<Map<String, dynamic>> products, {String filterInfo = ''}) async {
     final pdf = pw.Document();
     final headers = ['SKU / ID', 'Product Details', 'Category & Size', 'Price', 'Stock & Status'];
-    
+
     final data = products.map((prod) {
       final id = _clean((prod['id'] ?? prod['docId'] ?? 'N/A').toString());
       final name = _clean((prod['name'] ?? 'Unnamed Item').toString());
       final desc = _clean((prod['description'] ?? '').toString());
       final details = '$name${desc.isNotEmpty ? '\n$desc' : ''}';
-      
+
       final category = _clean((prod['category'] ?? 'N/A').toString().toUpperCase());
-      
+
       // Pull specific size/serving info or default to standard variants
       final size = _clean((prod['size'] ?? prod['servingSize'] ?? 'Box of 4').toString());
-      
+
       // Handle dual box pricing if priceBox6 exists
       String priceStr = _cleanAmount(prod['price']);
       if (prod['priceBox6'] != null) {
         priceStr += '\nBox of 6: ${_cleanAmount(prod['priceBox6'])}';
       }
-      
+
       final catAndSize = '$category\n$size';
-      
+
       final stockNum = (prod['stock'] as num?)?.toInt() ?? 0;
       final isActive = prod['active'] == true;
       final statusText = isActive ? 'Active' : 'Hidden';
@@ -279,7 +279,7 @@ class PdfReportGenerator {
           return [
             _buildHeader('Dashboard Overview Snapshot${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
             pw.SizedBox(height: 10),
-            
+
             // MATCHING WEB DASHBOARD METRIC BOXES
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -290,7 +290,7 @@ class PdfReportGenerator {
                 _buildStatBox('DELIVERIES DONE', '${stats['completedOrders'] ?? '0'} Orders'),
               ]
             ),
-            
+
             pw.SizedBox(height: 24),
             pw.Text('Comprehensive Transactions Log', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF2E1B10))),
             pw.SizedBox(height: 10),
@@ -307,6 +307,45 @@ class PdfReportGenerator {
       ),
     );
 
+    return pdf.save();
+  }
+
+  // 6. CUSTOMER REVIEWS  (new)
+  static Future<Uint8List> generateReviewsReport(List<Map<String, dynamic>> reviews, {String filterInfo = ''}) async {
+    final pdf = pw.Document();
+    final headers = ['Date', 'Customer', 'Product', 'Rating', 'Comment', 'Status'];
+
+    final data = reviews.map((review) {
+      final rating = review['rating'] is num ? (review['rating'] as num).toInt() : 5;
+      return [
+        _formatDate(review['createdAt']),
+        _clean((review['userName'] ?? 'Anonymous').toString()),
+        _clean((review['productName'] ?? 'Unknown Product').toString()),
+        '$rating / 5',
+        _clean((review['comment']?.toString().isNotEmpty == true
+                ? review['comment']
+                : 'No written feedback provided.')
+            .toString()),
+        _clean((review['status'] ?? 'new').toString()),
+      ];
+    }).toList();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: _landscapePageTheme(),
+        build: (context) => [
+          _buildHeader('Customer Reviews${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
+          _buildTable(headers, data, columnWidths: {
+            0: const pw.FlexColumnWidth(1.5),
+            1: const pw.FlexColumnWidth(1.5),
+            2: const pw.FlexColumnWidth(1.8),
+            3: const pw.FlexColumnWidth(1.0),
+            4: const pw.FlexColumnWidth(3.5),
+            5: const pw.FlexColumnWidth(1.2),
+          }),
+        ],
+      ),
+    );
     return pdf.save();
   }
 

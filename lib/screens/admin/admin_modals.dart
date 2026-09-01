@@ -24,7 +24,7 @@ class AdminModals {
   }
 
   // ── FIX: Smart Image Renderer ──
-  // Checks if the string is an old Firebase URL or a new Base64 string 
+  // Checks if the string is an old Firebase URL or a new Base64 string
   // and uses either Image.network or Image.memory to render it safely.
   static Widget _buildProofImage(
     BuildContext context,
@@ -64,7 +64,8 @@ class AdminModals {
       );
     }
 
-    final bool isUrl = imageData.startsWith('http') || imageData.startsWith('https');
+    final bool isUrl =
+        imageData.startsWith('http') || imageData.startsWith('https');
 
     Widget imageWidget;
     if (isUrl) {
@@ -74,10 +75,7 @@ class AdminModals {
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
           return const Center(
-            child: CircularProgressIndicator(
-              color: brandCocoa,
-              strokeWidth: 2,
-            ),
+            child: CircularProgressIndicator(color: brandCocoa, strokeWidth: 2),
           );
         },
         errorBuilder: (context, error, stackTrace) => const Center(
@@ -144,7 +142,11 @@ class AdminModals {
     );
   }
 
-  static void _showFullScreenImage(BuildContext context, String imageData, bool isUrl) {
+  static void _showFullScreenImage(
+    BuildContext context,
+    String imageData,
+    bool isUrl,
+  ) {
     Widget imageWidget;
     if (isUrl) {
       imageWidget = Image.network(
@@ -192,9 +194,7 @@ class AdminModals {
             InteractiveViewer(
               minScale: 0.8,
               maxScale: 4,
-              child: Center(
-                child: imageWidget,
-              ),
+              child: Center(child: imageWidget),
             ),
             Positioned(
               top: 8,
@@ -379,7 +379,10 @@ class AdminModals {
               ),
               _buildReceiptRow('Delivery Fee:', _cleanPdfCurrency(deliveryFee)),
               if (order['packagingFee'] != null && order['packagingFee'] > 0)
-                _buildReceiptRow('Packaging Fee:', _cleanPdfCurrency(order['packagingFee'])),
+                _buildReceiptRow(
+                  'Packaging Fee:',
+                  _cleanPdfCurrency(order['packagingFee']),
+                ),
               pw.SizedBox(height: 4),
               _buildDashedLine(),
               pw.SizedBox(height: 4),
@@ -738,11 +741,19 @@ class AdminModals {
                           ),
                         ),
                         onPressed: () async {
-                          final pdfDoc = await _generateKitchenSlipPdf(order);
-                          await Printing.sharePdf(
-                            bytes: await pdfDoc.save(),
-                            filename: 'Kitchen_Slip_$orderId.pdf',
-                          );
+                          try {
+                            final pdfDoc = await _generateKitchenSlipPdf(order);
+                            await Printing.sharePdf(
+                              bytes: await pdfDoc.save(),
+                              filename: 'Kitchen_Slip_$orderId.pdf',
+                            );
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Error saving PDF: $e')),
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(
                           Icons.picture_as_pdf_outlined,
@@ -770,12 +781,20 @@ class AdminModals {
                           ),
                         ),
                         onPressed: () async {
-                          final pdfDoc = await _generateKitchenSlipPdf(order);
-                          await Printing.layoutPdf(
-                            name: 'Kitchen_Slip_$orderId',
-                            onLayout: (PdfPageFormat format) async =>
-                                pdfDoc.save(),
-                          );
+                          try {
+                            final pdfDoc = await _generateKitchenSlipPdf(order);
+                            await Printing.layoutPdf(
+                              name: 'Kitchen_Slip_$orderId',
+                              onLayout: (PdfPageFormat format) async =>
+                                  pdfDoc.save(),
+                            );
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Error printing: $e')),
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(Icons.print, size: 16),
                         label: const Text(
@@ -1041,8 +1060,11 @@ class AdminModals {
               ),
               onPressed: () {
                 final name = nameController.text.trim();
-                final price = double.tryParse(priceController.text.trim()) ?? 0.0;
-                final priceBox6 = double.tryParse(priceBox6Controller.text.trim());
+                final price =
+                    double.tryParse(priceController.text.trim()) ?? 0.0;
+                final priceBox6 = double.tryParse(
+                  priceBox6Controller.text.trim(),
+                );
                 final stock = int.tryParse(stockController.text.trim()) ?? 0;
 
                 if (name.isEmpty || price <= 0) return;
@@ -1093,17 +1115,20 @@ class AdminModals {
 
     if (paymentType == 'retainer') {
       refNumber = order['downPaymentReference']?.toString();
-      proofData = order['downpaymentProofBase64']?.toString() ?? 
-                  order['downPaymentProofBase64']?.toString() ?? 
-                  order['downPaymentProofUrl']?.toString();
+      proofData =
+          order['downpaymentProofBase64']?.toString() ??
+          order['downPaymentProofBase64']?.toString() ??
+          order['downPaymentProofUrl']?.toString();
     } else if (paymentType == 'full') {
       refNumber = order['fullPaymentReference']?.toString();
-      proofData = order['fullPaymentProofBase64']?.toString() ?? 
-                  order['fullPaymentProofUrl']?.toString();
+      proofData =
+          order['fullPaymentProofBase64']?.toString() ??
+          order['fullPaymentProofUrl']?.toString();
     } else {
       refNumber = order['referenceNumber']?.toString();
-      proofData = order['paymentProofBase64']?.toString() ?? 
-                  order['paymentProofUrl']?.toString();
+      proofData =
+          order['paymentProofBase64']?.toString() ??
+          order['paymentProofUrl']?.toString();
     }
 
     showDialog(
@@ -1157,7 +1182,11 @@ class AdminModals {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: textMuted, size: 20),
+                        icon: const Icon(
+                          Icons.close,
+                          color: textMuted,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -1190,7 +1219,11 @@ class AdminModals {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.tag, size: 14, color: brandCocoa),
+                                const Icon(
+                                  Icons.tag,
+                                  size: 14,
+                                  color: brandCocoa,
+                                ),
                                 const SizedBox(width: 6),
                                 const Text(
                                   'Ref #: ',
@@ -1323,9 +1356,10 @@ class AdminModals {
     final String balance =
         (order['balance']?.toString() ?? order['total']?.toString() ?? '₱0.00');
     final String? refNumber = order['balanceReference']?.toString();
-    
-    final String? proofData = order['finalPaymentProofBase64']?.toString() ?? 
-                              order['finalPaymentProofUrl']?.toString();
+
+    final String? proofData =
+        order['finalPaymentProofBase64']?.toString() ??
+        order['finalPaymentProofUrl']?.toString();
 
     showDialog(
       context: context,
@@ -1378,7 +1412,11 @@ class AdminModals {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: textMuted, size: 20),
+                        icon: const Icon(
+                          Icons.close,
+                          color: textMuted,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -1411,7 +1449,11 @@ class AdminModals {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.tag, size: 14, color: brandCocoa),
+                                const Icon(
+                                  Icons.tag,
+                                  size: 14,
+                                  color: brandCocoa,
+                                ),
                                 const SizedBox(width: 6),
                                 const Text(
                                   'Ref #: ',
@@ -1528,22 +1570,25 @@ class AdminModals {
     Function(double, double) onApprove,
     VoidCallback onReject,
   ) {
-    final double initialBase = double.tryParse(
+    final double initialBase =
+        double.tryParse(
           (order['baseCakePrice'] ?? order['subtotal'] ?? 0.0).toString(),
         ) ??
         0.0;
     final TextEditingController baseController = TextEditingController(
       text: initialBase > 0 ? initialBase.toStringAsFixed(0) : '',
     );
-    final TextEditingController addonController =
-        TextEditingController(text: '300');
+    final TextEditingController addonController = TextEditingController(
+      text: '300',
+    );
 
     final String orderId = (order['id'] ?? order['docId'] ?? '').toString();
     final String customer = (order['customer'] ?? 'Guest').toString();
     final String contact = (order['contact'] ?? '').toString();
 
-    final List<dynamic> rawCustomCakes =
-        order['customCakes'] is List ? order['customCakes'] as List : [];
+    final List<dynamic> rawCustomCakes = order['customCakes'] is List
+        ? order['customCakes'] as List
+        : [];
     final List<Map<String, dynamic>> customCakes = rawCustomCakes
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))
@@ -1553,7 +1598,8 @@ class AdminModals {
       customCakes.add({
         'name': order['item']?.toString() ?? 'Custom Cake',
         'description': order['note']?.toString() ?? '',
-        'referenceImageBase64': order['referenceImageBase64'] ?? order['referenceImageUrl'],
+        'referenceImageBase64':
+            order['referenceImageBase64'] ?? order['referenceImageUrl'],
         'quantity': 1,
       });
     }
@@ -1585,8 +1631,12 @@ class AdminModals {
                   padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
                   decoration: const BoxDecoration(
                     color: Color(0xFFFAF2E9),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-                    border: Border(bottom: BorderSide(color: Color(0xFFEFE4D6))),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(22),
+                    ),
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFEFE4D6)),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1625,7 +1675,11 @@ class AdminModals {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: textMuted, size: 20),
+                        icon: const Icon(
+                          Icons.close,
+                          color: textMuted,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -1664,7 +1718,9 @@ class AdminModals {
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: borderLight),
+                                    borderSide: const BorderSide(
+                                      color: borderLight,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1680,7 +1736,9 @@ class AdminModals {
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: borderLight),
+                                    borderSide: const BorderSide(
+                                      color: borderLight,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1734,7 +1792,8 @@ class AdminModals {
                           ),
                           onPressed: () {
                             final double base =
-                                double.tryParse(baseController.text) ?? initialBase;
+                                double.tryParse(baseController.text) ??
+                                initialBase;
                             final double addon =
                                 double.tryParse(addonController.text) ?? 300.0;
                             Navigator.pop(ctx);
@@ -1763,11 +1822,13 @@ class AdminModals {
   ) {
     final String name = (cake['name'] ?? 'Custom Cake').toString();
     final String description = (cake['description'] ?? '').toString();
-    final int quantity =
-        (cake['quantity'] is num) ? (cake['quantity'] as num).toInt() : 1;
-        
-    final String? imageString = cake['referenceImageBase64']?.toString() ?? 
-                                cake['referenceImageUrl']?.toString();
+    final int quantity = (cake['quantity'] is num)
+        ? (cake['quantity'] as num).toInt()
+        : 1;
+
+    final String? imageString =
+        cake['referenceImageBase64']?.toString() ??
+        cake['referenceImageUrl']?.toString();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1791,7 +1852,11 @@ class AdminModals {
             const SizedBox(height: 4),
             Text(
               description,
-              style: const TextStyle(fontSize: 12, color: textMuted, height: 1.35),
+              style: const TextStyle(
+                fontSize: 12,
+                color: textMuted,
+                height: 1.35,
+              ),
             ),
           ],
           const SizedBox(height: 10),
@@ -1822,20 +1887,178 @@ class AdminModals {
     Map<String, dynamic> order,
     VoidCallback onComplete,
   ) {
+    final String orderId = (order['id'] ?? order['docId'] ?? 'NB-000000')
+        .toString();
+    final String customer = (order['customer'] ?? 'Guest').toString();
+    final String item = (order['item'] ?? 'Bakery Item').toString();
+    final String total = (order['total'] ?? '₱0.00').toString();
+    final bool isCod = (order['payment'] ?? '')
+        .toString()
+        .toLowerCase()
+        .contains('cash');
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delivery Hand-off'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onComplete();
-            },
-            child: const Text('Mark Completed'),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFCF9F5),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFE8D5C4), width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(37, 24, 17, 0.18),
+                  blurRadius: 30,
+                  offset: Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0E5DA),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.local_shipping_outlined,
+                        color: brandCocoa,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Delivery Hand-off',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16.5,
+                          color: brandCocoa,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: textMuted, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: wellBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE8DACB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSlipRow('Order #:', orderId),
+                      _buildSlipRow('Customer:', customer),
+                      _buildSlipRow('Item:', item),
+                      const Divider(color: Color(0xFFE8DACB), height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: textDark,
+                            ),
+                          ),
+                          Text(
+                            total,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: brandCocoa,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  isCod
+                      ? 'Confirm the rider has collected COD payment and completed this delivery.'
+                      : 'Confirm this order has been handed off and delivered to the customer.',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: textMuted,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: borderLight),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text(
+                          'Close',
+                          style: TextStyle(
+                            color: textMuted,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: brandCocoa,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          onComplete();
+                        },
+                        icon: const Icon(Icons.check_circle_outline, size: 16),
+                        label: Text(
+                          isCod ? 'Collect & Complete' : 'Mark Completed',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

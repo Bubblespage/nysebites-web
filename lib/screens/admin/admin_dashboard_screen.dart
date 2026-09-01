@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'tabs/live_orders_tab.dart';
 import 'tabs/dashboard_overview_tab.dart';
 import 'tabs/custom_cake_desk_tab.dart';
@@ -186,12 +189,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE57373),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogCtx);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-              );
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                );
+              }
             },
             child: const Text(
               'Logout',
@@ -245,6 +251,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             await queryByOrderNum.docs.first.reference.update(updatePayload);
           }
         }
+      }
+
+      // -- MAGICAL FIX: Trigger Web Push Notification --
+      try {
+        final orderData = docSnap.exists ? docSnap.data() : null;
+        final userId = orderData?['userId'];
+        final orderNumber = orderData?['orderNumber'] ?? id;
+
+        if (userId != null) {
+          final userDoc = await _firestore.collection('users').doc(userId).get();
+          if (userDoc.exists) {
+            final fcmToken = userDoc.data()?['fcmToken'];
+            final pushEnabled = userDoc.data()?['pushEnabled'] ?? false;
+
+            if (pushEnabled && fcmToken != null) {
+              // Send ping to Vercel Backend
+              final response = await http.post(
+                Uri.parse('https://nyse-bites-backend.vercel.app/api/notify'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                  'fcmToken': fcmToken,
+                  'title': 'Order Update! 🤎',
+                  'body': 'Order #$orderNumber is now $newLabel.',
+                }),
+              );
+              debugPrint('FCM Ping Response: ${response.statusCode}');
+            }
+          }
+        }
+      } catch (fcmError) {
+        debugPrint('FCM Trigger Error: $fcmError');
       }
 
       if (!mounted) return;

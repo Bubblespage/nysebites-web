@@ -47,26 +47,24 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             final data = userDoc.data() as Map<String, dynamic>;
             final String rawRole = (data['role'] ?? '').toString();
             
-            if (rawRole.isNotEmpty) {
-              String resolvedRole = 'Baker Admin';
-              if (rawRole == 'super_admin' || rawRole == 'Super Admin') {
-                resolvedRole = 'Super Admin';
-              } else if (rawRole == 'order_dispatcher' || rawRole == 'rider') {
-                resolvedRole = 'Order Dispatcher';
-              }
-              
-              _hasNavigated = true;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AdminDashboardScreen(
-                    currentRole: resolvedRole,
-                    adminEmail: user.email ?? '',
-                  ),
-                ),
-              );
-              return;
+            String resolvedRole = 'Baker Admin';
+            if (rawRole == 'super_admin' || rawRole == 'Super Admin') {
+              resolvedRole = 'Super Admin';
+            } else if (rawRole == 'order_dispatcher' || rawRole == 'rider') {
+              resolvedRole = 'Order Dispatcher';
             }
+            
+            _hasNavigated = true;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AdminDashboardScreen(
+                  currentRole: resolvedRole,
+                  adminEmail: user.email ?? '',
+                ),
+              ),
+            );
+            return;
           }
         } catch (e) {
           debugPrint('Auto-login stream error: $e');

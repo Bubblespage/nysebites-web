@@ -1,3 +1,4 @@
+import 'dart:typed_data'; // Add this for Uint8List support
 import 'package:flutter/material.dart';
 
 class MobileNavDrawer extends StatelessWidget {
@@ -10,7 +11,9 @@ class MobileNavDrawer extends StatelessWidget {
   final VoidCallback onContactClick;
   final VoidCallback onOpenAuth;
   final String? currentUser;
+  final Uint8List? profileImageBytes; // Added parameter for real-time image bytes
   final VoidCallback onLogout;
+  final VoidCallback? onProfileClick;
 
   const MobileNavDrawer({
     super.key,
@@ -23,7 +26,9 @@ class MobileNavDrawer extends StatelessWidget {
     required this.onContactClick,
     required this.onOpenAuth,
     this.currentUser,
+    this.profileImageBytes, // Include in constructor
     required this.onLogout,
+    this.onProfileClick,
   });
 
   @override
@@ -108,7 +113,7 @@ class MobileNavDrawer extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 children: [
                   _drawerItem(
-                    icon: Icons.cookie_outlined, // More thematic icon
+                    icon: Icons.cookie_outlined,
                     title: 'Fresh Menu',
                     onTap: () {
                       Navigator.pop(context);
@@ -192,45 +197,85 @@ class MobileNavDrawer extends StatelessWidget {
               child: currentUser != null
                   ? Row(
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: const Color(0xFF8E4A23),
-                          child: Text(
-                            currentUser![0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
+                                onProfileClick?.call();
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              hoverColor: const Color(0xFFF3E7DC),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                  horizontal: 4,
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Updated Avatar with Real-time Image Support
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF8E4A23),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: ClipOval(
+                                        child: profileImageBytes != null
+                                            ? Image.memory(
+                                                profileImageBytes!,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Center(
+                                                child: Text(
+                                                  currentUser!.isNotEmpty
+                                                      ? currentUser![0].toUpperCase()
+                                                      : 'R',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            currentUser!,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 14.5,
+                                              color: Color(0xFF2E1B10),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          const Text(
+                                            'Logged In • View Profile',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF756256),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                currentUser!,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14.5,
-                                  color: Color(0xFF2E1B10),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                'Logged In',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF756256),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(width: 6),
                         Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFFDE8E8),
