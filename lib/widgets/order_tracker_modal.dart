@@ -577,6 +577,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     final bool isDelivered = cleanStatus == 'delivered';
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTrackingStep(
           Icons.receipt_long_outlined,
@@ -689,6 +690,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
     final bool isFullyPaid = data['paymentType'] == 'full';
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildActionableStep(
           icon: Icons.receipt_long_outlined,
