@@ -283,46 +283,90 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 20.0, // Safely below the status bar
-        left: 16.0,
-        right: 16.0,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF3C2216),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 12,
-                  offset: Offset(0, 6),
-                )
-              ],
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.notifications_active_rounded, color: Color(0xFFFBEBE4)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        message.notification!.title ?? 'Nyse Bites Update',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        message.notification!.body ?? '',
-                        style: const TextStyle(color: Color(0xFFFBEBE4), fontSize: 13),
-                      ),
-                    ],
+        top: MediaQuery.of(context).padding.top + 16.0,
+        left: 0,
+        right: 0,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.elasticOut,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, -80 * (1 - value)),
+              child: Opacity(
+                opacity: value.clamp(0.0, 1.0),
+                child: child,
+              ),
+            );
+          },
+          child: Material(
+            color: Colors.transparent,
+            child: Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3C2216),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: const Color(0xFFFBEBE4).withOpacity(0.2),
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3C2216).withOpacity(0.4),
+                      blurRadius: 24,
+                      spreadRadius: 4,
+                      offset: const Offset(0, 10),
+                    )
+                  ],
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFBEBE4).withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_active_rounded,
+                        color: Color(0xFFFBEBE4),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Flexible(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            message.notification!.title ?? 'Nyse Bites Update',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              fontSize: 14.5,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            message.notification!.body ?? '',
+                            style: TextStyle(
+                              color: const Color(0xFFFBEBE4).withOpacity(0.95),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -330,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
 
     overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 4), () {
       if (overlayEntry.mounted) {
         overlayEntry.remove();
       }

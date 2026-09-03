@@ -302,6 +302,8 @@ class _AuthModalState extends State<AuthModal>
     bool showCheck = false,
     Widget? suffixIcon,
     TextInputType keyboardType = TextInputType.text,
+    TextInputAction? textInputAction,
+    void Function(String)? onFieldSubmitted,
     required String? Function(String?) validator,
   }) {
     return Column(
@@ -323,6 +325,11 @@ class _AuthModalState extends State<AuthModal>
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onFieldSubmitted ?? 
+              (textInputAction == TextInputAction.next 
+                  ? (_) => FocusScope.of(context).nextFocus() 
+                  : null),
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: validator,
           onChanged: (_) => setState(() {}),
@@ -819,6 +826,7 @@ class _AuthModalState extends State<AuthModal>
                                     label: 'Full Name',
                                     hint: 'e.g. Mai Leonhart',
                                     icon: Icons.person_outline_rounded,
+                                    textInputAction: TextInputAction.next,
                                     showCheck: _nameController.text.trim().length >= 2,
                                     validator: (val) {
                                       if (val == null || val.trim().isEmpty) {
@@ -842,6 +850,7 @@ class _AuthModalState extends State<AuthModal>
                             hint: 'maihart@gmail.com',
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
                             showCheck: _isValidEmail(_emailController.text),
                             validator: (val) {
                               if (val == null || val.trim().isEmpty) {
@@ -861,6 +870,8 @@ class _AuthModalState extends State<AuthModal>
                             hint: '••••••••',
                             icon: Icons.lock_outline_rounded,
                             obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _handleSubmit(),
                             showCheck: !_isSignUp || _isPasswordValid,
                             suffixIcon: IconButton(
                               icon: Icon(

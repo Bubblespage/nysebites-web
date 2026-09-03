@@ -484,8 +484,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 .where((d) => d.data()['isRead'] == false)
                 .length;
 
-            return Container(
-              color: darkEspresso,
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _firestore.collection('reviews').snapshots(),
+              builder: (context, reviewsSnap) {
+                final reviewsDocs = reviewsSnap.data?.docs ?? [];
+                final int unreadReviewsCount = reviewsDocs
+                    .where((d) => d.data()['status'] == 'new')
+                    .length;
+
+                return Container(
+                  color: darkEspresso,
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,6 +575,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     _buildNavItem(
                       5,
                       '⭐ Customer Reviews',
+                      count: unreadReviewsCount > 0 ? '$unreadReviewsCount' : null,
                       isDrawer: isDrawer,
                     ),
                   ],
@@ -606,6 +615,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   ),
                 ],
               ),
+            );
+              },
             );
           },
         );

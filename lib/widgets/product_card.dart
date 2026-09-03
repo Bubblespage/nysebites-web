@@ -126,12 +126,12 @@ class _ProductCardState extends State<ProductCard> {
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFFAF4ED),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _isHovered
                   ? const Color(0xFF8E4A23)
-                  : const Color(0xFFEFE4D6),
+                  : const Color(0xFFDCC8B8),
               width: _isHovered ? 1.5 : 1.0,
             ),
             boxShadow: [
@@ -145,42 +145,52 @@ class _ProductCardState extends State<ProductCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(19),
-                    ),
-                    child: SizedBox(
-                      height: ProductCard.imageHeight(widget.cardWidth),
-                      width: double.infinity,
-                      child: _buildImage(), // Uses the new anti-flicker image logic
-                    ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+              Container(
+                decoration: BoxDecoration(
+                  border: !isCookie
+                      ? const Border(
+                          bottom:
+                              BorderSide(color: Color(0xFFDCC8B8), width: 1.0),
+                        )
+                      : null,
+                ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(19),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2E1B10).withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        height: ProductCard.imageHeight(widget.cardWidth),
+                        width: double.infinity,
+                        child: _buildImage(), // Uses the new anti-flicker image logic
                       ),
-                      child: Text(
-                        widget.product.category.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
+                    ),
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E1B10).withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          widget.product.category.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               Expanded(

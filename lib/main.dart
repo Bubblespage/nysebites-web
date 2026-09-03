@@ -8,6 +8,8 @@ import 'data/mock_products.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 
+import 'screens/auth/reset_password_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -92,6 +94,20 @@ class NyseBitesApp extends StatelessWidget {
       routes: {
         '/': (context) => const HomeScreen(),
         '/admin': (context) => const AdminLoginScreen(),
+      },
+      onGenerateRoute: (settings) {
+        // Handle deep linking for Firebase Auth action URLs
+        final uri = Uri.parse(settings.name ?? '');
+        if (uri.path == '/reset-password') {
+          // Firebase appends query parameters like ?mode=resetPassword&oobCode=XYZ
+          final oobCode = uri.queryParameters['oobCode'];
+          if (oobCode != null) {
+            return MaterialPageRoute(
+              builder: (context) => ResetPasswordScreen(oobCode: oobCode),
+            );
+          }
+        }
+        return null;
       },
     );
   }

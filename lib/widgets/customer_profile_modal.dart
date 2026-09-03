@@ -87,6 +87,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  late TextEditingController _emailController;
 
   late TextEditingController _streetController;
   late TextEditingController _zipCodeController;
@@ -96,6 +97,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
   String _selectedCity = '';
   String _selectedBarangay = '';
   String? _activeDropdownField;
+
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   // Web-safe image byte states (avoids Image.file crashes on web)
   Uint8List? _profileImageBytes;
@@ -263,6 +266,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     _tabController = TabController(length: 2, vsync: this);
     _nameController = TextEditingController(text: widget.currentName);
     _phoneController = TextEditingController(text: widget.currentPhone);
+    _emailController = TextEditingController(text: FirebaseAuth.instance.currentUser?.email ?? '');
 
     // Initialize with passed image bytes if available
     _profileImageBytes = widget.initialImageBytes;
@@ -435,6 +439,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     _tabController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _streetController.dispose();
     _zipCodeController.dispose();
     _landmarkController.dispose();
@@ -494,6 +499,47 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     final newAddress = _getFormattedAddress();
 
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final newEmail = _emailController.text.trim();
+        if (newEmail.isNotEmpty && newEmail != user.email) {
+          try {
+            await user.verifyBeforeUpdateEmail(newEmail);
+            if (mounted) {
+              _scaffoldMessengerKey.currentState?.showSnackBar(
+                const SnackBar(
+                  content: Text('Verification email sent to new address. Please verify to complete the update.'),
+                  backgroundColor: Color(0xFF4CAF50),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          } on FirebaseAuthException catch (e) {
+            if (e.code == 'requires-recent-login') {
+              if (mounted) {
+                _scaffoldMessengerKey.currentState?.showSnackBar(
+                  const SnackBar(
+                    content: Text('Please log out and log back in to change your email for security reasons.'),
+                    backgroundColor: Color(0xFFD32F2F),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            } else {
+              if (mounted) {
+                _scaffoldMessengerKey.currentState?.showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating email: ${e.message}'),
+                    backgroundColor: const Color(0xFFD32F2F),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            }
+          }
+        }
+      }
+
       final Map<String, dynamic> updateData = {
         'name': newName,
         'phone': newPhone,
@@ -540,6 +586,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             left: Radius.circular(leftRadius),
           ),
           child: ScaffoldMessenger(
+            key: _scaffoldMessengerKey,
             child: Scaffold(
               backgroundColor: Colors.transparent,
               body: Stack(
@@ -1143,9 +1190,51 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   _buildSettingsTile(
                     icon: Icons.lock_outline_rounded,
                     title: 'Change Password',
-                    subtitle: 'Temporarily unavailable',
-                    disabled: true,
-                    onTap: null,
+                    subtitle: 'Send a secure reset link to your email',
+                    disabled: false,
+                    onTap: () async {
+                      final userEmail = FirebaseAuth.instance.currentUser?.email;
+                      if (userEmail != null && userEmail.isNotEmpty) {
+                        try {
+                          await FirebaseAuth.instance.sendPasswordResetEmail(
+                            email: userEmail,
+                            actionCodeSettings: ActionCodeSettings(
+                              url: 'https://nyse-bites.web.app/reset-password',
+                              handleCodeInApp: true,
+                            ),
+                          );
+                          if (mounted) {
+                            _scaffoldMessengerKey.currentState?.showSnackBar(
+                              const SnackBar(
+                                content: Text('Password reset email sent! Please check your inbox.'),
+                                backgroundColor: Color(0xFF4CAF50),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            _scaffoldMessengerKey.currentState?.showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to send reset email: $e'),
+                                backgroundColor: const Color(0xFFD32F2F),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      } else {
+                        if (mounted) {
+                          _scaffoldMessengerKey.currentState?.showSnackBar(
+                            const SnackBar(
+                              content: Text('No email found for your account.'),
+                              backgroundColor: Color(0xFFD32F2F),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ],
               ),
@@ -2019,15 +2108,28 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
-                                  FirebaseAuth.instance.currentUser?.email ??
-                                      'rynnepagsanjan@gmail.com',
+                                TextField(
+                                  controller: _emailController,
+                                  onChanged: (_) => setState(() {}),
+                                  keyboardType: TextInputType.emailAddress,
                                   style: const TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w600,
-                                    color: _muted,
+                                    color: _espresso,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter your email',
+                                    hintStyle: TextStyle(
+                                      color: Color(0xFFAAA09A),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13.5,
+                                    ),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    isDense: true,
+                                  ),
                                 ),
                               ],
                             ),
@@ -3115,6 +3217,9 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                 'status': 'new',
                               });
 
+                              // Skip updating the order document as it may cause permission denied errors.
+                              // The UI already queries the 'reviews' collection directly via StreamBuilder.
+                              /* 
                               await FirebaseFirestore.instance
                                   .collection('orders')
                                   .doc(_reviewOrderId)
@@ -3123,11 +3228,12 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                 'userRating': _reviewRating,
                                 'userComment': _reviewCommentController.text
                                     .trim(),
-                              });
+                              }); 
+                              */
 
                               if (mounted) {
                                 setState(() => _isSubmittingReview = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                _scaffoldMessengerKey.currentState?.showSnackBar(
                                   SnackBar(
                                     content: const Text(
                                       'Thank you for your sweet review! 🤎',
@@ -3146,6 +3252,16 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             } catch (e) {
                               if (mounted) {
                                 setState(() => _isSubmittingReview = false);
+                                _scaffoldMessengerKey.currentState?.showSnackBar(
+                                  SnackBar(
+                                    content: Text('Could not submit review: $e'),
+                                    backgroundColor: _errorRed,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
                               }
                               debugPrint('Error submitting review: $e');
                             }
@@ -3799,7 +3915,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                     Navigator.pop(context);
                                     widget.onOpenCart();
                                   } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    _scaffoldMessengerKey.currentState?.showSnackBar(
                                       SnackBar(
                                         content: const Text(
                                           'These items are no longer available on the menu.',
