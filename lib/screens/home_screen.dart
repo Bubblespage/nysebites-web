@@ -747,21 +747,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: _buildFloatingActions(),
           body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.0, 0.25, 0.55, 0.85, 1.0],
-                colors: [
-                  Color(0xFFFAF2E9),
-                  Color(0xFFFBF6F0),
-                  Color(0xFFF8EFE4),
-                  Color(0xFFF5E9DB),
-                  Color(0xFFEFE2D2),
-                ],
-              ),
-            ),
-            child: SingleChildScrollView(
+            color: const Color(0xFFEFE2D2),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1440),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [0.0, 0.25, 0.55, 0.85, 1.0],
+                      colors: [
+                        Color(0xFFFAF2E9),
+                        Color(0xFFFBF6F0),
+                        Color(0xFFF8EFE4),
+                        Color(0xFFF5E9DB),
+                        Color(0xFFEFE2D2),
+                      ],
+                    ),
+                  ),
+                  child: SingleChildScrollView(
               controller: _scrollController,
               child: Column(
                 children: [
@@ -815,9 +820,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ContactSection(key: _sweetNoteKey),
                   Footer(key: _footerKey),
                 ],
-              ),
-            ),
-          ),
+              ),       // Column
+            ),         // SingleChildScrollView
+          ),           // inner Container (gradient)
+              ),       // ConstrainedBox
+            ),         // Center
+          ),           // outer Container (bg color)
         );
       },
     );

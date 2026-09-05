@@ -61,7 +61,10 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
         horizontal: isMobile ? 12 : 24,
         vertical: 8,
       ),
-      child: Row(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1440),
+          child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Left Area: Hamburger on Mobile + Logo
@@ -262,6 +265,8 @@ class AppBarHeader extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ],
+      ),
+      ),
       ),
     );
   }
