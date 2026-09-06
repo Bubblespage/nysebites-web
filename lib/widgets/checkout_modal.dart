@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
@@ -878,14 +879,19 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     child: TextFormField(
                                       controller: _phoneController,
                                       keyboardType: TextInputType.phone,
+                                      maxLength: 11,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF2E1B10),
                                       ),
                                       decoration: InputDecoration(
+                                        counterText: '',
                                         labelText: 'Mobile Number *',
-                                        hintText: '917 123 4567',
+                                        hintText: '0917 123 4567',
                                         prefixIcon: Padding(
                                           padding: const EdgeInsets.only(
                                             left: 4,

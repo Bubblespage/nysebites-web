@@ -113,7 +113,7 @@ class _AuthModalState extends State<AuthModal>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome to Nyse Bites, $name! 🎉'),
-            backgroundColor: const Color(0xFF8C4A27),
+            backgroundColor: const Color(0xFF251811),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -259,39 +259,6 @@ class _AuthModalState extends State<AuthModal>
     );
   }
 
-  Widget _buildRequirementBadge(String label, bool isMet) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isMet ? const Color(0xFFEBF5EE) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isMet ? const Color(0xFF2E7D32) : const Color(0xFFEFE4D6),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isMet ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-            size: 11,
-            color: isMet ? const Color(0xFF2E7D32) : const Color(0xFF7A6559),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: isMet ? FontWeight.w700 : FontWeight.w500,
-              color: isMet ? const Color(0xFF1B5E20) : const Color(0xFF7A6559),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCleanField({
     required TextEditingController controller,
@@ -345,7 +312,7 @@ class _AuthModalState extends State<AuthModal>
               color: Color(0xFFAAA09A),
               fontWeight: FontWeight.w400,
             ),
-            prefixIcon: Icon(icon, color: const Color(0xFF8C4A27), size: 18),
+            prefixIcon: Icon(icon, color: const Color(0xFF251811), size: 18),
             suffixIcon: suffixIcon ??
                 (showCheck
                     ? const Padding(
@@ -380,7 +347,7 @@ class _AuthModalState extends State<AuthModal>
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(
-                color: Color(0xFF8C4A27),
+                color: Color(0xFF251811),
                 width: 1.8,
               ),
             ),
@@ -436,9 +403,8 @@ class _AuthModalState extends State<AuthModal>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF3C2216),
-                          Color(0xFF5A3420),
-                          Color(0xFF8C4A27),
+                          Color(0xFF251811), // Storefront banner dark espresso
+                          Color(0xFF3A2312), // Subtle fade
                         ],
                       ),
                     ),
@@ -634,7 +600,7 @@ class _AuthModalState extends State<AuthModal>
                                         child: Container(
                                           height: 28,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF8C4A27),
+                                            color: const Color(0xFF251811),
                                             borderRadius: BorderRadius.circular(18),
                                           ),
                                         ),
@@ -706,7 +672,7 @@ class _AuthModalState extends State<AuthModal>
                                   TextButton(
                                     onPressed: _handleGuestAccess,
                                     style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFF8C4A27),
+                                      foregroundColor: const Color(0xFF251811),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
                                         vertical: 4,
@@ -888,8 +854,11 @@ class _AuthModalState extends State<AuthModal>
                               if (val == null || val.isEmpty) {
                                 return 'Please enter your password';
                               }
-                              if (_isSignUp && !_isPasswordValid) {
-                                return 'Password does not meet security criteria';
+                              if (_isSignUp) {
+                                if (!_hasMinLength) return 'Must be at least 8 characters';
+                                if (!_hasUppercase || !_hasLowercase) return 'Must contain uppercase and lowercase letters';
+                                if (!_hasNumber) return 'Must contain at least one number';
+                                if (!_hasSpecialChar) return 'Must contain a special character (!@#\$%)';
                               }
                               return null;
                             },
@@ -904,7 +873,7 @@ class _AuthModalState extends State<AuthModal>
                                   height: 18,
                                   child: Checkbox(
                                     value: _keepLoggedIn,
-                                    activeColor: const Color(0xFF8C4A27),
+                                    activeColor: const Color(0xFF251811),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4),
                                     ),
@@ -926,58 +895,6 @@ class _AuthModalState extends State<AuthModal>
                             ),
                           ],
 
-                          if (_isSignUp) ...[
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFBEBE4),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFEFE4D6)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Password must contain:',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF251811),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 4,
-                                    children: [
-                                      _buildRequirementBadge(
-                                        'At least 8 chars',
-                                        _hasMinLength,
-                                      ),
-                                      _buildRequirementBadge(
-                                        'Uppercase (A-Z)',
-                                        _hasUppercase,
-                                      ),
-                                      _buildRequirementBadge(
-                                        'Lowercase (a-z)',
-                                        _hasLowercase,
-                                      ),
-                                      _buildRequirementBadge(
-                                        'Number (0-9)',
-                                        _hasNumber,
-                                      ),
-                                      _buildRequirementBadge(
-                                        'Symbol (!@#\$%)',
-                                        _hasSpecialChar,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-
                           const SizedBox(height: 16),
 
                           SizedBox(
@@ -985,13 +902,13 @@ class _AuthModalState extends State<AuthModal>
                             height: 46,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8C4A27),
+                                backgroundColor: const Color(0xFF251811),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 elevation: 2,
-                                shadowColor: const Color(0xFF8C4A27).withOpacity(0.3),
+                                shadowColor: const Color(0xFF251811).withOpacity(0.3),
                               ),
                               onPressed: _isLoading ? null : _handleSubmit,
                               child: _isLoading

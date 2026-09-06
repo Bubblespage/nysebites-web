@@ -253,6 +253,14 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
       rethrow; // Forces the GCash modal to catch the error and STOP loading
     }
   }
+  String _formatDate(DateTime dt) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final month = months[dt.month - 1];
+    final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$month ${dt.day}, ${dt.year} at $hour:$minute $period';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -468,28 +476,55 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                             ),
                     ),
                     const SizedBox(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${widget.itemCount} items • ₱${widget.totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9F5F0),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE8D5C4)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E1B10))),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Order #${widget.orderNumber} • ${_formatDate(widget.placedAt)}',
+                                    style: const TextStyle(fontSize: 10, color: Color(0xFF9E8E84)),
+                                  ),
+                                ],
+                              ),
+                              Text('₱${widget.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E4A23))),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            (data['item'] ?? '${widget.itemCount} items').toString(),
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF756256), height: 1.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Close Tracker',
+                          style: TextStyle(
+                            color: Color(0xFF8E4A23),
                             fontWeight: FontWeight.bold,
-                            fontSize: 12.5,
-                            color: Color(0xFF756256),
                           ),
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            'Close Tracker',
-                            style: TextStyle(
-                              color: Color(0xFF8E4A23),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),

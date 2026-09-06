@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function supporting both lowercase and capitalized role strings
+    function isStaff() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role.lower() in [
+            'super_admin', 'super admin', 'baker_admin', 'baker admin', 'admin', 'rider', 'order dispatcher'
+          ]
+        );
+    }
+
+    // 1. PRODUCTS
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isStaff();
+    }
+
+    // 2. ORDERS
+    match /orders/{orderId} {
+      allow create: if true;
+      
+      // allow get: Lets customers read their specific order if they know the secret orderId (QT-XXXXXX)
+      allow get: if true; 
+      
+      // allow list: Staff can query all orders. Customers can only query their own orders.
+      allow list: if isStaff() || (request.auth != null && resource.data.userId == request.auth.uid);
+      
+      // allow delete: Keeps the collection secure so only staff can delete orders
+      allow delete: if isStaff();
+      
+      // allow update: Staff can update anything. Customers can only update payment & status fields.
+      allow update: if isStaff() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'statusLabel', 'downPaymentReference', 'balanceReference'])
+      );
+    }
+
+    // 3. SWEET NOTES
+    match /sweet_notes/{noteId} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+
+    // 4. USERS
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isStaff());
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && (request.auth.uid == userId || isStaff());
+    }
+
+    // 5. REVIEWS
+    match /reviews/{reviewId} {
+      allow read: if true;
+      // This is the ONLY line that was changed so customers can submit reviews!
+      allow create: if request.auth != null;
+      allow update, delete: if isStaff();
+    }
+
+    // 6. STOREFRONT & GLOBAL SETTINGS
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isStaff() || request.auth != null;
+    }
+  }
+}

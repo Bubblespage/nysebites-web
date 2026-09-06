@@ -778,6 +778,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _liveOrdersStream,
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error loading orders: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+            }
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return _buildStreamLoader('Connecting to live order desk...');
@@ -819,6 +822,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _dashboardStream,
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error loading dashboard: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+            }
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return _buildStreamLoader('Computing bakery revenue...');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
@@ -2039,13 +2040,18 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                       child: TextField(
                                         controller: _phoneController,
                                         keyboardType: TextInputType.phone,
+                                        maxLength: 11,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly,
+                                        ],
                                         style: const TextStyle(
                                           fontSize: 13.5,
                                           fontWeight: FontWeight.w600,
                                           color: _espresso,
                                         ),
                                         decoration: const InputDecoration(
-                                          hintText: '9000000000',
+                                          counterText: '',
+                                          hintText: '0900 000 0000',
                                           hintStyle: TextStyle(
                                             color: Color(0xFFAAA09A),
                                             fontWeight: FontWeight.w500,
