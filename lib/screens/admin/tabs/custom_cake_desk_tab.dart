@@ -648,6 +648,62 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
     );
   }
 
+  void _showDispatchDialog(BuildContext context, String targetDocId, Map<String, dynamic> order) {
+    final TextEditingController riderNameController = TextEditingController(text: order['riderName']?.toString());
+    final TextEditingController trackingLinkController = TextEditingController(text: order['trackingLink']?.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dispatch Order'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: riderNameController,
+              decoration: const InputDecoration(
+                labelText: 'Rider Details (Name / Plate No)',
+                hintText: 'e.g. Juan Dela Cruz - GrabCar',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: trackingLinkController,
+              decoration: const InputDecoration(
+                labelText: 'Tracking Link (URL)',
+                hintText: 'https://...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3E2723)),
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.onUpdateStatus(
+                targetDocId,
+                'delivering',
+                '🛵 Out for Delivery',
+                {
+                  if (riderNameController.text.trim().isNotEmpty)
+                    'riderName': riderNameController.text.trim(),
+                  if (trackingLinkController.text.trim().isNotEmpty)
+                    'trackingLink': trackingLinkController.text.trim(),
+                },
+              );
+            },
+            child: const Text('Dispatch', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButtons(BuildContext context, Map<String, dynamic> order, String orderId, String status) {
     if (status == 'quote_received') {
       return OutlinedButton(
@@ -708,7 +764,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
         onPressed: () {
           final bool isFullyPaid = order['paymentType'] == 'full';
           if (isFullyPaid) {
-            widget.onUpdateStatus(orderId, 'delivering', '🛵 Out for Delivery');
+            _showDispatchDialog(context, orderId, order);
           } else {
             widget.onUpdateStatus(orderId, 'baked_payment_required', '💳 Awaiting Balance');
           }
@@ -726,7 +782,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
         onPressed: () => AdminModals.showBalanceVerificationModal(
           context,
           order,
-          () => widget.onUpdateStatus(orderId, 'delivering', '🛵 Out for Delivery'),
+          () => _showDispatchDialog(context, orderId, order),
         ),
         child: const Text('Verify Balance', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
       );

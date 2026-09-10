@@ -849,6 +849,62 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     );
   }
 
+  void _showDispatchDialog(BuildContext context, String targetDocId, Map<String, dynamic> order) {
+    final TextEditingController riderNameController = TextEditingController(text: order['riderName']?.toString());
+    final TextEditingController trackingLinkController = TextEditingController(text: order['trackingLink']?.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dispatch Order'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: riderNameController,
+              decoration: const InputDecoration(
+                labelText: 'Rider Details (Name / Plate No)',
+                hintText: 'e.g. Juan Dela Cruz - GrabCar',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: trackingLinkController,
+              decoration: const InputDecoration(
+                labelText: 'Tracking Link (URL)',
+                hintText: 'https://...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3E2723)),
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.onUpdateStatus(
+                targetDocId,
+                'delivering',
+                '🛵 Out for Delivery',
+                {
+                  if (riderNameController.text.trim().isNotEmpty)
+                    'riderName': riderNameController.text.trim(),
+                  if (trackingLinkController.text.trim().isNotEmpty)
+                    'trackingLink': trackingLinkController.text.trim(),
+                },
+              );
+            },
+            child: const Text('Dispatch', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPrimaryStepButton(
     BuildContext context,
     Map<String, dynamic> order,
@@ -890,8 +946,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
               borderRadius: BorderRadius.circular(6),
             ),
           ),
-          onPressed: () =>
-              widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
+          onPressed: () => _showDispatchDialog(context, targetDocId, order),
           icon: const Icon(Icons.takeout_dining, size: 13, color: Colors.white),
           label: const Text(
             'Pick Up Batch',
@@ -1162,12 +1217,12 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           if (isCustom) {
             final bool isFullyPaid = order['paymentType'] == 'full';
             if (isFullyPaid) {
-              widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
+              _showDispatchDialog(context, targetDocId, order);
             } else {
               widget.onUpdateStatus(targetDocId, 'baked_payment_required', '💳 Awaiting Balance');
             }
           } else {
-            widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery');
+            _showDispatchDialog(context, targetDocId, order);
           }
         },
         child: const Text(
@@ -1192,7 +1247,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
         onPressed: () => AdminModals.showBalanceVerificationModal(
           context,
           order,
-          () => widget.onUpdateStatus(targetDocId, 'delivering', '🛵 Out for Delivery'),
+          () => _showDispatchDialog(context, targetDocId, order),
         ),
         child: const Text(
           'Verify Balance',

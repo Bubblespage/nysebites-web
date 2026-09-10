@@ -300,7 +300,7 @@ class Footer extends StatelessWidget {
                                 Icons.help_outline_rounded,
                                 'Everything you need to know about our bakes ✨',
                                 [
-                                  '🛵 Q: How does the delivery model work?\nA: We utilize GrabCar-based dispatching! You can select Standard or Priority Express delivery rates calculated right at checkout.',
+                                  '🛵 Q: How does the delivery model work?\nA: We utilize GrabCar and Lalamove-based dispatching! You can select Standard or Priority Express delivery rates calculated right at checkout.',
                                   '👀 Q: How do I track my active order?\nA: Simply tap the floating "Track Order" button on your screen anytime to view real-time kitchen preparation status and assigned rider details!',
                                   '📦 Q: Can I choose box sizes for cookies?\nA: Yes! Our artisanal cookies are available in convenient Box of 4 or Box of 6 sizes with special bundle pricing.',
                                 ],

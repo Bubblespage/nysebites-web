@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -364,11 +365,13 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                           'GCash')
                       .toString();
 
+              final bool isCustom = data['isCustom'] ?? false;
+              final String deliveryMethod = (data['deliveryMethod'] ?? (isCustom ? 'GrabCar' : 'Lalamove')).toString();
+
               final String riderName =
-                  (data['riderName'] ?? 'Assigning GrabCar driver...')
+                  (data['riderName'] ?? 'Assigning $deliveryMethod driver...')
                       .toString();
 
-              final bool isCustom = data['isCustom'] ?? false;
               final cleanStatus = status.replaceAll(' ', '_');
 
               return SingleChildScrollView(
@@ -470,6 +473,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                               riderName,
                             )
                           : _buildStandardTrackerFlow(
+                              data,
                               cleanStatus,
                               payment,
                               riderName,
@@ -508,6 +512,15 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                           Text(
                             (data['item'] ?? '${widget.itemCount} items').toString(),
                             style: const TextStyle(fontSize: 12, color: Color(0xFF756256), height: 1.5),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Address: ${data['address'] ?? 'Not provided'}',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF756256), height: 1.5),
+                          ),
+                          Text(
+                            'Contact: ${data['contact'] ?? data['phone'] ?? 'Not provided'}',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF756256), height: 1.5),
                           ),
                         ],
                       ),
@@ -596,6 +609,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
 }
 
   Widget _buildStandardTrackerFlow(
+    Map<String, dynamic> data,
     String cleanStatus,
     String payment,
     String riderName,
@@ -636,22 +650,50 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
   child: isDelivering && !isDelivered
       ? Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF8E4A23)),
-                foregroundColor: const Color(0xFF8E4A23),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          child: Column(
+            children: [
+              if (data['trackingLink'] != null && data['trackingLink'].toString().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8E4A23),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final url = Uri.parse(data['trackingLink'].toString());
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      icon: const Icon(Icons.map_outlined, size: 16),
+                      label: const Text('Track Rider Location'),
+                    ),
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF8E4A23)),
+                    foregroundColor: const Color(0xFF8E4A23),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    _showContactAdminDialog(context);
+                  },
+                  icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+                  label: const Text('Contact Kitchen Admin'),
                 ),
               ),
-              onPressed: () {
-                _showContactAdminDialog(context);
-              },
-              icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
-              label: const Text('Contact Kitchen Admin'),
-            ),
+            ],
           ),
         )
       : null,
@@ -1089,20 +1131,48 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
           child: cleanStatus == 'delivering'
               ? Container(
                   margin: const EdgeInsets.only(top: 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF8E4A23)),
-                        foregroundColor: const Color(0xFF8E4A23),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  child: Column(
+                    children: [
+                      if (data['trackingLink'] != null && data['trackingLink'].toString().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8E4A23),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final url = Uri.parse(data['trackingLink'].toString());
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                              icon: const Icon(Icons.map_outlined, size: 16),
+                              label: const Text('Track Rider Location'),
+                            ),
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF8E4A23)),
+                            foregroundColor: const Color(0xFF8E4A23),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () {
+                            _showContactAdminDialog(context);
+                          },
+                          icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+                          label: const Text('Contact Kitchen Admin'),
+                        ),
                       ),
-                      onPressed: () {
-                        _showContactAdminDialog(context);
-                      },
-                      icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
-                      label: const Text('Contact Kitchen Admin'),
-                    ),
+                    ],
                   ),
                 )
               : null,

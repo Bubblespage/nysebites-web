@@ -2356,7 +2356,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     _FaqItem(
                       question: 'What are the payment and delivery details?',
                       answer:
-                          'We exclusively accept GCash payments via our automated scanner portal. For delivery, we book via third-party couriers (such as GrabCar) to safely bring your treats to you. Please note that the delivery fee is not included in your app total and will be paid directly in cash to the rider upon arrival at your destination. 💳🚗',
+                          'We exclusively accept GCash payments via our automated scanner portal. For delivery, we book via third-party couriers (such as GrabCar or Lalamove) to safely bring your treats to you. Please note that the delivery fee is not included in your app total and will be paid directly in cash to the rider upon arrival at your destination. 💳🚗',
                       showDivider: true,
                     ),
                     _FaqItem(

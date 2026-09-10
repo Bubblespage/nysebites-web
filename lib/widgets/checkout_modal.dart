@@ -123,7 +123,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
       statusLabel = '🎂 Needs Spec Review';
     }
 
-    final String deliverySpeedLabel = 'GrabCar Delivery (Paid to Rider)';
+    final String deliveryMethod = hasCustomCake ? 'GrabCar' : 'Lalamove';
+    final String deliverySpeedLabel = '$deliveryMethod Delivery (Paid to Rider)';
 
     final String rawPhone = _phoneController.text.trim();
     final String completePhone = rawPhone.startsWith('+63')
@@ -184,7 +185,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
       'statusLabel': statusLabel,
       'payment': 'GCash',
       'paymentMethod': 'GCash',
-      'deliveryMethod': 'GrabCar',
+      'deliveryMethod': deliveryMethod,
       'isCustom': hasCustomCake,
       'createdAt': FieldValue.serverTimestamp(),
       'targetDate': _targetDate != null
@@ -1331,9 +1332,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-                                          const Text(
-                                            'You must pay the GrabCar driver directly in cash for the delivery fee upon arrival.',
-                                            style: TextStyle(
+                                          Text(
+                                            'You must pay the ${hasCustomCake ? 'GrabCar' : 'Lalamove'} driver directly in cash for the delivery fee upon arrival.',
+                                            style: const TextStyle(
                                               fontSize: 10.5,
                                               color: Color(0xFFD32F2F),
                                               height: 1.4,
@@ -1374,7 +1375,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     ),
                                     const SizedBox(height: 8),
                                     _receiptRowWidget(
-                                      'GrabCar Delivery Fee',
+                                      '${hasCustomCake ? 'GrabCar' : 'Lalamove'} Delivery Fee',
                                       Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
