@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -346,6 +347,189 @@ class PdfReportGenerator {
         ],
       ),
     );
+    return pdf.save();
+  }
+
+  // 7. E-RECEIPT (new)
+  static Future<Uint8List> generateEReceiptPdf({
+    required Map<String, dynamic> data,
+    required String orderNumber,
+    required List<Map<String, dynamic>> parsedItems,
+    required String dateStr,
+    required double subtotal,
+    required double deliveryFee,
+    required double packagingFee,
+    required double total,
+    required String paymentMethod,
+    required String reference,
+    required String customerName,
+    required String customerPhone,
+    required String customerAddress,
+  }) async {
+    final pdf = pw.Document();
+
+    final cocoa = const PdfColor.fromInt(0xFF8C4A27);
+    final espresso = const PdfColor.fromInt(0xFF3E2723);
+    final cream = const PdfColor.fromInt(0xFFFAF4ED);
+    final muted = const PdfColor.fromInt(0xFF757575);
+    final white = PdfColors.white;
+
+    final int itemsCount = parsedItems.length;
+    final int feesCount = (deliveryFee > 0 ? 1 : 0) + (packagingFee > 0 ? 1 : 0);
+    final bool hasGCash = paymentMethod.toLowerCase().contains('gcash') && reference != 'N/A' && reference.isNotEmpty;
+
+    double calculatedHeight = 420.0; // Base height (header, total, spacing)
+    if (hasGCash) calculatedHeight += 20.0;
+    if (customerPhone.isNotEmpty) calculatedHeight += 14.0;
+    if (customerAddress.isNotEmpty) calculatedHeight += 24.0; // Assume address might wrap
+    calculatedHeight += (itemsCount * 22.0);
+    calculatedHeight += (feesCount * 20.0);
+
+    final pageFormat = PdfPageFormat(400, calculatedHeight, marginAll: 0);
+
+    final pageTheme = pw.PageTheme(
+      pageFormat: pageFormat,
+      theme: pw.ThemeData.withFont(
+        base: await PdfGoogleFonts.robotoRegular(),
+        bold: await PdfGoogleFonts.robotoBold(),
+      ),
+    );
+
+    const String receiptSvg = '''<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5 6 2 4.5 3.5 3 2v20z" fill="white"/></svg>''';
+
+    pw.Widget buildInfoRow(String label, String value, {pw.FontWeight weight = pw.FontWeight.bold}) {
+      return pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label, style: pw.TextStyle(color: muted, fontSize: 11)),
+          pw.Text(value, style: pw.TextStyle(color: espresso, fontSize: 11, fontWeight: weight)),
+        ],
+      );
+    }
+
+    pw.Widget buildDivider() {
+      return pw.Divider(color: const PdfColor.fromInt(0xFFE0E0E0), thickness: 1, borderStyle: pw.BorderStyle.dashed);
+    }
+
+    pdf.addPage(
+      pw.Page(
+        pageTheme: pageTheme,
+        build: (context) {
+          return pw.Container(
+            padding: const pw.EdgeInsets.all(24),
+            color: cream,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  children: [
+                    pw.Column(
+                      children: [
+                        pw.Container(
+                          padding: const pw.EdgeInsets.all(12),
+                          decoration: pw.BoxDecoration(
+                            color: cocoa,
+                            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+                          ),
+                          child: pw.SvgImage(svg: receiptSvg, width: 28, height: 28),
+                        ),
+                        pw.SizedBox(height: 12),
+                        pw.Text('E-Receipt', style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold, color: espresso)),
+                        pw.SizedBox(height: 4),
+                        pw.Text(dateStr, style: pw.TextStyle(fontSize: 12, color: muted)),
+                      ],
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 16),
+                buildDivider(),
+                pw.SizedBox(height: 16),
+                buildInfoRow('Order ID', orderNumber),
+                pw.SizedBox(height: 8),
+                buildInfoRow('Payment Method', paymentMethod),
+                if (paymentMethod.toLowerCase().contains('gcash') && reference != 'N/A' && reference.isNotEmpty) ...[
+                  pw.SizedBox(height: 8),
+                  buildInfoRow('GCash Ref', reference),
+                ],
+                pw.SizedBox(height: 12),
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(12),
+                  decoration: pw.BoxDecoration(
+                    color: white,
+                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(customerName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                      if (customerPhone.isNotEmpty) ...[
+                        pw.SizedBox(height: 2),
+                        pw.Text(customerPhone, style: pw.TextStyle(color: muted, fontSize: 11)),
+                      ],
+                      if (customerAddress.isNotEmpty) ...[
+                        pw.SizedBox(height: 2),
+                        pw.Text(customerAddress, style: pw.TextStyle(color: muted, fontSize: 11)),
+                      ],
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Text('ITEMS', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: muted, fontSize: 11, letterSpacing: 1.2)),
+                pw.SizedBox(height: 8),
+                ...parsedItems.map((item) {
+                  final qty = item['quantity']?.toString() ?? '1';
+                  final name = item['name']?.toString() ?? 'Item';
+                  final priceVal = item['_calculatedPrice'] as double?;
+                  
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 8),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('${qty}x', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                        pw.SizedBox(width: 8),
+                        pw.Expanded(
+                          child: pw.Text(name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                        ),
+                        pw.SizedBox(width: 8),
+                        if (priceVal != null && priceVal > 0.0)
+                          pw.Text('₱${priceVal.toStringAsFixed(2)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                if (deliveryFee > 0 || packagingFee > 0) ...[
+                  pw.SizedBox(height: 4),
+                  if (deliveryFee > 0)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(bottom: 6),
+                      child: buildInfoRow('Delivery Fee', '₱${deliveryFee.toStringAsFixed(2)}', weight: pw.FontWeight.normal),
+                    ),
+                  if (packagingFee > 0)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(bottom: 6),
+                      child: buildInfoRow('Packaging Fee', '₱${packagingFee.toStringAsFixed(2)}', weight: pw.FontWeight.normal),
+                    ),
+                ],
+                pw.SizedBox(height: 8),
+                buildDivider(),
+                pw.SizedBox(height: 12),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Total Amount', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: espresso)),
+                    pw.Text('₱${total.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, color: cocoa)),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
     return pdf.save();
   }
 

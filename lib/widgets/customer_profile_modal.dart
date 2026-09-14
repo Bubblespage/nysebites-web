@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'order_tracker_modal.dart';
 import 'dart:convert';
 import 'dart:typed_data'; // Add this for Uint8List
+import '../utils/pdf_report_generator.dart';
+import 'package:printing/printing.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -3058,6 +3060,345 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
     });
   }
 
+  void _showEReceiptDialog(
+      BuildContext context,
+      Map<String, dynamic> data,
+      String orderNumber,
+      List<Map<String, dynamic>> parsedItems,
+      String dateStr) {
+    double parseDouble(dynamic val) {
+      if (val == null) return 0.0;
+      if (val is num) return val.toDouble();
+      return double.tryParse(val.toString().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    }
+
+    double subtotal = parseDouble(data['subtotal'] ?? data['baseCakePrice']);
+    final deliveryFee = parseDouble(data['deliveryFee']);
+    final packagingFee = parseDouble(data['packagingFee']);
+    final total = parseDouble(data['total'] ?? data['totalAmount']);
+
+    if (subtotal == 0.0 && total > 0.0) {
+      subtotal = total - deliveryFee - packagingFee;
+    }
+
+    final paymentMethod = data['paymentMethod']?.toString() ?? data['payment']?.toString() ?? 'N/A';
+    final reference = data['referenceNumber']?.toString() ?? data['gcashReference']?.toString() ?? 'N/A';
+    final customerName = data['customer']?.toString() ?? 'Customer';
+    final customerPhone = data['contact']?.toString() ?? '';
+    final customerAddress = data['address']?.toString() ?? '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: _cream,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 36),
+                    Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: _cocoa,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long_rounded,
+                            size: 28,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'E-Receipt',
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: _espresso,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          dateStr,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: _muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, size: 18, color: _espresso),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(8),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildDottedDivider(),
+                const SizedBox(height: 16),
+                _buildInfoRow('Order ID', orderNumber),
+                const SizedBox(height: 8),
+                _buildInfoRow('Payment Method', paymentMethod),
+                if (paymentMethod.toLowerCase().contains('gcash') && reference != 'N/A' && reference.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow('GCash Ref', reference),
+                ],
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customerName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: _espresso,
+                        ),
+                      ),
+                      if (customerPhone.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(customerPhone, style: const TextStyle(color: _muted, fontSize: 12)),
+                      ],
+                      if (customerAddress.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(customerAddress, style: const TextStyle(color: _muted, fontSize: 12)),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'ITEMS',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: _muted,
+                      letterSpacing: 1.2,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...parsedItems.map((item) {
+                  double price = parseDouble(item['price']);
+                  if (price == 0.0) {
+                    if (parsedItems.length == 1) {
+                      price = subtotal;
+                    } else {
+                      try {
+                        final pName = item['name'].toString().split('(').first.trim().toLowerCase();
+                        final match = _products.firstWhere((p) => p.name.trim().toLowerCase() == pName);
+                        price = match.price * (item['quantity'] as int);
+                      } catch (_) {}
+                    }
+                  }
+                  item['_calculatedPrice'] = price;
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${item['quantity']}x',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: _espresso,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: _espresso,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (price > 0.0)
+                          Text(
+                            '₱${price.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: _espresso,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+                if (deliveryFee > 0 || packagingFee > 0) ...[
+                  const SizedBox(height: 4),
+                  if (deliveryFee > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _buildInfoRow('Delivery Fee', '₱${deliveryFee.toStringAsFixed(2)}', valueWeight: FontWeight.w700),
+                    ),
+                  if (packagingFee > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _buildInfoRow('Packaging Fee', '₱${packagingFee.toStringAsFixed(2)}', valueWeight: FontWeight.w700),
+                    ),
+                ],
+                const SizedBox(height: 8),
+                _buildDottedDivider(),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total Amount',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: _espresso,
+                      ),
+                    ),
+                    Text(
+                      '₱${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: _cocoa,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () async {
+                          final pdfBytes = await PdfReportGenerator.generateEReceiptPdf(
+                            data: data,
+                            orderNumber: orderNumber,
+                            parsedItems: parsedItems,
+                            dateStr: dateStr,
+                            subtotal: subtotal,
+                            deliveryFee: deliveryFee,
+                            packagingFee: packagingFee,
+                            total: total,
+                            paymentMethod: paymentMethod,
+                            reference: reference,
+                            customerName: customerName,
+                            customerPhone: customerPhone,
+                            customerAddress: customerAddress,
+                          );
+                          await Printing.sharePdf(bytes: pdfBytes, filename: 'receipt_$orderNumber.pdf');
+                        },
+                        icon: const Icon(Icons.download_rounded, size: 16),
+                        label: const Text('Download', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _cocoa,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _espresso,
+                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          backgroundColor: Colors.white,
+                        ),
+                        child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, {FontWeight valueWeight = FontWeight.w800}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _muted,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: _espresso,
+            fontWeight: valueWeight,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDottedDivider() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxWidth = constraints.constrainWidth();
+        const dashWidth = 5.0;
+        const dashHeight = 1.0;
+        final dashCount = (boxWidth / (2 * dashWidth)).floor();
+        return Flex(
+          direction: Axis.horizontal,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(dashCount, (_) {
+            return const SizedBox(
+              width: dashWidth,
+              height: dashHeight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: Color(0xFFD0C4B8)),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+
   Widget _buildReviewSubView() {
     return SafeArea(
       child: Column(
@@ -3823,6 +4164,38 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                 ),
                                 const SizedBox(width: 8),
                               ],
+                              OutlinedButton(
+                                onPressed: () {
+                                  String recDateStr = 'Recent';
+                                  if (data['createdAt'] is Timestamp) {
+                                    final dt = (data['createdAt'] as Timestamp).toDate();
+                                    int hour = dt.hour;
+                                    final min = dt.minute.toString().padLeft(2, '0');
+                                    final period = hour >= 12 ? 'PM' : 'AM';
+                                    if (hour > 12) hour -= 12;
+                                    if (hour == 0) hour = 12;
+                                    recDateStr = '${dt.month}/${dt.day}/${dt.year}, $hour:$min $period';
+                                  }
+                                  _showEReceiptDialog(context, data, orderNumber, parsedItems, recDateStr);
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: _cocoa,
+                                  side: const BorderSide(
+                                    color: _cocoa,
+                                    width: 1.2,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  minimumSize: const Size(40, 40),
+                                ),
+                                child: const Icon(
+                                  Icons.receipt_long_outlined,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               if (!isCompleted) ...[
                                 OutlinedButton.icon(
                                   onPressed: () {
