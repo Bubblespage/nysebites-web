@@ -16,15 +16,23 @@ void main() async {
 
   // Explicitly enforce Local Persistence so logins survive browser refreshes
   if (kIsWeb) {
-    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+    try {
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+    } catch (e) {
+      debugPrint('Warning: Could not set local persistence (likely in-app browser). $e');
+    }
   }
 
   // Prevent mobile browsers from locking into stale IndexedDB cache
   if (kIsWeb) {
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: false,
-      sslEnabled: true,
-    );
+    try {
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: false,
+        sslEnabled: true,
+      );
+    } catch (e) {
+      debugPrint('Warning: Could not configure Firestore settings. $e');
+    }
   }
 
   // Render UI first without blocking
