@@ -114,13 +114,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
-    // Listen for Web Push Notifications while the app is actively open!
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
-        if (!mounted) return;
-        _showTopNotification(message);
-      }
-    });
+    // Listen for Web Push Notifications if supported (prevents crashes in in-app browsers)
+    try {
+      FirebaseMessaging.instance.isSupported().then((isSupported) {
+        if (isSupported) {
+          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+            if (message.notification != null) {
+              if (!mounted) return;
+              _showTopNotification(message);
+            }
+          });
+        }
+      }).catchError((e) {
+        debugPrint('Firebase Messaging async support check failed: $e');
+      });
+    } catch (e) {
+      debugPrint('Firebase Messaging not supported or failed to init: $e');
+    }
 
     _settingsStream = FirebaseFirestore.instance.collection('settings').doc('storefront').snapshots();
     _productsStream = FirebaseFirestore.instance.collection('products').snapshots();
