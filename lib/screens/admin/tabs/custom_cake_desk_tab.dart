@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import '../admin_modals.dart';
 
 class CustomCakeDeskTab extends StatefulWidget {
@@ -29,7 +30,8 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
   static const Color borderLight = Color(0xFFE5E7EB);
   static const Color wellBg = Color(0xFFF3F4F6);
 
-  int _selectedSubTab = 0; // 0 = Pending Specs, 1 = Cake History
+  int _selectedSubTab = 0; // 0 = Pending Specs, 1 = In Progress, 2 = History, 3 = Schedule & Slots
+  DateTime _currentMonth = DateTime.now();
 
   double _parseTotal(dynamic val) {
     if (val is num) return val.toDouble();
@@ -125,14 +127,19 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: borderLight),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(child: _subTabButton('Pending (${pendingSpecs.length})', 0)),
-                                  const SizedBox(width: 4),
-                                  Expanded(child: _subTabButton('In Progress (${inProgress.length})', 1)),
-                                  const SizedBox(width: 4),
-                                  Expanded(child: _subTabButton('History (${cakeHistory.length})', 2)),
-                                ],
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    _subTabButton('Pending (${pendingSpecs.length})', 0),
+                                    const SizedBox(width: 4),
+                                    _subTabButton('In Progress (${inProgress.length})', 1),
+                                    const SizedBox(width: 4),
+                                    _subTabButton('History (${cakeHistory.length})', 2),
+                                    const SizedBox(width: 4),
+                                    _subTabButton('Schedule', 3),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -159,9 +166,8 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                       ),
                     ],
                   )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,26 +187,35 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: wellBg,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: borderLight),
-                            ),
-                            child: Row(
-                              children: [
-                                _subTabButton('Pending Specs (${pendingSpecs.length})', 0),
-                                const SizedBox(width: 4),
-                                _subTabButton('In Progress (${inProgress.length})', 1),
-                                const SizedBox(width: 4),
-                                _subTabButton('Cake Order History (${cakeHistory.length})', 2),
-                              ],
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: wellBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: borderLight),
+                              ),
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    _subTabButton('Pending Specs (${pendingSpecs.length})', 0),
+                                    const SizedBox(width: 4),
+                                    _subTabButton('In Progress (${inProgress.length})', 1),
+                                    const SizedBox(width: 4),
+                                    _subTabButton('Cake Order History (${cakeHistory.length})', 2),
+                                    const SizedBox(width: 4),
+                                    _subTabButton('Schedule & Slots', 3),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 16),
                           ElevatedButton.icon(
                             onPressed: () async {
                               final filterText = _selectedSubTab == 0 
@@ -229,7 +244,9 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                   ),
             const SizedBox(height: 18),
 
-            if (currentList.isEmpty)
+            if (_selectedSubTab == 3)
+              _buildScheduleAndSlotsView(inProgress, isMobile)
+            else if (currentList.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(36),
@@ -814,6 +831,365 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildScheduleAndSlotsView(List<Map<String, dynamic>> activeOrders, bool isMobile) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 950),
+        child: _buildCalendarGrid(activeOrders, isMobile),
+      ),
+    );
+  }
+
+  void _showDayOrdersDialog(DateTime date, List<Map<String, dynamic>> orders) {
+    final dateStr = DateFormat('MMMM d, yyyy').format(date);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.cake_rounded, color: brandCocoa, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Orders for $dateStr',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: brandCocoa),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: brandCocoa),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: borderLight),
+                if (orders.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: Center(child: Text('No active orders for this date', style: TextStyle(color: textMuted, fontSize: 13))),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: orders.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) {
+                        final order = orders[i];
+                        final String customer = order['customer']?.toString() ?? 'Unknown';
+                        final String orderId = order['id']?.toString() ?? order['docId']?.toString() ?? '';
+                        final String payment = order['payment']?.toString().toLowerCase() ?? order['paymentType']?.toString().toLowerCase() ?? '';
+                        final String status = order['status']?.toString() ?? '';
+                        
+                        String badgeText = 'PEND';
+                        Color badgeBg = const Color(0xFFF3F4F6);
+                        Color badgeFg = const Color(0xFF6B7280);
+
+                        if (payment.contains('full')) {
+                          badgeText = 'FULL';
+                          badgeBg = const Color(0xFFE8F5E9);
+                          badgeFg = const Color(0xFF2E7D32);
+                        } else if (payment.contains('half') || payment.contains('deposit')) {
+                          badgeText = 'HALF';
+                          badgeBg = const Color(0xFFFFF3E0);
+                          badgeFg = const Color(0xFFE65100);
+                        } else if (status == 'baking' || status == 'ready_to_bake') {
+                          badgeText = 'BAKI';
+                          badgeBg = const Color(0xFFFBEBE4);
+                          badgeFg = brandCocoa;
+                        } else if (status.contains('quote') || status.contains('contract')) {
+                          badgeText = 'QUOT';
+                          badgeBg = const Color(0xFFE3F2FD);
+                          badgeFg = const Color(0xFF1565C0);
+                        }
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(color: borderLight),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: wellBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.cake_rounded, color: brandCocoa, size: 24),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      customer,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: brandCocoa),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      order['item']?.toString() ?? 'Custom Cake',
+                                      style: const TextStyle(fontSize: 12, color: textMuted, fontWeight: FontWeight.w500),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          orderId,
+                                          style: const TextStyle(fontSize: 10, color: textMuted, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: badgeFg.withValues(alpha: 0.2)),
+                                ),
+                                child: Text(
+                                  badgeText,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: badgeFg,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+            ),
+          ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
+  Widget _buildCalendarGrid(List<Map<String, dynamic>> activeOrders, bool isMobile) {
+    final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    final firstWeekday = firstDayOfMonth.weekday; // 1 = Mon, 7 = Sun
+    
+    int offset = firstWeekday == 7 ? 0 : firstWeekday;
+    final monthName = DateFormat('MMMM yyyy').format(_currentMonth);
+
+    int totalReservedThisMonth = 0;
+    Map<int, int> daysOrderCount = {};
+    for (var o in activeOrders) {
+      final targetField = o['targetDate'] ?? o['createdAt'];
+      DateTime? td;
+      if (targetField is Timestamp) td = targetField.toDate();
+      else if (targetField != null) td = DateTime.tryParse(targetField.toString());
+      if (td != null && td.month == _currentMonth.month && td.year == _currentMonth.year) {
+        totalReservedThisMonth++;
+        daysOrderCount[td.day] = (daysOrderCount[td.day] ?? 0) + 1;
+      }
+    }
+    
+    int totalCapacity = daysInMonth * 4; // 4 slots per day
+    int available = totalCapacity - totalReservedThisMonth;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderLight),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  'Baking Schedule & Slots',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textDark),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: wellBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left, size: 20),
+                        onPressed: () => setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1)),
+                      ),
+                      Text(monthName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right, size: 20),
+                        onPressed: () => setState(() => _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1)),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                    '$totalReservedThisMonth/${totalCapacity} reserved',
+                    style: const TextStyle(fontSize: 12, color: textMuted, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: borderLight),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d) => 
+                Expanded(
+                  child: Text(
+                    d,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted),
+                  ),
+                )
+              ).toList(),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(isMobile ? 8 : 16, 0, isMobile ? 8 : 16, 16),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 42,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: isMobile ? 0.8 : 1.5,
+                crossAxisSpacing: isMobile ? 4 : 8,
+                mainAxisSpacing: isMobile ? 4 : 8,
+              ),
+              itemBuilder: (context, index) {
+                int dayNumber = index - offset + 1;
+                bool isCurrentMonth = dayNumber > 0 && dayNumber <= daysInMonth;
+                int dayCount = isCurrentMonth ? (daysOrderCount[dayNumber] ?? 0) : 0;
+                
+                return GestureDetector(
+                  onTap: () {
+                    if (isCurrentMonth) {
+                      final date = DateTime(_currentMonth.year, _currentMonth.month, dayNumber);
+                      final ordersForDay = activeOrders.where((o) {
+                        final targetField = o['targetDate'] ?? o['createdAt'];
+                        DateTime? td;
+                        if (targetField is Timestamp) td = targetField.toDate();
+                        else if (targetField != null) td = DateTime.tryParse(targetField.toString());
+                        return td != null && td.year == date.year && td.month == date.month && td.day == date.day;
+                      }).toList();
+                      _showDayOrdersDialog(date, ordersForDay);
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isCurrentMonth ? Colors.white : const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderLight),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                padding: const EdgeInsets.all(6),
+                child: isCurrentMonth ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$dayNumber',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 12, 
+                        color: isCurrentMonth ? textDark : textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    if (dayCount > 0)
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 2 : 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: wellBg,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: borderLight),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.cake_rounded, size: isMobile ? 10 : 8, color: brandCocoa),
+                            if (!isMobile) ...[
+                              const SizedBox(width: 3),
+                              Text(
+                                '$dayCount order${dayCount > 1 ? 's' : ''}',
+                                style: const TextStyle(fontSize: 8, color: brandCocoa, fontWeight: FontWeight.bold),
+                              ),
+                            ] else ...[
+                              const SizedBox(width: 2),
+                              Text(
+                                '$dayCount',
+                                style: const TextStyle(fontSize: 9, color: brandCocoa, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                  ],
+                ) : null,
+                ),
+              );
+            },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 class StaggeredSlideIn extends StatefulWidget {
