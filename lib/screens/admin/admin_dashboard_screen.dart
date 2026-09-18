@@ -13,6 +13,7 @@ import 'tabs/customer_reviews_tab.dart';
 import 'tabs/store_settings_tab.dart';
 import 'tabs/security_permissions_tab.dart';
 import 'admin_login_screen.dart';
+import '../../data/mock_products.dart';
 
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -68,6 +69,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     _inventoryStream = _firestore.collection('products').snapshots();
     _sweetNotesStream = _firestore.collection('sweet_notes').snapshots();
     
+    _checkAndSeedMissingProducts();
+
     WidgetsBinding.instance.addObserver(this); 
     
     _animController = AnimationController(
@@ -152,6 +155,60 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     }
   }
 
+  Future<void> _checkAndSeedMissingProducts() async {
+    try {
+      final batch = _firestore.batch();
+      bool hasUpdates = false;
+
+      for (final product in mockProducts) {
+        final docRef = _firestore.collection('products').doc('sku_${product.id}');
+        final docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+          batch.set(docRef, {
+            'id': 'sku_${product.id}',
+            'order': product.order,
+            'name': product.name,
+            'category': product.category,
+            'price': product.price,
+            'priceBox6': product.priceBox6,
+            'servingSize': product.servingSize,
+            'description': product.description,
+            'imgSrc': product.imgSrc,
+            'icon': product.icon,
+            'stock': product.category == 'cakes' ? 5 : 24,
+            'active': true,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          hasUpdates = true;
+        } else {
+          // Sync existing product images, order, and category just in case they were updated
+          batch.update(docRef, {
+            'imgSrc': product.imgSrc,
+            'order': product.order,
+            'category': product.category,
+          });
+          hasUpdates = true;
+        }
+      }
+
+      if (hasUpdates) {
+        await batch.commit();
+        debugPrint('Admin Dashboard: Missing products added to Firestore.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Missing mock products successfully seeded to database.'),
+              backgroundColor: Color(0xFF2E7D32),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error auto-seeding products from admin: $e');
+    }
+  }
+
   void _switchTab(int index) {
     setState(() {
       _selectedNavIndex = index;
@@ -191,12 +248,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
             onPressed: () async {
               Navigator.pop(dialogCtx);
-              await FirebaseAuth.instance.signOut();
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-                );
+              try {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                    (route) => false,
+                  );
+                }
+              } catch (e) {
+                debugPrint('Logout error: $e');
               }
             },
             child: const Text(

@@ -8,6 +8,7 @@ import 'data/mock_products.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 
+import 'screens/splash_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 
 void main() async {
@@ -39,22 +40,20 @@ void main() async {
   runApp(const NyseBitesApp());
 
   // Run auto-seed asynchronously in the background
-  _seedFirestoreProductsIfEmpty();
+  _seedMissingFirestoreProducts();
 }
 
-Future<void> _seedFirestoreProductsIfEmpty() async {
+Future<void> _seedMissingFirestoreProducts() async {
   try {
     final firestore = FirebaseFirestore.instance;
-    final snapshot = await firestore.collection('products').limit(1).get();
+    final batch = firestore.batch();
+    bool hasUpdates = false;
 
-    if (snapshot.docs.isEmpty) {
-      final batch = firestore.batch();
+    for (final product in mockProducts) {
+      final docRef = firestore.collection('products').doc('sku_${product.id}');
+      final docSnap = await docRef.get();
 
-      for (final product in mockProducts) {
-        final docRef = firestore
-            .collection('products')
-            .doc('sku_${product.id}');
-
+      if (!docSnap.exists) {
         batch.set(docRef, {
           'id': 'sku_${product.id}',
           'order': product.order,
@@ -70,10 +69,13 @@ Future<void> _seedFirestoreProductsIfEmpty() async {
           'active': true,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        hasUpdates = true;
       }
+    }
 
+    if (hasUpdates) {
       await batch.commit();
-      debugPrint('Firestore auto-seed completed.');
+      debugPrint('Firestore auto-seed: Missing products added.');
     }
   } catch (e) {
     debugPrint('Firestore auto-seed error: $e');
@@ -100,7 +102,8 @@ class NyseBitesApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const HomeScreen(),
+        '/': (context) => const SplashScreen(),
+        '/home': (context) => const HomeScreen(),
         '/admin': (context) => const AdminLoginScreen(),
       },
       onGenerateRoute: (settings) {

@@ -93,11 +93,36 @@ final List<Product> mockProducts = [
     imgSrc: 'assets/images/brownies1.jpg',
     icon: '🟫',
   ),
+  // --- CAKE LOAFS (8 to 9) ---
+  const Product(
+    id: 11,
+    order: 8,
+    name: 'Carrot Cake Loaf',
+    category: 'cake loafs',
+    price: 350.0,
+    servingSize: '1 Loaf',
+    description:
+        'Moist and spiced carrot cake loaf, packed with freshly grated carrots, walnuts, and topped with signature cream cheese frosting.',
+    imgSrc: 'assets/images/carrot_cake_loaf.jpg',
+    icon: '🥕',
+  ),
+  const Product(
+    id: 12,
+    order: 9,
+    name: 'Banana Cake Loaf Overload',
+    category: 'cake loafs',
+    price: 300.0,
+    servingSize: '1 Loaf',
+    description:
+        'Classic soft and fluffy banana cake loaf made from overripe bananas, topped with a generous sprinkle of chocolate chips.',
+    imgSrc: 'assets/images/banana_cake_loaf.jpg',
+    icon: '🍌',
+  ),
 
-  // --- LAYER CAKES (8 to 10) ---
+  // --- LAYER CAKES (10 to 12) ---
   const Product(
     id: 8,
-    order: 8,
+    order: 10,
     name: 'Caramel Cookie Drip Cake',
     category: 'cakes',
     price: 800.0, // Standard cake base starting price
@@ -109,7 +134,7 @@ final List<Product> mockProducts = [
   ),
   const Product(
     id: 9,
-    order: 9,
+    order: 11,
     name: 'Whimsical Hot Air Balloon Cloud Cake',
     category: 'cakes',
     price: 1450.0, // 1 Tier starting price
@@ -121,7 +146,7 @@ final List<Product> mockProducts = [
   ),
   const Product(
     id: 10,
-    order: 10,
+    order: 12,
     name: 'Action-Packed Character Masterpiece',
     category: 'cakes',
     price: 2500.0, // 2 Tier starting price

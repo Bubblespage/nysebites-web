@@ -65,16 +65,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _productsStream;
 
   static const Map<String, int> _productOrderMap = {
-    'Biscoff Nocciola Swirl': 1,
+    // Cookies
+    'Twix Chocolate': 1,
     'Snicker-Doodle Hug': 2,
     'Dark Chocolate Noir': 3,
     'Red Velvet Kiss Blossom': 4,
     'Belgian Choco Chip': 5,
+    // Brownies
     "Hershey's Almond Cloud Squares": 6,
     'Dark Kissed Melt Bites': 7,
-    'Pure Decadence Cocoa Fudge': 8,
-    'Vanilla Sky Cerulean Dream': 9,
-    'Lavender Noir Velvet': 10,
+    // Loaves
+    'Carrot Cake Loaf': 8,
+    'Banana Cake Loaf Overload': 9,
+    // Cakes
+    'Caramel Cookie Drip Cake': 10,
+    'Whimsical Hot Air Balloon Cloud Cake': 11,
+    'Action-Packed Character Masterpiece': 12,
   };
 
   static int _countItemsFromOrderData(Map<String, dynamic> data) {
@@ -1111,6 +1117,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 rawList = snapshot.data!.docs
                     .map((doc) => Product.fromMap(doc.id, doc.data()))
                     .toList();
+                
+                // Merge any mock products that haven't been seeded to Firestore yet
+                // AND force override category and imgSrc in case Firebase is outdated
+                final existingIds = rawList.map((p) => p.id.toString().replaceAll('sku_', '')).toList();
+                for (final mp in mockProducts) {
+                  final index = existingIds.indexOf(mp.id.toString());
+                  if (index == -1) {
+                    rawList.add(mp);
+                  } else {
+                    rawList[index] = Product(
+                      id: rawList[index].id,         // Keep Firebase ID
+                      name: mp.name,                 // Force override
+                      order: mp.order,               // Force override
+                      category: mp.category,         // Force override
+                      price: mp.price,               // Force override
+                      priceBox6: mp.priceBox6,       // Force override
+                      servingSize: mp.servingSize,   // Force override
+                      description: mp.description,   // Force override
+                      imgSrc: mp.imgSrc,             // Force override
+                      icon: mp.icon,                 // Force override
+                      stock: rawList[index].stock,   // Keep Firebase Stock
+                      active: rawList[index].active, // Keep Firebase Active Status
+                    );
+                  }
+                }
               } else {
                 rawList = List.from(mockProducts);
               }

@@ -70,6 +70,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
       {'label': 'All Treats', 'value': 'All', 'icon': '✨'},
       {'label': 'Cookies', 'value': 'Cookies', 'icon': '🍪'},
       {'label': 'Brownies', 'value': 'Brownies', 'icon': '🍫'},
+      {'label': 'Cake Loafs', 'value': 'Cake Loafs', 'icon': '🍞'},
       {'label': 'Cakes', 'value': 'Cakes', 'icon': '🎂'},
     ];
 

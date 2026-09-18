@@ -918,6 +918,10 @@ class AdminModals {
                                   child: Text('🍫 Brownies'),
                                 ),
                                 DropdownMenuItem(
+                                  value: 'Cake Loafs',
+                                  child: Text('🍞 Cake Loafs'),
+                                ),
+                                DropdownMenuItem(
                                   value: 'Cakes',
                                   child: Text('🎂 Cakes'),
                                 ),
@@ -928,7 +932,7 @@ class AdminModals {
                                     selectedCategory = val;
                                     selectedIcon = val == 'Cookies'
                                         ? '🍪'
-                                        : (val == 'Brownies' ? '🍫' : '🎂');
+                                        : (val == 'Brownies' ? '🍫' : (val == 'Cake Loafs' ? '🍞' : '🎂'));
                                   });
                                 }
                               },

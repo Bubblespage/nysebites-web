@@ -16,6 +16,7 @@ class CategoryFilter extends StatelessWidget {
       {'label': 'All Sweets', 'value': 'all'},
       {'label': 'Cookies', 'value': 'cookies'},
       {'label': 'Brownies', 'value': 'brownies'},
+      {'label': 'Cake Loafs', 'value': 'cake loafs'},
       {'label': 'Layer Cakes', 'value': 'cakes'},
     ];
 

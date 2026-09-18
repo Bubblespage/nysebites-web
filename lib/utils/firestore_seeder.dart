@@ -64,6 +64,8 @@ class FirestoreSeeder {
         return '🍪';
       case 'brownies':
         return '🟫';
+      case 'cake loafs':
+        return '🍞';
       case 'cakes':
         return '🎂';
       default:

@@ -550,7 +550,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                     child: TextButton.icon(
                                       onPressed: () => Navigator.of(
                                         context,
-                                      ).pushReplacementNamed('/'),
+                                      ).pushReplacementNamed('/home'),
                                       icon: const Icon(
                                         Icons.arrow_back_rounded,
                                         size: 16,

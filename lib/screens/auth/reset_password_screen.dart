@@ -166,7 +166,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 if (_isSuccess)
                   FilledButton(
                     onPressed: () {
-                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                      Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: _cocoa,
