@@ -1,9 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../theme/app_colors.dart';
 
 class Footer extends StatelessWidget {
-  const Footer({super.key});
+  final VoidCallback? onHomeClick;
+  final VoidCallback? onShopClick;
+  final VoidCallback? onAboutClick;
+
+  const Footer({
+    super.key,
+    this.onHomeClick,
+    this.onShopClick,
+    this.onAboutClick,
+  });
 
   Future<void> _openUrl(String urlString) async {
     final Uri uri = Uri.parse(urlString);
@@ -37,129 +47,140 @@ class Footer extends StatelessWidget {
     }
   }
 
-  void _showCutePolicyDialog(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String subtitle,
-    List<String> sections,
-  ) {
+  Future<void> _callPhone(String phone) async {
+    final Uri uri = Uri(scheme: 'tel', path: phone);
+    try {
+      await launchUrl(uri);
+    } catch (e) {
+      debugPrint('Error launching phone: $e');
+    }
+  }
+
+  void _showPolicyDialog(BuildContext context, {required bool isPrivacy}) {
+    final isPrivacyPolicy = isPrivacy;
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 540, maxHeight: 600),
+          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 680),
           child: Container(
-            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFFAFAFA),
+              color: AppColors.cardWhite,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFE5D5C5), width: 1.5),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color.fromRGBO(60, 34, 22, 0.22),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
+                  color: AppColors.brandRed.withOpacity(0.18),
+                  blurRadius: 40,
+                  offset: const Offset(0, 16),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3E7DC),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            icon,
-                            color: const Color(0xFF8E4A23),
-                            size: 22,
-                          ),
+                // Themed Header
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
+                  decoration: const BoxDecoration(
+                    color: AppColors.brandRed,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
+                        child: Icon(
+                          isPrivacyPolicy
+                              ? Icons.shield_outlined
+                              : Icons.article_outlined,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              title,
+                              isPrivacyPolicy
+                                  ? 'Privacy Policy'
+                                  : 'Terms & Conditions',
                               style: const TextStyle(
                                 fontFamily: 'serif',
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF2E1B10),
+                                color: Colors.white,
+                                letterSpacing: -0.3,
                               ),
                             ),
                             Text(
-                              subtitle,
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                color: Color(0xFF8E4A23),
-                                fontWeight: FontWeight.bold,
+                              isPrivacyPolicy
+                                  ? 'Your trust is our secret ingredient 🤎'
+                                  : 'Baked with honesty, served with care 🍪',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Color(0xFF756256)),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(color: Color(0xFFEFE4D6)),
-                const SizedBox(height: 12),
-
-                // Content Body
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: sections.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: Text(
-                          sections[index],
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            color: Color(0xFF5A4438),
-                            height: 1.5,
-                          ),
-                        ),
-                      );
-                    },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded,
+                            color: Colors.white, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: isPrivacyPolicy
+                          ? _buildPrivacyContent()
+                          : _buildTermsContent(),
+                    ),
+                  ),
+                ),
 
                 // Footer button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E1B10),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
                       ),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Got it, thanks! 🍪',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Got it, thanks!',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -172,224 +193,298 @@ class Footer extends StatelessWidget {
     );
   }
 
+  List<Widget> _buildPrivacyContent() {
+    final sections = [
+      _PolicySection(
+        emoji: '✨',
+        title: '1. Information We Collect',
+        body:
+            'When you place an order or create an account on Nyse Bites, we collect your name, contact number, delivery address, and order details. This information is used solely to fulfill your order and improve your experience with us.',
+      ),
+      _PolicySection(
+        emoji: '🔒',
+        title: '2. How We Use Your Data',
+        body:
+            'Your information is used to process orders, send order confirmations, and communicate delivery updates. We do not sell, trade, or rent your personal information to third parties.',
+      ),
+      _PolicySection(
+        emoji: '📦',
+        title: '3. Data Storage & Security',
+        body:
+            'All data is securely stored using Firebase (Google Cloud). We apply industry-standard security practices to protect your information from unauthorized access.',
+      ),
+      _PolicySection(
+        emoji: '📸',
+        title: '4. Profile Photos',
+        body:
+            'Profile images you upload are stored securely and only visible to you within your account. They are never shared publicly.',
+      ),
+      _PolicySection(
+        emoji: '🔔',
+        title: '5. Push Notifications',
+        body:
+            'If you opt in, we may send you order updates and occasional promotions. You can turn this off anytime in your profile settings.',
+      ),
+      _PolicySection(
+        emoji: '📩',
+        title: '6. Contact Us',
+        body:
+            'For any privacy concerns, reach us at nysebites@gmail.com or message us on Facebook at @NYSEbites. We\'re always happy to help! 🤎',
+      ),
+    ];
+    return sections;
+  }
+
+  List<Widget> _buildTermsContent() {
+    final sections = [
+      _PolicySection(
+        emoji: '🍪',
+        title: '1. Quality Commitment',
+        body:
+            'All Nyse Bites products are made fresh in small batches using quality ingredients. We take pride in every treat we bake, and your satisfaction is our top priority.',
+      ),
+      _PolicySection(
+        emoji: '📅',
+        title: '2. Order Lead Times',
+        body:
+            'Standard orders may be available for same-day or next-day pickup/delivery depending on availability. Custom cakes require a minimum of 2 weeks advance notice. Please plan accordingly!',
+      ),
+      _PolicySection(
+        emoji: '❌',
+        title: '3. No Cancellations',
+        body:
+            'Since our treats are freshly baked to order, all submitted orders are final. Please double-check your cart before checking out. For urgent concerns, message us directly on Facebook.',
+      ),
+      _PolicySection(
+        emoji: '🚚',
+        title: '4. Delivery Policy',
+        body:
+            'We offer delivery via GrabCar and Lalamove for your convenience. Delivery fees are shouldered by the customer and depend on your location. Exact delivery times will be communicated after your order is confirmed.',
+      ),
+      _PolicySection(
+        emoji: '💳',
+        title: '5. Payment',
+        body:
+            'We accept GCash payments. Payment details will be provided after your order is confirmed. Orders are only processed upon receipt of payment.',
+      ),
+      _PolicySection(
+        emoji: '🎂',
+        title: '6. Custom Cake Policy',
+        body:
+            'Custom cake orders require a 50% deposit upon confirmation. We reserve the right to decline designs that are beyond our current capabilities.',
+      ),
+      _PolicySection(
+        emoji: '📬',
+        title: '7. Contact & Concerns',
+        body:
+            'For questions, order modifications, or complaints, contact us at nysebites@gmail.com or via Facebook @NYSEbites. We will do our best to respond within 24 hours.',
+      ),
+    ];
+    return sections;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFF2E1B10),
-      padding: const EdgeInsets.only(top: 48, bottom: 24, left: 24, right: 24),
+      color: AppColors.textDarkBerry,
+      padding: const EdgeInsets.only(top: 64, bottom: 24, left: 24, right: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final compactColumnWidth = constraints.maxWidth < 600
-                      ? constraints.maxWidth
-                      : null;
+                  final isMobile = constraints.maxWidth < 800;
 
                   return Wrap(
                     spacing: 40,
-                    runSpacing: 32,
+                    runSpacing: 40,
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.start,
                     children: [
-                      // Brand & Story Column
+                      // Column 1: Brand & Story
                       SizedBox(
-                        width: compactColumnWidth ?? 260,
+                        width: isMobile ? double.infinity : 280,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      'assets/images/logo.jpg',
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Icon(
-                                        Icons.cookie_outlined,
-                                        color: Color(0xFF8E4A23),
-                                        size: 18,
-                                      ),
-                                    ),
+                                Image.asset(
+                                  'assets/images/nysebites_logo.png',
+                                  width: 40,
+                                  height: 40,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.cookie_outlined,
+                                    color: AppColors.accentGold,
+                                    size: 32,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 12),
                                 const Text(
                                   'Nyse Bites.',
                                   style: TextStyle(
                                     fontFamily: 'serif',
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 22,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Handcrafted cookies, brownies, and signature cakes made from scratch daily using premium real butter and chocolates.',
+                            const SizedBox(height: 16),
+                            Text(
+                              'Freshly baked goods, made with love. Because life is sweeter with something homemade.',
                               style: TextStyle(
-                                color: Color(0xFFD1C5BC),
+                                color: Colors.white.withOpacity(0.7),
                                 fontSize: 13,
                                 height: 1.6,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-
-                      // Customer Care & Cute Legal Links Column
-                      SizedBox(
-                        width: compactColumnWidth ?? 220,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Customer Care',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            _footerLink(
-                              'Privacy Policy',
-                              () => _showCutePolicyDialog(
-                                context,
-                                'Privacy Policy',
-                                Icons.privacy_tip_outlined,
-                                'Your trust is our secret ingredient 🤎',
-                                [
-                                  '✨ 1. Information We Collect: When you place an order, we collect your name, contact number, delivery address, and GCash receipt references to ensure smooth fulfillment.',
-                                  '🔒 2. Data Protection: All personal data and GCash payment details are stored securely. We adhere to strict privacy guidelines and do not sell, trade, or share your private information with third parties.',
-                                  '🛵 3. Delivery Usage: Your address and contact number are securely provided to our assigned delivery dispatchers solely for the purpose of bringing your fresh bakes to your doorstep.',
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _footerLink(
-                              'Terms & Conditions',
-                              () => _showCutePolicyDialog(
-                                context,
-                                'Terms & Conditions',
-                                Icons.gavel_outlined,
-                                'Baked fresh with love and guidelines 📜',
-                                [
-                                  '🍪 1. Fresh Batch Quality: All cookies, brownies, and cakes are baked in small batches daily using premium ingredients. Visual toppings may slightly vary depending on seasonal availability.',
-                                  '💳 2. Payment & Verification: We strictly accept GCash payments only. A valid GCash receipt reference must be provided for verification. Your payment details are kept fully private and secure.',
-                                  '🎂 3. Custom Cakes & Cancellations: Custom cake commissions require early notice. Order cancellations or modifications are only accommodated before kitchen preparation begins.',
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _footerLink(
-                              'Frequently Asked Questions (FAQ)',
-                              () => _showCutePolicyDialog(
-                                context,
-                                'Frequently Asked Questions',
-                                Icons.help_outline_rounded,
-                                'Everything you need to know about our bakes ✨',
-                                [
-                                  '🛵 Q: How does the delivery model work?\nA: We utilize GrabCar and Lalamove-based dispatching! You can select Standard or Priority Express delivery rates calculated right at checkout.',
-                                  '👀 Q: How do I track my active order?\nA: Simply tap the floating "Track Order" button on your screen anytime to view real-time kitchen preparation status and assigned rider details!',
-                                  '📦 Q: Can I choose box sizes for cookies?\nA: Yes! Our artisanal cookies are available in convenient Box of 4 or Box of 6 sizes with special bundle pricing.',
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Contact & Location Column
-                      SizedBox(
-                        width: compactColumnWidth ?? 240,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Get In Touch',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onTap: () => _sendEmail('nysebites@gmail.com'),
-                                child: Row(
-                                  children: const [
-                                    Icon(
-                                      Icons.email_outlined,
-                                      color: Color(0xFFDDB892),
-                                      size: 16,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'nysebites@gmail.com',
-                                      style: TextStyle(
-                                        color: Color(0xFFEFE4D6),
-                                        fontSize: 12.5,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 24),
                             Row(
-                              children: const [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  color: Color(0xFFDDB892),
-                                  size: 16,
-                                ),
-                                SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'Carsadang Bago II • Imus, Cavite',
-                                    style: TextStyle(
-                                      color: Color(0xFFD1C5BC),
-                                      fontSize: 12.5,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 10,
-                              runSpacing: 8,
                               children: [
                                 _FooterSocialBtn(
                                   icon: Icons.camera_alt_outlined,
-                                  label: 'Instagram',
                                   onTap: () => _openUrl(
-                                    'https://www.instagram.com/nysebites',
-                                  ),
+                                      'https://www.instagram.com/nysebites'),
                                 ),
+                                const SizedBox(width: 12),
                                 _FooterSocialBtn(
                                   icon: Icons.facebook,
-                                  label: 'Facebook',
                                   onTap: () => _openUrl(
-                                    'https://www.facebook.com/NYSEbites',
+                                      'https://www.facebook.com/NYSEbites'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Column 2: Quick Links
+                      SizedBox(
+                        width: 160,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Quick Links',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _footerLink('Home', onHomeClick ?? () {}),
+                            _footerLink('Shop', onShopClick ?? () {}),
+                            _footerLink('About', onAboutClick ?? () {}),
+                            _footerLink(
+                              'Privacy Policy',
+                              () => _showPolicyDialog(context, isPrivacy: true),
+                            ),
+                            _footerLink(
+                              'Terms & Conditions',
+                              () =>
+                                  _showPolicyDialog(context, isPrivacy: false),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Column 3: Categories
+                      SizedBox(
+                        width: 160,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Categories',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _footerLink('Cookies', onShopClick ?? () {}),
+                            _footerLink('Cakes', onShopClick ?? () {}),
+                            _footerLink('Brownies', onShopClick ?? () {}),
+                            _footerLink('Cake Loafs', onShopClick ?? () {}),
+                          ],
+                        ),
+                      ),
+
+                      // Column 4: Contact Us
+                      SizedBox(
+                        width: 240,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Contact Us',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.location_on,
+                                    color: AppColors.accentGold, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Carsadang Bago II\nImus, Cavite, PH',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 16),
+                            GestureDetector(
+                              onTap: () => _callPhone('+639950829180'),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.phone,
+                                      color: AppColors.accentGold, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '+63 995 082 9180',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            GestureDetector(
+                              onTap: () => _sendEmail('nysebites@gmail.com'),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.email,
+                                      color: AppColors.accentGold, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'nysebites@gmail.com',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -398,12 +493,34 @@ class Footer extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: 40),
-              const Divider(color: Color(0xFF4A3428)),
-              const SizedBox(height: 16),
-              const Text(
-                '© 2026 Nyse Bites Bakery. All rights reserved.',
-                style: TextStyle(color: Color(0xFFA89A90), fontSize: 12),
+              const SizedBox(height: 48),
+              Divider(color: Colors.white.withOpacity(0.1)),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '© 2026 Nyse Bites. All rights reserved.',
+                    style:
+                        TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'Made with ',
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5), fontSize: 12),
+                      ),
+                      const Icon(Icons.favorite,
+                          color: AppColors.accentGold, size: 12),
+                      Text(
+                        ' for sweet lovers',
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -415,12 +532,94 @@ class Footer extends StatelessWidget {
   Widget _footerLink(String title, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Text(
-          title,
-          style: const TextStyle(color: Color(0xFFD1C5BC), fontSize: 12.5),
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: AppColors.accentGold,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.75),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Policy Section Widget ──
+class _PolicySection extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String body;
+
+  const _PolicySection({
+    required this.emoji,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDarkBerry,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: Text(
+              body,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: AppColors.textDarkBerry.withOpacity(0.75),
+                height: 1.6,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: Divider(
+              color: AppColors.bgPastelPink.withOpacity(0.8),
+              height: 1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -428,12 +627,10 @@ class Footer extends StatelessWidget {
 
 class _FooterSocialBtn extends StatelessWidget {
   final IconData icon;
-  final String label;
   final VoidCallback onTap;
 
   const _FooterSocialBtn({
     required this.icon,
-    required this.label,
     required this.onTap,
   });
 
@@ -444,27 +641,13 @@ class _FooterSocialBtn extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: const Color(0xFF3C2216),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF4A3428)),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: const Color(0xFFDDB892), size: 14),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+          child: Icon(icon, color: Colors.white, size: 16),
         ),
       ),
     );

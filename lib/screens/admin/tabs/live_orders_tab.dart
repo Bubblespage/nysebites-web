@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
 import '../admin_modals.dart';
+import '../../../theme/app_colors.dart';
 
 class LiveOrdersTab extends StatefulWidget {
   final List<Map<String, dynamic>> orders;
@@ -27,12 +28,12 @@ class LiveOrdersTab extends StatefulWidget {
 }
 
 class _LiveOrdersTabState extends State<LiveOrdersTab> {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
-  static const Color wellBg = Color(0xFFF4EDE6);
+  static const Color brandCocoa = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color textDark = AppColors.textDarkBerry;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
+  static const Color wellBg = AppColors.brandRed;
 
   String _currentFilter = 'All';
   Set<String> _selectedExportIds = {};
@@ -174,7 +175,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
             border: Border.all(color: borderLight),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF8B7355).withValues(alpha: 0.08),
+                color: AppColors.brandRed.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -201,7 +202,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                 if (_selectedExportIds.isNotEmpty)
                   Container(
                     height: 38,
-                    decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                    decoration: BoxDecoration(color: AppColors.brandRed, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.brandRed)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -209,12 +210,12 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                           onPressed: () => _showBatchDeleteConfirmation(context),
                           icon: const Icon(Icons.delete_outline, size: 16),
                           label: Text('Delete (${_selectedExportIds.length})'),
-                          style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         ),
-                        Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                        Container(width: 1, height: 20, color: AppColors.brandRed),
                         TextButton(
                           onPressed: () => setState(() => _selectedExportIds.clear()),
-                          style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                           child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                         ),
                       ],
@@ -261,7 +262,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                   onPressed: _exportPdf,
                   icon: const Icon(Icons.download_rounded, color: brandCocoa),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFFBF7F2),
+                    backgroundColor: AppColors.brandRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
                   ),
                 ),
@@ -294,7 +295,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                   if (_selectedExportIds.isNotEmpty)
                     Container(
                       height: 38,
-                      decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                      decoration: BoxDecoration(color: AppColors.brandRed, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.brandRed)),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -302,12 +303,12 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                             onPressed: () => _showBatchDeleteConfirmation(context),
                             icon: const Icon(Icons.delete_outline, size: 16),
                             label: Text('Delete (${_selectedExportIds.length})'),
-                            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                            style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                           ),
-                          Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                          Container(width: 1, height: 20, color: AppColors.brandRed),
                           TextButton(
                             onPressed: () => setState(() => _selectedExportIds.clear()),
-                            style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                            style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                             child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                           ),
                         ],
@@ -348,7 +349,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: const BoxDecoration(
-            color: Color(0xFFFBF7F2),
+            color: AppColors.brandRed,
             border: Border(
               top: BorderSide(color: borderLight),
               bottom: BorderSide(color: borderLight),
@@ -820,20 +821,20 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
 
   Widget _buildPaymentBadge(String payment) {
     final cleanPay = payment.trim();
-    Color bg = const Color(0xFFECEFF1);
-    Color fg = const Color(0xFF455A64);
+    Color bg = AppColors.brandRed;
+    Color fg = AppColors.brandRed;
 
     if (cleanPay.contains('GCash')) {
-      bg = const Color(0xFFE8F0FE);
-      fg = const Color(0xFF1967D2);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     } else if (cleanPay.contains('QRPh') ||
         cleanPay.contains('MariBank') ||
         cleanPay.contains('SeaBank')) {
-      bg = const Color(0xFFE6F4EA);
-      fg = const Color(0xFF137333);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     } else if (cleanPay.contains('Delivery') || cleanPay.contains('COD')) {
-      bg = const Color(0xFFFFF3E0);
-      fg = const Color(0xFFE65100);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     }
 
     return Container(
@@ -883,7 +884,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3E2723)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkGarnet),
             onPressed: () {
               Navigator.pop(ctx);
               widget.onUpdateStatus(
@@ -939,7 +940,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
       if (status == 'baking') {
         return ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFC27803),
+            backgroundColor: AppColors.brandRed,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             minimumSize: const Size(105, 30),
             shape: RoundedRectangleBorder(
@@ -966,7 +967,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
             .contains('cash');
         return ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2E7D32),
+            backgroundColor: AppColors.brandRed,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             minimumSize: const Size(105, 30),
             shape: RoundedRectangleBorder(
@@ -1001,7 +1002,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
       return const Text(
         '✓ Done',
         style: TextStyle(
-          color: Color(0xFF2E7D32),
+          color: AppColors.brandRed,
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),
@@ -1011,7 +1012,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     if (status == 'pending_ewallet') {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC27803),
+          backgroundColor: AppColors.brandRed,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           minimumSize: const Size(105, 30),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -1045,7 +1046,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     if (status == 'pending_cod') {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4A6572),
+          backgroundColor: AppColors.brandRed,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           minimumSize: const Size(105, 30),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -1163,7 +1164,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
       final bool isFull = order['paymentType'] == 'full';
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC27803),
+          backgroundColor: AppColors.brandRed,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           minimumSize: const Size(105, 30),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -1239,7 +1240,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     if (status == 'baked_payment_verifying') {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC27803),
+          backgroundColor: AppColors.brandRed,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           minimumSize: const Size(105, 30),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -1308,17 +1309,17 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     Color bg = wellBg;
     Color fg = textDark;
     if (status == 'baking') {
-      bg = const Color(0xFFFBEBE4);
+      bg = AppColors.bgPastelPink;
       fg = brandCocoa;
     } else if (status.contains('pending') || status.contains('verifying')) {
-      bg = const Color(0xFFFEF6E9);
-      fg = const Color(0xFFC27803);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     } else if (status == 'delivering' || status == 'baked_payment_required') {
-      bg = const Color(0xFFEBF5EC);
-      fg = const Color(0xFF2E7D32);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     } else if (status == 'ready_to_bake') {
-      bg = const Color(0xFFE8F5E9);
-      fg = const Color(0xFF2E7D32);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     }
 
     return Container(
@@ -1404,14 +1405,14 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
               pendingSpecsCount > 0
                   ? '$pendingSpecsCount need spec check'
                   : 'All specs verified',
-              const Color(0xFFC27803),
+              AppColors.brandRed,
               cardWidth,
             ),
             _metricCard(
               "TODAY'S SALES",
               '₱${todaySales.toStringAsFixed(2)}',
               '${completedOrders.length} orders completed',
-              const Color(0xFF2E7D32),
+              AppColors.brandRed,
               cardWidth,
             ),
             _metricCard(
@@ -1478,7 +1479,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           backgroundColor: Colors.white,
           title: const Text(
             'Delete Order?',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandRed),
           ),
           content: Text(
             'Are you sure you want to permanently delete order $orderId? This action cannot be undone.',
@@ -1491,7 +1492,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD32F2F),
+                backgroundColor: AppColors.brandRed,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {
@@ -1500,13 +1501,13 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                   await FirebaseFirestore.instance.collection('orders').doc(orderId).delete();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Order successfully deleted'), backgroundColor: Color(0xFF4CAF50)),
+                      const SnackBar(content: Text('Order successfully deleted'), backgroundColor: AppColors.brandRed),
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: const Color(0xFFD32F2F)),
+                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: AppColors.brandRed),
                     );
                   }
                 }
@@ -1528,7 +1529,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           backgroundColor: Colors.white,
           title: Text(
             'Delete ${_selectedExportIds.length} Orders?',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandRed),
           ),
           content: const Text(
             'Are you sure you want to permanently delete the selected orders? This action cannot be undone.',
@@ -1541,7 +1542,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD32F2F),
+                backgroundColor: AppColors.brandRed,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {
@@ -1559,13 +1560,13 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                       _selectedExportIds.clear();
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Orders successfully deleted'), backgroundColor: Color(0xFF4CAF50)),
+                      const SnackBar(content: Text('Orders successfully deleted'), backgroundColor: AppColors.brandRed),
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: const Color(0xFFD32F2F)),
+                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: AppColors.brandRed),
                     );
                   }
                 }
@@ -1607,7 +1608,7 @@ class _HoverElevateState extends State<HoverElevate> {
           boxShadow: _isHovering
               ? [
                   BoxShadow(
-            color: const Color(0xFF8B7355).withValues(alpha: 0.08),
+            color: AppColors.brandRed.withValues(alpha: 0.08),
             blurRadius: 16,
                     offset: const Offset(0, 4),
                   )

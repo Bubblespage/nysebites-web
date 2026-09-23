@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import '../models/product.dart';
 import 'cake_radius_visualizer.dart';
+import '../theme/app_colors.dart';
 
 class CustomCakeModal extends StatefulWidget {
   final Product baseProduct;
@@ -22,8 +23,9 @@ class CustomCakeModal extends StatefulWidget {
 
 class _CustomCakeModalState extends State<CustomCakeModal> {
   bool get _isStandardCake =>
-      widget.baseProduct.name.contains('Pure Decadence');
-  bool get _isOneTierCake => widget.baseProduct.name.contains('Vanilla Sky');
+      widget.baseProduct.price == 800.0 || widget.baseProduct.name.contains('Pure Decadence');
+  bool get _isOneTierCake => 
+      widget.baseProduct.price == 1450.0 || widget.baseProduct.name.contains('Vanilla Sky');
 
   late String _selectedSize;
   late Map<String, double> _sizeOptions;
@@ -182,12 +184,12 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFA),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFEFE4D6)),
+            border: Border.all(color: AppColors.bgPastelPink),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF3C2216).withValues(alpha: 0.18),
+                color: AppColors.darkGarnet.withValues(alpha: 0.18),
                 blurRadius: 30,
                 offset: const Offset(0, 12),
               ),
@@ -211,7 +213,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         Expanded(flex: 5, child: _buildHeroShowcase(isSplit: true)),
 
         // Vertical divider
-        Container(width: 1, color: const Color(0xFFEFE4D6)),
+        Container(width: 1, color: AppColors.bgPastelPink),
 
         // Right Column: Customizer Configuration Panel
         Expanded(
@@ -432,7 +434,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                       const Text(
                         'Reference photo attached ✓',
                         style: TextStyle(
-                          color: Color(0xFF3C2216),
+                          color: AppColors.darkGarnet,
                           fontWeight: FontWeight.bold,
                           fontSize: 11.5,
                         ),
@@ -497,9 +499,9 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
 
   Widget _buildFallbackShowcase() {
     return Container(
-      color: const Color(0xFFF3E7DC),
+      color: AppColors.bgPastelPink,
       child: const Center(
-        child: Icon(Icons.cake, size: 64, color: Color(0xFF8E4A23)),
+        child: Icon(Icons.cake, size: 64, color: AppColors.textDarkBerry),
       ),
     );
   }
@@ -510,7 +512,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEFE4D6))),
+        border: Border(bottom: BorderSide(color: AppColors.bgPastelPink)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -523,7 +525,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF2E1B10),
+                  color: AppColors.darkGarnet,
                 ),
               ),
               const SizedBox(height: 2),
@@ -531,18 +533,18 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                 'Personalize size, base, icing & decorations',
                 style: TextStyle(
                   fontSize: 12,
-                  color: const Color(0xFF756256).withValues(alpha: 0.9),
+                  color: AppColors.textDarkBerry.withValues(alpha: 0.9),
                 ),
               ),
             ],
           ),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFAF2E9),
+              color: AppColors.bgPastelPink,
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.close, color: Color(0xFF3C2216), size: 20),
+              icon: const Icon(Icons.close, color: AppColors.darkGarnet, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -575,12 +577,12 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFFAF2E9) : Colors.white,
+              color: isSelected ? AppColors.bgPastelPink : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
-                    ? const Color(0xFF8E4A23)
-                    : const Color(0xFFEFE4D6),
+                    ? AppColors.textDarkBerry
+                    : AppColors.bgPastelPink,
                 width: isSelected ? 1.5 : 1.0,
               ),
             ),
@@ -604,8 +606,8 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF8E4A23)
-                              : const Color(0xFFB5A196),
+                              ? AppColors.textDarkBerry
+                              : AppColors.brandRed,
                           width: 2,
                         ),
                       ),
@@ -616,7 +618,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                                 height: 10,
                                 decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Color(0xFF8E4A23),
+                                  color: AppColors.textDarkBerry,
                                 ),
                               ),
                             )
@@ -634,7 +636,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                             style: const TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF2E1B10),
+                              color: AppColors.darkGarnet,
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -646,9 +648,9 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                               fontSize: 11,
                               color: isSelected
                                   ? const Color(
-                                      0xFF8E4A23,
+                                      0xFF2E151A,
                                     ).withValues(alpha: 0.85)
-                                  : const Color(0xFF8B776A),
+                                  : AppColors.brandRed,
                             ),
                           ),
                         ],
@@ -661,8 +663,8 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isSelected
-                            ? const Color(0xFF8E4A23)
-                            : const Color(0xFF756256),
+                            ? AppColors.textDarkBerry
+                            : AppColors.textDarkBerry,
                         fontSize: 14,
                       ),
                     ),
@@ -686,10 +688,10 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             return ChoiceChip(
               label: Text(base),
               selected: isSelected,
-              selectedColor: const Color(0xFF8E4A23),
+              selectedColor: AppColors.brandRed,
               backgroundColor: Colors.white,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF3C2216),
+                color: isSelected ? Colors.white : AppColors.darkGarnet,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12.5,
               ),
@@ -715,10 +717,10 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             return ChoiceChip(
               label: Text(frosting),
               selected: isSelected,
-              selectedColor: const Color(0xFF8E4A23),
+              selectedColor: AppColors.brandRed,
               backgroundColor: Colors.white,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF3C2216),
+                color: isSelected ? Colors.white : AppColors.darkGarnet,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12.5,
               ),
@@ -749,16 +751,16 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+              borderSide: const BorderSide(color: AppColors.bgPastelPink),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+              borderSide: const BorderSide(color: AppColors.bgPastelPink),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: Color(0xFF8E4A23),
+                color: AppColors.textDarkBerry,
                 width: 1.5,
               ),
             ),
@@ -781,16 +783,16 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             contentPadding: const EdgeInsets.all(14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+              borderSide: const BorderSide(color: AppColors.bgPastelPink),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+              borderSide: const BorderSide(color: AppColors.bgPastelPink),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: Color(0xFF8E4A23),
+                color: AppColors.textDarkBerry,
                 width: 1.5,
               ),
             ),
@@ -808,16 +810,16 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAF2E9),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFEFE4D6)),
+            border: Border.all(color: AppColors.bgPastelPink),
           ),
           child: Row(
             children: [
               const Icon(
                 Icons.calendar_month_outlined,
                 size: 18,
-                color: Color(0xFF8E4A23),
+                color: AppColors.textDarkBerry,
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -826,7 +828,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF8E4A23),
+                    color: AppColors.textDarkBerry,
                   ),
                 ),
               ),
@@ -843,7 +845,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFEFE4D6))),
+        border: Border(top: BorderSide(color: AppColors.bgPastelPink)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -854,21 +856,21 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             children: [
               const Text(
                 'Total Cake Price',
-                style: TextStyle(fontSize: 11.5, color: Color(0xFF756256)),
+                style: TextStyle(fontSize: 11.5, color: AppColors.textDarkBerry),
               ),
               Text(
                 '₱${_calculatedTotal.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF8E4A23),
+                  color: AppColors.textDarkBerry,
                 ),
               ),
             ],
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8E4A23),
+              backgroundColor: AppColors.brandRed,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
@@ -894,7 +896,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         fontSize: 13.5,
-        color: Color(0xFF2E1B10),
+        color: AppColors.darkGarnet,
       ),
     );
   }
@@ -907,12 +909,12 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAF2E9),
+          color: AppColors.bgPastelPink,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _preferredImageBytes != null
-                ? const Color(0xFF8E4A23)
-                : const Color(0xFFE5D5C5),
+                ? AppColors.textDarkBerry
+                : AppColors.bgPastelPink,
           ),
         ),
         child: Row(
@@ -930,7 +932,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             ] else ...[
               const Icon(
                 Icons.add_photo_alternate_outlined,
-                color: Color(0xFF8E4A23),
+                color: AppColors.textDarkBerry,
               ),
               const SizedBox(width: 10),
             ],
@@ -938,7 +940,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
               child: Text(
                 _preferredImageName ??
                     'Upload sample cake photo from gallery...',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF5A4438)),
+                style: const TextStyle(fontSize: 13, color: AppColors.textDarkBerry),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -946,7 +948,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
               IconButton(
                 icon: const Icon(
                   Icons.delete_outline,
-                  color: Color(0xFF8E4A23),
+                  color: AppColors.textDarkBerry,
                   size: 20,
                 ),
                 onPressed: () {

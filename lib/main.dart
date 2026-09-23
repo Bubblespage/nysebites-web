@@ -10,6 +10,7 @@ import 'screens/admin/admin_login_screen.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
+import 'theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,12 +92,15 @@ class NyseBitesApp extends StatelessWidget {
       title: 'Nyse Bites | Cookie & Cake Company',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFFDF9F3),
+        scaffoldBackgroundColor: AppColors.bgPastelPink,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3C2216),
-          primary: const Color(0xFF3C2216),
-          secondary: const Color(0xFF8E4A23),
-          surface: const Color(0xFFFFFFFF),
+          seedColor: AppColors.textDarkBerry,
+          primary: AppColors.textDarkBerry,
+          secondary: AppColors.brandRed,
+          surface: AppColors.cardWhite,
+          onPrimary: Colors.white,
+          onSecondary: AppColors.darkGarnet,
+          onSurface: AppColors.darkGarnet,
         ),
         fontFamily: 'sans-serif',
       ),

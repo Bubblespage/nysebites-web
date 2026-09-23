@@ -14,6 +14,7 @@ import 'tabs/store_settings_tab.dart';
 import 'tabs/security_permissions_tab.dart';
 import 'admin_login_screen.dart';
 import '../../data/mock_products.dart';
+import '../../theme/app_colors.dart';
 
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -32,13 +33,13 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF1F1209);
-  static const Color creamCanvas = Color(0xFFFAFAFA);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color borderLight = Color(0xFFE5E7EB);
-  static const Color wellBg = Color(0xFFF3F4F6);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color darkEspresso = AppColors.brandRed;
+  static const Color creamCanvas = AppColors.bgPastelPink;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
+  static const Color wellBg = AppColors.brandRed;
 
   int _selectedNavIndex = 0;
   String _searchQuery = '';
@@ -112,7 +113,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     ),
                   ],
                 ),
-                backgroundColor: const Color(0xFF10B981), // Green
+                backgroundColor: AppColors.brandRed, // Green
                 duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -199,7 +200,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Missing mock products successfully seeded to database.'),
-              backgroundColor: Color(0xFF2E7D32),
+              backgroundColor: AppColors.brandRed,
             ),
           );
         }
@@ -244,7 +245,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE57373),
+              backgroundColor: AppColors.brandRed,
             ),
             onPressed: () async {
               Navigator.pop(dialogCtx);
@@ -360,7 +361,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: const Color(0xFFE57373),
+          backgroundColor: AppColors.brandRed,
           content: Text('Failed to update status: $e'),
         ),
       );
@@ -457,11 +458,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               end: Alignment.bottomCenter,
               stops: [0.0, 0.25, 0.55, 0.85, 1.0],
               colors: [
-                Color(0xFFFAF2E9),
-                Color(0xFFFBF6F0),
-                Color(0xFFF8EFE4),
-                Color(0xFFF5E9DB),
-                Color(0xFFEFE2D2),
+                AppColors.bgPastelPink,
+                AppColors.bgPastelPink,
+                AppColors.bgPastelPink,
+                AppColors.bgPastelPink,
+                AppColors.bgPastelPink,
               ],
             ),
           ),
@@ -564,7 +565,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Image.asset(
-                          'assets/images/logo.jpg',
+                          'assets/images/nysebites_logo.png',
                           width: 40,
                           height: 40,
                           fit: BoxFit.cover,
@@ -658,13 +659,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(
                       Icons.logout,
-                      color: Color(0xFFE57373),
+                      color: AppColors.brandRed,
                       size: 18,
                     ),
                     title: const Text(
                       'Logout Session',
                       style: TextStyle(
-                        color: Color(0xFFE57373),
+                        color: AppColors.brandRed,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -708,7 +709,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: Text(
             label,
             style: TextStyle(
-              color: active ? Colors.white : const Color(0xFFD9C3B0),
+              color: active ? Colors.white : AppColors.brandRed,
               fontWeight: active ? FontWeight.bold : FontWeight.w500,
               fontSize: 13,
             ),

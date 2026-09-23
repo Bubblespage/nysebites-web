@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -113,7 +114,7 @@ class _AuthModalState extends State<AuthModal>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome to Nyse Bites, $name! 🎉'),
-            backgroundColor: const Color(0xFF251811),
+            backgroundColor: AppColors.darkGarnet,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -236,7 +237,7 @@ class _AuthModalState extends State<AuthModal>
               border: Border.all(color: Colors.white.withOpacity(0.3)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE5B976).withOpacity(glow),
+                  color: AppColors.bgPastelPink.withOpacity(glow),
                   blurRadius: 20,
                   spreadRadius: 3,
                 ),
@@ -249,7 +250,7 @@ class _AuthModalState extends State<AuthModal>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: Image.asset(
-          'assets/images/logo.jpg',
+          'assets/images/nysebites_logo.png',
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => const Center(
             child: Text('🧁', style: TextStyle(fontSize: 26)),
@@ -284,7 +285,7 @@ class _AuthModalState extends State<AuthModal>
             style: const TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF251811),
+              color: AppColors.darkGarnet,
             ),
           ),
         ),
@@ -302,35 +303,35 @@ class _AuthModalState extends State<AuthModal>
           onChanged: (_) => setState(() {}),
           style: const TextStyle(
             fontSize: 13.5,
-            color: Color(0xFF251811),
+            color: AppColors.darkGarnet,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
               fontSize: 13,
-              color: Color(0xFFAAA09A),
+              color: AppColors.brandRed,
               fontWeight: FontWeight.w400,
             ),
-            prefixIcon: Icon(icon, color: const Color(0xFF251811), size: 18),
+            prefixIcon: Icon(icon, color: AppColors.darkGarnet, size: 18),
             suffixIcon: suffixIcon ??
                 (showCheck
                     ? const Padding(
                         padding: EdgeInsets.all(12),
                         child: Icon(
                           Icons.check_circle_rounded,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.brandRed,
                           size: 18,
                         ),
                       )
                     : null),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.bgPastelPink,
             errorStyle: const TextStyle(
               fontSize: 11,
               height: 1.1,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFC62828),
+              color: AppColors.brandRed,
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -338,26 +339,26 @@ class _AuthModalState extends State<AuthModal>
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFFEFE4D6), width: 1.2),
+              borderSide: const BorderSide(color: AppColors.bgPastelPink, width: 1.2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFFEFE4D6), width: 1.2),
+              borderSide: const BorderSide(color: AppColors.bgPastelPink, width: 1.2),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(
-                color: Color(0xFF251811),
+                color: AppColors.darkGarnet,
                 width: 1.8,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.2),
+              borderSide: const BorderSide(color: AppColors.brandRed, width: 1.2),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.8),
+              borderSide: const BorderSide(color: AppColors.brandRed, width: 1.8),
             ),
           ),
         ),
@@ -374,9 +375,9 @@ class _AuthModalState extends State<AuthModal>
         constraints: const BoxConstraints(maxWidth: 820),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFBF5ED),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0xFFEFE4D6), width: 1.5),
+            border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
             boxShadow: const [
               BoxShadow(
                 color: Color.fromRGBO(37, 24, 17, 0.18),
@@ -403,8 +404,8 @@ class _AuthModalState extends State<AuthModal>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF251811), // Storefront banner dark espresso
-                          Color(0xFF3A2312), // Subtle fade
+                          AppColors.darkGarnet, // Storefront banner dark espresso
+                          AppColors.textDarkBerry, // Subtle fade
                         ],
                       ),
                     ),
@@ -432,7 +433,7 @@ class _AuthModalState extends State<AuthModal>
                             height: 280,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFFE5B976).withOpacity(0.08),
+                              color: AppColors.bgPastelPink.withOpacity(0.08),
                             ),
                           ),
                         ),
@@ -521,7 +522,7 @@ class _AuthModalState extends State<AuthModal>
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFFE5B976),
+                                    color: AppColors.bgPastelPink,
                                     letterSpacing: 2,
                                   ),
                                 ),
@@ -568,7 +569,7 @@ class _AuthModalState extends State<AuthModal>
 
                 // Right Form Panel
                 final formPanel = Container(
-                  color: const Color(0xFFFBF5ED),
+                  color: AppColors.cardWhite,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
                     child: Form(
@@ -584,7 +585,7 @@ class _AuthModalState extends State<AuthModal>
                                 width: 165,
                                 padding: const EdgeInsets.all(3),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF4E9DC),
+                                  color: AppColors.bgPastelPink,
                                   borderRadius: BorderRadius.circular(22),
                                 ),
                                 child: Stack(
@@ -600,7 +601,7 @@ class _AuthModalState extends State<AuthModal>
                                         child: Container(
                                           height: 28,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF251811),
+                                            color: AppColors.brandRed,
                                             borderRadius: BorderRadius.circular(18),
                                           ),
                                         ),
@@ -627,7 +628,7 @@ class _AuthModalState extends State<AuthModal>
                                                     fontWeight: FontWeight.w800,
                                                     color: !_isSignUp
                                                         ? Colors.white
-                                                        : const Color(0xFF7A6559),
+                                                        : AppColors.textDarkBerry,
                                                   ),
                                                   child: const Text('Sign In'),
                                                 ),
@@ -653,7 +654,7 @@ class _AuthModalState extends State<AuthModal>
                                                     fontWeight: FontWeight.w800,
                                                     color: _isSignUp
                                                         ? Colors.white
-                                                        : const Color(0xFF7A6559),
+                                                        : AppColors.textDarkBerry,
                                                   ),
                                                   child: const Text('Sign Up'),
                                                 ),
@@ -672,7 +673,7 @@ class _AuthModalState extends State<AuthModal>
                                   TextButton(
                                     onPressed: _handleGuestAccess,
                                     style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFF251811),
+                                      foregroundColor: AppColors.darkGarnet,
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
                                         vertical: 4,
@@ -693,7 +694,7 @@ class _AuthModalState extends State<AuthModal>
                                   IconButton(
                                     icon: const Icon(
                                       Icons.close_rounded,
-                                      color: Color(0xFF7A6559),
+                                      color: AppColors.textDarkBerry,
                                       size: 20,
                                     ),
                                     onPressed: () => Navigator.pop(context),
@@ -714,7 +715,7 @@ class _AuthModalState extends State<AuthModal>
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF251811),
+                                color: AppColors.darkGarnet,
                                 letterSpacing: -0.5,
                               ),
                             ),
@@ -729,7 +730,7 @@ class _AuthModalState extends State<AuthModal>
                                   : 'Please enter your credentials to continue',
                               style: const TextStyle(
                                 fontSize: 12.5,
-                                color: Color(0xFF7A6559),
+                                color: AppColors.textDarkBerry,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -744,15 +745,15 @@ class _AuthModalState extends State<AuthModal>
                                 vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFDE8E8),
+                                color: AppColors.bgPastelPink,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFF8B4B4)),
+                                border: Border.all(color: AppColors.bgPastelPink),
                               ),
                               child: Row(
                                 children: [
                                   const Icon(
                                     Icons.error_outline_rounded,
-                                    color: Color(0xFFC62828),
+                                    color: AppColors.brandRed,
                                     size: 16,
                                   ),
                                   const SizedBox(width: 8),
@@ -761,7 +762,7 @@ class _AuthModalState extends State<AuthModal>
                                       _authErrorMessage!,
                                       style: const TextStyle(
                                         fontSize: 11.5,
-                                        color: Color(0xFFC62828),
+                                        color: AppColors.brandRed,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -845,7 +846,7 @@ class _AuthModalState extends State<AuthModal>
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
                                 size: 18,
-                                color: const Color(0xFF7A6559),
+                                color: AppColors.textDarkBerry,
                               ),
                               onPressed: () => setState(
                                   () => _obscurePassword = !_obscurePassword),
@@ -873,7 +874,7 @@ class _AuthModalState extends State<AuthModal>
                                   height: 18,
                                   child: Checkbox(
                                     value: _keepLoggedIn,
-                                    activeColor: const Color(0xFF251811),
+                                    activeColor: AppColors.darkGarnet,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(4),
                                     ),
@@ -887,7 +888,7 @@ class _AuthModalState extends State<AuthModal>
                                   'Keep me logged in',
                                   style: TextStyle(
                                     fontSize: 12.5,
-                                    color: Color(0xFF7A6559),
+                                    color: AppColors.textDarkBerry,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -902,13 +903,13 @@ class _AuthModalState extends State<AuthModal>
                             height: 46,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF251811),
+                                backgroundColor: AppColors.brandRed,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 elevation: 2,
-                                shadowColor: const Color(0xFF251811).withOpacity(0.3),
+                                shadowColor: AppColors.brandRed.withOpacity(0.3),
                               ),
                               onPressed: _isLoading ? null : _handleSubmit,
                               child: _isLoading
@@ -921,7 +922,7 @@ class _AuthModalState extends State<AuthModal>
                                       ),
                                     )
                                   : Text(
-                                      _isSignUp ? 'Complete Sign Up 🧁' : 'Sign In 🍪',
+                                      _isSignUp ? 'Complete Sign Up' : 'Sign In',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 14,

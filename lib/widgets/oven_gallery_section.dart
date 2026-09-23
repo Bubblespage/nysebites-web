@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'instagram_post_modal.dart';
+import '../theme/app_colors.dart';
 
 class OvenGallerySection extends StatefulWidget {
   const OvenGallerySection({super.key});
@@ -441,6 +442,11 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
     },
   ];
 
+
+  List<Map<String, dynamic>> get _displayCategories {
+    return _categories;
+  }
+
   void _openCategoryModal(BuildContext context, Map<String, dynamic> category) {
     showDialog(
       context: context,
@@ -450,9 +456,9 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 950, maxHeight: 750),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFA),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE5D5C5), width: 1.5),
+            border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
             boxShadow: const [
               BoxShadow(
                 color: Color.fromRGBO(60, 34, 22, 0.25),
@@ -466,9 +472,9 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFFAF2E9),
+                  color: AppColors.bgPastelPink,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  border: Border(bottom: BorderSide(color: Color(0xFFEFE4D6))),
+                  border: Border(bottom: BorderSide(color: AppColors.bgPastelPink)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -480,22 +486,22 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                           category['title'],
                           style: const TextStyle(
                             fontFamily: 'serif',
-                            fontSize: 18,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E1B10),
+                            color: AppColors.darkGarnet,
                           ),
                         ),
                         Text(
                           category['subtitle'],
                           style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF756256),
+                            fontSize: 14,
+                            color: AppColors.textDarkBerry,
                           ),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Color(0xFF756256), size: 22),
+                      icon: const Icon(Icons.close, color: AppColors.textDarkBerry, size: 26),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -523,9 +529,9 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.cardWhite,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE5D5C5)),
+                            border: Border.all(color: AppColors.bgPastelPink),
                             boxShadow: const [
                               BoxShadow(
                                 color: Color.fromRGBO(60, 34, 22, 0.05),
@@ -548,30 +554,30 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(12),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.favorite, color: Colors.redAccent, size: 14),
+                                        const Icon(Icons.favorite, color: AppColors.brandRed, size: 14),
                                         const SizedBox(width: 4),
                                         Text(
-                                          item['likes'],
+                                          item['likes'] ?? '',
                                           style: const TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF2E1B10),
+                                            color: AppColors.textDarkBerry,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
                                     Text(
-                                      item['caption'],
+                                      item['caption'] ?? '',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry),
                                     ),
                                   ],
                                 ),
@@ -592,177 +598,100 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
   }
 
   @override
-Widget build(BuildContext context) {
-  // ── TRUE DEVICE WIDTH CHECK (bypasses Chrome "Desktop site" mode) ──
-  // MediaQuery.size.width is the logical/CSS width, which Chrome's
-  // Desktop Site toggle fakes to look wide even on a real phone. Using
-  // the physical pixel width instead (same trick already used in
-  // HomeScreen) keeps this section on the mobile layout — arrows +
-  // scrollable cards — on an actual mobile device regardless of that
-  // toggle.
-  final flutterView = View.of(context);
-  final double screenWidth =
-      flutterView.physicalSize.width / flutterView.devicePixelRatio;
-  final bool isMobile = screenWidth < 768;
+  Widget build(BuildContext context) {
+    final flutterView = View.of(context);
+    final double screenWidth = flutterView.physicalSize.width / flutterView.devicePixelRatio;
+    final bool isMobile = screenWidth < 768;
 
-    // Mobile: cards still need to scroll, so keep them reasonably sized
-    // and keep the arrows. Desktop: shrink cards enough that all 5
-    // categories fit in one row with no scrolling needed — no arrows.
-    final double cardWidth = isMobile
-        ? (screenWidth * 0.62).clamp(160.0, 240.0)
-        : 220.0; // was 250.0 — shrunk so 5 cards + gaps fit in ~1080px
-    final double cardHeight = cardWidth + 60.0;
-
-    final double arrowSize = isMobile ? 32.0 : 40.0;
-    final double arrowIconSize = isMobile ? 18.0 : 24.0;
-    final double listPadding = isMobile ? 30.0 : 0.0; // desktop no longer needs arrow clearance
-    final double arrowInset = isMobile ? 4.0 : 12.0;
-    const double cardSpacing = 18.0;
+    final categories = _displayCategories;
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 32 : 54),
-      color: const Color(0xFFFAF4ED),
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60),
+      color: Colors.transparent,
       child: Column(
         children: [
-          // Section Title
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
-            child: const Column(
-              children: [
-                Text(
-                  'Oven Fresh Gallery 🤎',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF2E1B10),
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Explore our cake tiers and daily treat collections. Click any category to view all designs!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF756256), fontSize: 13.5),
-                ),
-              ],
+          // Header Text
+          Text(
+            'OUR GALLERY',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.0,
+              color: AppColors.brandRed,
             ),
           ),
-          const SizedBox(height: 28),
-
-          if (isMobile)
-            // ── MOBILE: horizontal scroll + nav arrows (still needed, cards don't all fit) ──
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  height: cardHeight,
-                  child: ListView.separated(
-                    controller: _scrollController,
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: listPadding),
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: cardSpacing),
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      return SizedBox(
-                        width: cardWidth,
-                        child: _HoverableCategoryCard(
-                          category: category,
-                          cardWidth: cardWidth,
-                          onTap: () => _openCategoryModal(context, category),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Positioned(
-                  left: arrowInset,
-                  top: (cardWidth / 2) - (arrowSize / 2),
-                  child: Material(
-                    color: Colors.white.withOpacity(0.92),
-                    shape: const CircleBorder(),
-                    elevation: 4,
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: _scrollLeft,
-                      child: SizedBox(
-                        width: arrowSize,
-                        height: arrowSize,
-                        child: Icon(Icons.chevron_left,
-                            size: arrowIconSize, color: const Color(0xFF8E4A23)),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: arrowInset,
-                  top: (cardWidth / 2) - (arrowSize / 2),
-                  child: Material(
-                    color: Colors.white.withOpacity(0.92),
-                    shape: const CircleBorder(),
-                    elevation: 4,
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: _scrollRight,
-                      child: SizedBox(
-                        width: arrowSize,
-                        height: arrowSize,
-                        child: Icon(Icons.chevron_right,
-                            size: arrowIconSize, color: const Color(0xFF8E4A23)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            // ── DESKTOP: all cards fit in one centered row, no scroll, no arrows ──
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1260),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (int i = 0; i < _categories.length; i++) ...[
-                      if (i != 0) const SizedBox(width: cardSpacing),
-                      SizedBox(
-                        width: cardWidth,
-                        child: _HoverableCategoryCard(
-                          category: _categories[i],
-                          cardWidth: cardWidth,
-                          onTap: () => _openCategoryModal(context, _categories[i]),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
+            child: Text(
+              'A Glimpse of Our Creations',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'serif',
+                fontSize: isMobile ? 28 : 42,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkGarnet,
+                height: 1.1,
               ),
             ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
+            child: Text(
+              'Take a look at some of our favorite moments, custom cakes and cozy treats.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textDarkBerry,
+                fontSize: isMobile ? 14 : 16,
+              ),
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          // Gallery Category Cards (5 Images)
+          SizedBox(
+            height: isMobile ? 280 : 340,
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40),
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: categories.length,
+              separatorBuilder: (_, __) => SizedBox(width: isMobile ? 16 : 24),
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return _GalleryCategoryCard(
+                  category: category,
+                  width: isMobile ? 180 : 220,
+                  onTap: () => _openCategoryModal(context, category),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _HoverableCategoryCard extends StatefulWidget {
+class _GalleryCategoryCard extends StatefulWidget {
   final Map<String, dynamic> category;
-  final double cardWidth;
   final VoidCallback onTap;
+  final double width;
 
-  const _HoverableCategoryCard({
+  const _GalleryCategoryCard({
     required this.category,
-    required this.cardWidth,
     required this.onTap,
+    required this.width,
   });
 
   @override
-  State<_HoverableCategoryCard> createState() => _HoverableCategoryCardState();
+  State<_GalleryCategoryCard> createState() => _GalleryCategoryCardState();
 }
 
-class _HoverableCategoryCardState extends State<_HoverableCategoryCard> {
+class _GalleryCategoryCardState extends State<_GalleryCategoryCard> {
   bool _isHovered = false;
 
   @override
@@ -776,104 +705,103 @@ class _HoverableCategoryCardState extends State<_HoverableCategoryCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
-          transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1:1 Image Container
-              Container(
-                width: widget.cardWidth,
-                height: widget.cardWidth,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: _isHovered ? const Color(0xFF8E4A23) : const Color(0xFFE5D5C5),
-                    width: _isHovered ? 1.5 : 1.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color.fromRGBO(60, 34, 22, _isHovered ? 0.16 : 0.08),
-                      blurRadius: _isHovered ? 18 : 8,
-                      offset: Offset(0, _isHovered ? 8 : 4),
-                    ),
-                  ],
+          transform: Matrix4.translationValues(0, _isHovered ? -8 : 0, 0),
+          width: widget.width,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromRGBO(60, 34, 22, _isHovered ? 0.2 : 0.0),
+                blurRadius: _isHovered ? 20 : 0,
+                offset: Offset(0, _isHovered ? 12 : 0),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  widget.category['image']!,
+                  fit: BoxFit.cover,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(21),
-                  child: Stack(
-                    fit: StackFit.expand,
+                // Gradient overlay so text is readable
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  alignment: Alignment.bottomCenter,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        widget.category['image']!,
-                        fit: BoxFit.cover,
+                      Text(
+                        widget.category['title'] ?? '',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'serif',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
                       ),
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: _isHovered ? 1.0 : 0.0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withOpacity(0.55),
-                                Colors.black.withOpacity(0.85),
-                              ],
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.collections_rounded, color: Colors.white, size: 36),
-                              SizedBox(height: 6),
-                              Text(
-                                'View Collection ✨',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.category['subtitle'] ?? '',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              // Category Title
-              Text(
-                widget.category['title']!,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'serif',
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E1B10),
+                // Hover overlay (View Collection button style)
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _isHovered ? 1.0 : 0.0,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandRed,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.collections, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'View All',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              // Category Subtitle
-              Text(
-                widget.category['subtitle']!,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF756256),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+

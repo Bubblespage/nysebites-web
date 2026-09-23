@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
+import '../../../theme/app_colors.dart';
 
 class SweetNotesTab extends StatefulWidget {
   final List<Map<String, dynamic>> sweetNotes;
@@ -13,10 +14,10 @@ class SweetNotesTab extends StatefulWidget {
 }
 
 class _SweetNotesTabState extends State<SweetNotesTab> {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
 
   Set<String> _selectedExportIds = {};
 
@@ -64,7 +65,7 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
                 Expanded(
                   child: Container(
                     height: 38,
-                    decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                    decoration: BoxDecoration(color: AppColors.brandRed, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.brandRed)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -72,12 +73,12 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
                           onPressed: () => _showBatchDeleteConfirmation(context),
                           icon: const Icon(Icons.delete_outline, size: 16),
                           label: Text('Delete (${_selectedExportIds.length})'),
-                          style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         ),
-                        Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                        Container(width: 1, height: 20, color: AppColors.brandRed),
                         TextButton(
                           onPressed: () => setState(() => _selectedExportIds.clear()),
-                          style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                           child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                         ),
                       ],
@@ -91,7 +92,7 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
                 onPressed: _exportPdf,
                 icon: const Icon(Icons.download_rounded, color: brandCocoa),
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFFFBF7F2),
+                  backgroundColor: AppColors.brandRed,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
                 ),
               ),
@@ -116,7 +117,7 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
               if (_selectedExportIds.isNotEmpty) ...[
                 Container(
                   height: 38,
-                  decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFFE5E5))),
+                  decoration: BoxDecoration(color: AppColors.brandRed, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.brandRed)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -124,12 +125,12 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
                         onPressed: () => _showBatchDeleteConfirmation(context),
                         icon: const Icon(Icons.delete_outline, size: 16),
                         label: Text('Delete (${_selectedExportIds.length})'),
-                        style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F), padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                       ),
-                      Container(width: 1, height: 20, color: const Color(0xFFFFE5E5)),
+                      Container(width: 1, height: 20, color: AppColors.brandRed),
                       TextButton(
                         onPressed: () => setState(() => _selectedExportIds.clear()),
-                        style: TextButton.styleFrom(foregroundColor: const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                       ),
                     ],
@@ -357,7 +358,7 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
           backgroundColor: Colors.white,
           title: Text(
             'Delete ${_selectedExportIds.length} Messages?',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.brandRed),
           ),
           content: const Text(
             'Are you sure you want to permanently delete the selected messages? This action cannot be undone.',
@@ -370,7 +371,7 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD32F2F),
+                backgroundColor: AppColors.brandRed,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {
@@ -388,13 +389,13 @@ class _SweetNotesTabState extends State<SweetNotesTab> {
                       _selectedExportIds.clear();
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Messages successfully deleted'), backgroundColor: Color(0xFF4CAF50)),
+                      const SnackBar(content: Text('Messages successfully deleted'), backgroundColor: AppColors.brandRed),
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: const Color(0xFFD32F2F)),
+                      SnackBar(content: Text('Failed to delete: $e'), backgroundColor: AppColors.brandRed),
                     );
                   }
                 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
+import '../../../theme/app_colors.dart';
 
 class CustomerReviewsTab extends StatefulWidget {
   const CustomerReviewsTab({super.key});
@@ -11,10 +12,10 @@ class CustomerReviewsTab extends StatefulWidget {
 }
 
 class _CustomerReviewsTabState extends State<CustomerReviewsTab> {
-  static const Color _espresso = Color(0xFF251811);
-  static const Color _cocoa = Color(0xFF8C4A27);
-  static const Color _muted = Color(0xFF7A6559);
-  static const Color _border = Color(0xFFEFE4D6);
+  static const Color _espresso = AppColors.darkGarnet;
+  static const Color _cocoa = AppColors.brandRed;
+  static const Color _muted = AppColors.textDarkBerry;
+  static const Color _border = AppColors.bgPastelPink;
 
   final Set<String> _selectedReviewIds = {};
   bool _isExporting = false;
@@ -27,7 +28,7 @@ class _CustomerReviewsTabState extends State<CustomerReviewsTab> {
         return Icon(
           index < rating ? Icons.star_rounded : Icons.star_border_rounded,
           size: 16,
-          color: index < rating ? const Color(0xFFF5A623) : _border,
+          color: index < rating ? AppColors.brandRed : _border,
         );
       }),
     );
@@ -150,7 +151,7 @@ class _CustomerReviewsTabState extends State<CustomerReviewsTab> {
                               : const Icon(Icons.download_rounded,
                                   color: _cocoa),
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFFBF7F2),
+                            backgroundColor: AppColors.brandRed,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: const BorderSide(color: _border),

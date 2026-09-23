@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../theme/app_colors.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String oobCode;
@@ -19,12 +20,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   String? _errorMessage;
   bool _isSuccess = false;
 
-  static const Color _espresso = Color(0xFF3C2216);
-  static const Color _cocoa = Color(0xFF8C4A27);
-  static const Color _muted = Color(0xFF7A6559);
-  static const Color _border = Color(0xFFEFE4D6);
-  static const Color _cream = Color(0xFFFDFBF7);
-  static const Color _errorRed = Color(0xFFD9381E);
+  static const Color _espresso = AppColors.darkGarnet;
+  static const Color _cocoa = AppColors.brandRed;
+  static const Color _muted = AppColors.textDarkBerry;
+  static const Color _border = AppColors.bgPastelPink;
+  static const Color _cream = AppColors.bgPastelPink;
+  static const Color _errorRed = AppColors.brandRed;
 
   Future<void> _submitNewPassword() async {
     setState(() => _errorMessage = null);
@@ -102,7 +103,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F3),
+      backgroundColor: AppColors.bgPastelPink,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -318,7 +319,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(
-            color: Color(0xFFAAA09A),
+            color: AppColors.brandRed,
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
@@ -333,7 +334,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     _obscurePassword
                         ? Icons.visibility_off_rounded
                         : Icons.visibility_rounded,
-                    color: const Color(0xFFAAA09A),
+                    color: AppColors.brandRed,
                     size: 20,
                   ),
                   onPressed: () {

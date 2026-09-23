@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../theme/app_colors.dart';
 
 class SecurityPermissionsTab extends StatefulWidget {
   final String currentRole;
@@ -16,12 +17,12 @@ class SecurityPermissionsTab extends StatefulWidget {
 }
 
 class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF1F1209);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color borderLight = Color(0xFFE5E7EB);
-  static const Color wellBg = Color(0xFFF3F4F6);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color darkEspresso = AppColors.brandRed;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
+  static const Color wellBg = AppColors.brandRed;
 
   final CollectionReference<Map<String, dynamic>> _usersCollection =
       FirebaseFirestore.instance.collection('users');
@@ -58,7 +59,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setModalState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFFFAFAFA),
+            backgroundColor: AppColors.bgPastelPink,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -201,7 +202,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                           Navigator.pop(dialogCtx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: const Color(0xFF2E7D32),
+                              backgroundColor: AppColors.brandRed,
                               content: Text('✨ Added $email successfully!'),
                             ),
                           );
@@ -209,7 +210,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                           setModalState(() => isSubmitting = false);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: const Color(0xFFD32F2F),
+                              backgroundColor: AppColors.brandRed,
                               content: Text('Failed to add account: $e'),
                             ),
                           );
@@ -233,7 +234,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setModalState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFFFAFAFA),
+            backgroundColor: AppColors.bgPastelPink,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -337,7 +338,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                           Navigator.pop(dialogCtx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: const Color(0xFF2E7D32),
+                              backgroundColor: AppColors.brandRed,
                               content: Text(
                                 '✨ Updated $email to ${_formatRoleLabel(selectedRole)}!',
                               ),
@@ -347,7 +348,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                           setModalState(() => isSubmitting = false);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: const Color(0xFFD32F2F),
+                              backgroundColor: AppColors.brandRed,
                               content: Text('Failed to update role: $e'),
                             ),
                           );
@@ -366,7 +367,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: AppColors.bgPastelPink,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Revoke Account Access?',
@@ -387,7 +388,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD32F2F),
+              backgroundColor: AppColors.brandRed,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -406,7 +407,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: const Color(0xFF2E7D32),
+            backgroundColor: AppColors.brandRed,
             content: Text('Access revoked for $email'),
           ),
         );
@@ -414,7 +415,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: const Color(0xFFD32F2F),
+            backgroundColor: AppColors.brandRed,
             content: Text('Failed to remove account: $e'),
           ),
         );
@@ -444,7 +445,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                 border: Border.all(color: borderLight),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF8B7355).withOpacity(0.08),
+                    color: AppColors.brandRed.withOpacity(0.08),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -460,10 +461,10 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFAF2E9),
+                                color: AppColors.bgPastelPink,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFE5D5C5),
+                                  color: AppColors.bgPastelPink,
                                 ),
                               ),
                               alignment: Alignment.center,
@@ -495,8 +496,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSuperAdmin
-                                          ? const Color(0xFFE8F5E9)
-                                          : const Color(0xFFFFF3E0),
+                                          ? AppColors.brandRed
+                                          : AppColors.brandRed,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -507,8 +508,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w900,
                                         color: isSuperAdmin
-                                            ? const Color(0xFF2E7D32)
-                                            : const Color(0xFFE65100),
+                                            ? AppColors.brandRed
+                                            : AppColors.brandRed,
                                       ),
                                     ),
                                   ),
@@ -533,10 +534,10 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFAF2E9),
+                                color: AppColors.bgPastelPink,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFE5D5C5),
+                                  color: AppColors.bgPastelPink,
                                 ),
                               ),
                               alignment: Alignment.center,
@@ -568,8 +569,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isSuperAdmin
-                                            ? const Color(0xFFE8F5E9)
-                                            : const Color(0xFFFFF3E0),
+                                            ? AppColors.brandRed
+                                            : AppColors.brandRed,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -580,8 +581,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                           fontSize: 10,
                                           fontWeight: FontWeight.w900,
                                           color: isSuperAdmin
-                                              ? const Color(0xFF2E7D32)
-                                              : const Color(0xFFE65100),
+                                              ? AppColors.brandRed
+                                              : AppColors.brandRed,
                                         ),
                                       ),
                                     ),
@@ -605,7 +606,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
+                            color: AppColors.brandRed,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Row(
@@ -614,13 +615,13 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               Icon(
                                 Icons.lock_clock,
                                 size: 14,
-                                color: Color(0xFF2E7D32),
+                                color: AppColors.brandRed,
                               ),
                               SizedBox(width: 5),
                               Text(
                                 'Auth Token Valid',
                                 style: TextStyle(
-                                  color: Color(0xFF2E7D32),
+                                  color: AppColors.brandRed,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -874,7 +875,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
   Widget _buildPermissionTable() {
     return Table(
       border: TableBorder.all(
-        color: const Color(0xFFEFE4D6),
+        color: AppColors.bgPastelPink,
         borderRadius: BorderRadius.circular(10),
       ),
       columnWidths: const {
@@ -885,7 +886,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
       },
       children: [
         TableRow(
-          decoration: const BoxDecoration(color: Color(0xFFFAF4EE)),
+          decoration: const BoxDecoration(color: AppColors.brandRed),
           children: [
             _tableHeader('MODULE / CAPABILITY'),
             _tableHeader('SUPER ADMIN (OWNER)'),
@@ -954,10 +955,10 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
 
     if (normalized == 'super_admin') {
       icon = Icons.stars_rounded;
-      roleColor = const Color(0xFF2E7D32);
+      roleColor = AppColors.brandRed;
     } else if (normalized == 'order_dispatcher') {
       icon = Icons.two_wheeler_outlined;
-      roleColor = const Color(0xFFC27803);
+      roleColor = AppColors.brandRed;
     }
 
     final bool isCurrentSelf =
@@ -1008,7 +1009,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F5E9),
+                                  color: AppColors.brandRed,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
@@ -1016,7 +1017,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                   style: TextStyle(
                                     fontSize: 8.5,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFF2E7D32),
+                                    color: AppColors.brandRed,
                                   ),
                                 ),
                               ),
@@ -1080,7 +1081,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                             icon: const Icon(
                               Icons.delete_outline,
                               size: 17,
-                              color: Color(0xFFD32F2F),
+                              color: AppColors.brandRed,
                             ),
                             tooltip: 'Revoke Access',
                             padding: EdgeInsets.zero,
@@ -1127,7 +1128,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               vertical: 1,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8F5E9),
+                              color: AppColors.brandRed,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -1135,7 +1136,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF2E7D32),
+                                color: AppColors.brandRed,
                               ),
                             ),
                           ),
@@ -1185,7 +1186,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                     icon: const Icon(
                       Icons.delete_outline,
                       size: 18,
-                      color: Color(0xFFD32F2F),
+                      color: AppColors.brandRed,
                     ),
                     tooltip: 'Revoke Access',
                     onPressed: () => _deleteAccount(email),
@@ -1245,8 +1246,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
             isAllowed ? Icons.check_circle_rounded : Icons.cancel_rounded,
             size: 14,
             color: isAllowed
-                ? const Color(0xFF2E7D32)
-                : const Color(0xFFB0A39B),
+                ? AppColors.brandRed
+                : AppColors.brandRed,
           ),
           const SizedBox(width: 6),
           Expanded(

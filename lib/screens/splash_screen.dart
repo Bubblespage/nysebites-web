@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F3),
+      backgroundColor: AppColors.bgPastelPink,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -34,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 image: DecorationImage(
-                  image: AssetImage('assets/images/logo.jpg'),
+                  image: AssetImage('assets/images/nysebites_logo.png'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -42,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 30),
             // Loading indicator
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3C2216)),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.darkGarnet),
             ),
           ],
         ),

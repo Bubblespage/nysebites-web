@@ -42,19 +42,6 @@ final List<Product> mockProducts = [
     icon: '🍫',
   ),
   const Product(
-    id: 4,
-    order: 4,
-    name: 'Red Velvet Kiss Blossom',
-    category: 'cookies',
-    price: 260.0,
-    priceBox6: 390.0,
-    servingSize: 'Box of 4',
-    description:
-        'Vibrant crimson cocoa cookie with a smooth milk chocolate shell and creamy center.',
-    imgSrc: 'assets/images/redvelvet.jpg',
-    icon: '❤️',
-  ),
-  const Product(
     id: 5,
     order: 5,
     name: 'Belgian Choco Chip',

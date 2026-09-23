@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../theme/app_colors.dart';
 
 class StoreSettingsTab extends StatefulWidget {
   const StoreSettingsTab({super.key});
@@ -9,11 +10,11 @@ class StoreSettingsTab extends StatefulWidget {
 }
 
 class _StoreSettingsTabState extends State<StoreSettingsTab> {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF1F1209);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color darkEspresso = AppColors.brandRed;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
 
   final DocumentReference<Map<String, dynamic>> _settingsDoc =
       FirebaseFirestore.instance.collection('settings').doc('storefront');
@@ -56,7 +57,7 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFF2E7D32),
+          backgroundColor: AppColors.brandRed,
           content: Text('✨ Storefront settings and 3 announcement slots published live!'),
         ),
       );
@@ -64,7 +65,7 @@ class _StoreSettingsTabState extends State<StoreSettingsTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: const Color(0xFFE57373),
+          backgroundColor: AppColors.brandRed,
           content: Text('Failed to save settings: $e'),
         ),
       );

@@ -12,6 +12,7 @@ import '../utils/pdf_report_generator.dart';
 import 'package:printing/printing.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../theme/app_colors.dart';
 
 class CustomerProfileModal extends StatefulWidget {
   final Set<String> favorites;
@@ -64,13 +65,13 @@ enum ProfileViewState {
 
 class _CustomerProfileModalState extends State<CustomerProfileModal>
     with SingleTickerProviderStateMixin {
-  static const Color _espresso = Color(0xFF251811);
-  static const Color _cocoa = Color(0xFF8C4A27);
-  static const Color _muted = Color(0xFF7A6559);
-  static const Color _border = Color(0xFFEFE4D6);
-  static const Color _blush = Color(0xFFFBEBE4);
-  static const Color _cream = Color(0xFFFDFBF7);
-  static const Color _errorRed = Color(0xFFD9381E);
+  static const Color _espresso = AppColors.darkGarnet;
+  static const Color _cocoa = AppColors.brandRed;
+  static const Color _muted = AppColors.textDarkBerry;
+  static const Color _border = AppColors.bgPastelPink;
+  static const Color _blush = AppColors.bgPastelPink;
+  static const Color _cream = AppColors.cardWhite;
+  static const Color _errorRed = AppColors.brandRed;
 
   late TabController _tabController;
   List<Product> _products = List.from(mockProducts);
@@ -512,7 +513,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
               _scaffoldMessengerKey.currentState?.showSnackBar(
                 const SnackBar(
                   content: Text('Verification email sent to new address. Please verify to complete the update.'),
-                  backgroundColor: Color(0xFF4CAF50),
+                  backgroundColor: AppColors.brandRed,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -523,7 +524,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 _scaffoldMessengerKey.currentState?.showSnackBar(
                   const SnackBar(
                     content: Text('Please log out and log back in to change your email for security reasons.'),
-                    backgroundColor: Color(0xFFD32F2F),
+                    backgroundColor: AppColors.brandRed,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -533,7 +534,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 _scaffoldMessengerKey.currentState?.showSnackBar(
                   SnackBar(
                     content: Text('Error updating email: ${e.message}'),
-                    backgroundColor: const Color(0xFFD32F2F),
+                    backgroundColor: AppColors.brandRed,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -597,15 +598,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   Container(
                     height: MediaQuery.of(context).size.height,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFFFFFBF7),
-                          Color(0xFFFAF4ED),
-                          Color(0xFFF5EDDF),
-                        ],
-                      ),
+                      color: AppColors.cardWhite,
                       borderRadius: BorderRadius.horizontal(
                         left: Radius.circular(leftRadius),
                       ),
@@ -763,7 +756,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                     },
                                     icon: const Icon(
                                       Icons.facebook_rounded,
-                                      color: Color(0xFF1877F2),
+                                      color: AppColors.brandRed,
                                       size: 20,
                                     ),
                                     label: const Text(
@@ -779,7 +772,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                         vertical: 12,
                                       ),
                                       side: const BorderSide(
-                                        color: Color(0xFF1877F2),
+                                        color: AppColors.brandRed,
                                         width: 1.2,
                                       ),
                                       shape: RoundedRectangleBorder(
@@ -983,7 +976,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF3C2216), Color(0xFF5A3420)],
+            colors: [AppColors.textDarkBerry, AppColors.brandRed],
           ),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -994,7 +987,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFE5B976),
+                color: AppColors.bgPastelPink,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ClipRRect(
@@ -1007,7 +1000,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                               ? widget.currentName[0].toUpperCase()
                               : 'G',
                           style: const TextStyle(
-                            color: Color(0xFF3C2216),
+                            color: AppColors.darkGarnet,
                             fontWeight: FontWeight.w900,
                             fontSize: 18,
                           ),
@@ -1023,7 +1016,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   const Text(
                     'Welcome back! 🧁',
                     style: TextStyle(
-                      color: Color(0xFFE5D5C5),
+                      color: AppColors.bgPastelPink,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1043,7 +1036,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   const Text(
                     'Tap to open profile & settings ✨',
                     style: TextStyle(
-                      color: Color(0xFFF3E7DC),
+                      color: AppColors.bgPastelPink,
                       fontSize: 9.5,
                       fontWeight: FontWeight.w500,
                       fontStyle: FontStyle.italic,
@@ -1063,7 +1056,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 padding: EdgeInsets.zero,
                 icon: const Icon(
                   Icons.close_rounded,
-                  color: Color(0xFFE5D5C5),
+                  color: AppColors.bgPastelPink,
                   size: 16,
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -1083,20 +1076,18 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           height: 42,
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0E4D6),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(21),
-            border: Border.all(color: const Color(0xFFE5D5C5), width: 1),
+            border: Border.all(color: AppColors.textDarkBerry.withValues(alpha: 0.12), width: 1),
           ),
           child: TabBar(
             controller: _tabController,
             indicator: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF9E5528), Color(0xFF8E4A23)],
-              ),
+              color: AppColors.brandRed,
               borderRadius: BorderRadius.circular(21),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF8E4A23).withOpacity(0.35),
+                  color: AppColors.textDarkBerry.withOpacity(0.35),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1105,7 +1096,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,
             labelColor: Colors.white,
-            unselectedLabelColor: const Color(0xFF8E4A23),
+            unselectedLabelColor: AppColors.textDarkBerry,
             labelStyle: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 13,
@@ -1210,7 +1201,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             _scaffoldMessengerKey.currentState?.showSnackBar(
                               const SnackBar(
                                 content: Text('Password reset email sent! Please check your inbox.'),
-                                backgroundColor: Color(0xFF4CAF50),
+                                backgroundColor: AppColors.brandRed,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -1220,7 +1211,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             _scaffoldMessengerKey.currentState?.showSnackBar(
                               SnackBar(
                                 content: Text('Failed to send reset email: $e'),
-                                backgroundColor: const Color(0xFFD32F2F),
+                                backgroundColor: AppColors.brandRed,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -1231,7 +1222,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                           _scaffoldMessengerKey.currentState?.showSnackBar(
                             const SnackBar(
                               content: Text('No email found for your account.'),
-                              backgroundColor: Color(0xFFD32F2F),
+                              backgroundColor: AppColors.brandRed,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -1256,12 +1247,12 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                         Container(
                           padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0E4D6),
+                            color: AppColors.brandRed,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
                             Icons.notifications_active_rounded,
-                            color: _cocoa,
+                            color: Colors.white,
                             size: 16,
                           ),
                         ),
@@ -1554,21 +1545,21 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                       height: 64,
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3E7DC),
+                        color: AppColors.bgPastelPink,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE5D5C5),
+                          color: AppColors.bgPastelPink,
                           width: 1.5,
                         ),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
-                          'assets/images/logo.jpg',
+                          'assets/images/nysebites_logo.png',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const Icon(
                             Icons.cookie,
-                            color: Color(0xFF8E4A23),
+                            color: AppColors.textDarkBerry,
                             size: 32,
                           ),
                         ),
@@ -1652,7 +1643,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             },
                             icon: const Icon(
                               Icons.facebook_rounded,
-                              color: Color(0xFF1877F2),
+                              color: AppColors.brandRed,
                               size: 16,
                             ),
                             label: const Text(
@@ -1666,7 +1657,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               side: const BorderSide(
-                                color: Color(0xFF1877F2),
+                                color: AppColors.brandRed,
                                 width: 1.2,
                               ),
                               shape: RoundedRectangleBorder(
@@ -1692,7 +1683,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             },
                             icon: const Icon(
                               Icons.camera_alt_rounded,
-                              color: Color(0xFFE1306C),
+                              color: AppColors.brandRed,
                               size: 16,
                             ),
                             label: const Text(
@@ -1706,7 +1697,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               side: const BorderSide(
-                                color: Color(0xFFE1306C),
+                                color: AppColors.brandRed,
                                 width: 1.2,
                               ),
                               shape: RoundedRectangleBorder(
@@ -1778,10 +1769,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFEFE4D6)),
+                  border: Border.all(color: AppColors.bgPastelPink),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF251811).withOpacity(0.04),
+                      color: AppColors.darkGarnet.withOpacity(0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -1807,7 +1798,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                               width: double.infinity,
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Color(0xFF3C2216), Color(0xFF5A3420)], // Matches your storefront header theme
+                                  colors: [AppColors.textDarkBerry, AppColors.brandRed], // Matches your storefront header theme
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -1832,7 +1823,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                         color: Colors.white,
                                         width: 3,
                                       ),
-                                      color: const Color(0xFFF3E7DC),
+                                      color: AppColors.bgPastelPink,
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.1),
@@ -1923,7 +1914,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     const Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFF5EDDF),
+                      color: AppColors.bgPastelPink,
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -1970,7 +1961,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                   decoration: const InputDecoration(
                                     hintText: 'Enter your name',
                                     hintStyle: TextStyle(
-                                      color: Color(0xFFAAA09A),
+                                      color: AppColors.brandRed,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 13.5,
                                     ),
@@ -1991,7 +1982,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     const Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFF5EDDF),
+                      color: AppColors.bgPastelPink,
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -2055,7 +2046,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                           counterText: '',
                                           hintText: '0900 000 0000',
                                           hintStyle: TextStyle(
-                                            color: Color(0xFFAAA09A),
+                                            color: AppColors.brandRed,
                                             fontWeight: FontWeight.w500,
                                             fontSize: 13.5,
                                           ),
@@ -2079,7 +2070,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     const Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFF5EDDF),
+                      color: AppColors.bgPastelPink,
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -2128,7 +2119,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                   decoration: const InputDecoration(
                                     hintText: 'Enter your email',
                                     hintStyle: TextStyle(
-                                      color: Color(0xFFAAA09A),
+                                      color: AppColors.brandRed,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 13.5,
                                     ),
@@ -2149,7 +2140,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     const Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFF5EDDF),
+                      color: AppColors.bgPastelPink,
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -2207,7 +2198,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                       color:
                                           _getFormattedAddress().isNotEmpty
                                               ? _espresso
-                                              : const Color(0xFFAAA09A),
+                                              : AppColors.brandRed,
                                       height: 1.35,
                                     ),
                                   ),
@@ -2217,7 +2208,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             const SizedBox(width: 8),
                             const Icon(
                               Icons.chevron_right_rounded,
-                              color: Color(0xFFAAA09A),
+                              color: AppColors.brandRed,
                               size: 20,
                             ),
                           ],
@@ -2237,7 +2228,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.white.withOpacity(0.0), const Color(0xFFFAF4ED)],
+              colors: [Colors.white.withOpacity(0.0), AppColors.bgPastelPink],
             ),
           ),
           child: SizedBox(
@@ -2326,10 +2317,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFEFE4D6)),
+                  border: Border.all(color: AppColors.bgPastelPink),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF251811).withOpacity(0.04),
+                      color: AppColors.darkGarnet.withOpacity(0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -2432,10 +2423,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFEFE4D6)),
+                  border: Border.all(color: AppColors.bgPastelPink),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF251811).withOpacity(0.04),
+                      color: AppColors.darkGarnet.withOpacity(0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -2579,7 +2570,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.white.withOpacity(0.0), const Color(0xFFFAF4ED)],
+              colors: [Colors.white.withOpacity(0.0), AppColors.bgPastelPink],
             ),
           ),
           child: SizedBox(
@@ -2646,12 +2637,12 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: hasError ? _errorRed : const Color(0xFFEFE4D6),
+              color: hasError ? _errorRed : AppColors.bgPastelPink,
               width: hasError ? 1.5 : 1.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF251811).withOpacity(0.04),
+                color: AppColors.darkGarnet.withOpacity(0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -2673,7 +2664,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 hintStyle: TextStyle(
                   color: hasError
                       ? _errorRed.withOpacity(0.8)
-                      : const Color(0xFFAAA09A),
+                      : AppColors.brandRed,
                   fontWeight: FontWeight.w500,
                   fontSize: 13.5,
                 ),
@@ -2715,10 +2706,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                           ? FontWeight.w600
                           : FontWeight.w500,
                       color: disabled
-                          ? const Color(0xFFD3C8BC)
+                          ? AppColors.brandRed
                           : (value.isNotEmpty
                               ? _espresso
-                              : const Color(0xFFAAA09A)),
+                              : AppColors.brandRed),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2728,7 +2719,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                           hint.toLowerCase().replaceAll('select ', '').trim()
                       ? Icons.keyboard_arrow_up_rounded
                       : Icons.keyboard_arrow_down_rounded,
-                  color: disabled ? const Color(0xFFD3C8BC) : _cocoa,
+                  color: disabled ? AppColors.brandRed : _cocoa,
                   size: 20,
                 ),
               ],
@@ -2739,7 +2730,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           const Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFF5EDDF),
+            color: AppColors.bgPastelPink,
             indent: 20,
             endIndent: 20,
           ),
@@ -2871,16 +2862,16 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFFF8EDE0), Color(0xFFF0E0CC)],
+                      colors: [AppColors.brandRed, AppColors.brandRed],
                     ),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFE5D5C5),
+                      color: AppColors.bgPastelPink,
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFE5D5C5).withOpacity(0.4),
+                        color: AppColors.bgPastelPink.withOpacity(0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -2932,7 +2923,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
             border: Border.all(color: _border),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF3C2216).withOpacity(0.04),
+                color: AppColors.darkGarnet.withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -2950,14 +2941,14 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                           product.imgSrc,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFFF3E7DC),
+                            color: AppColors.bgPastelPink,
                             child: const Center(
                               child: Text('🍪', style: TextStyle(fontSize: 24)),
                             ),
                           ),
                         )
                       : Container(
-                          color: const Color(0xFFF3E7DC),
+                          color: AppColors.bgPastelPink,
                           child: const Center(
                             child: Text('🍪', style: TextStyle(fontSize: 24)),
                           ),
@@ -2997,8 +2988,8 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 children: [
                   _iconBtn(
                     icon: Icons.favorite_rounded,
-                    color: const Color(0xFFE88B8B),
-                    bgColor: const Color(0xFFFFF0F0),
+                    color: Colors.white,
+                    bgColor: AppColors.brandRed,
                     onTap: () {
                       widget.onToggleFavorite(product);
                       setState(() {});
@@ -3334,7 +3325,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _espresso,
-                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          side: const BorderSide(color: AppColors.brandRed),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           backgroundColor: Colors.white,
@@ -3390,7 +3381,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
               width: dashWidth,
               height: dashHeight,
               child: DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFD0C4B8)),
+                decoration: BoxDecoration(color: AppColors.brandRed),
               ),
             );
           }),
@@ -3495,7 +3486,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                     : Icons.star_border_rounded,
                                 size: 38,
                                 color: index < _reviewRating
-                                    ? const Color(0xFFF5A623)
+                                    ? AppColors.brandRed
                                     : _muted.withOpacity(0.3),
                               ),
                             ),
@@ -3519,7 +3510,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             fontWeight: FontWeight.w500,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFFDFBF7),
+                          fillColor: AppColors.bgPastelPink,
                           contentPadding: const EdgeInsets.all(16),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -3674,7 +3665,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     width: 64,
                     height: 64,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF8EDE0),
+                      color: AppColors.brandRed,
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
@@ -3729,7 +3720,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     width: 80,
                     height: 80,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF8EDE0),
+                      color: AppColors.brandRed,
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
@@ -3845,11 +3836,11 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                 statusLabel.toLowerCase().contains('complet') ||
                 statusLabel.toLowerCase().contains('deliver');
             final statusBg = isCompleted
-                ? const Color(0xFFE8F5E9)
-                : const Color(0xFFFFF8E1);
+                ? const Color(0xFFD4EDDA)  // soft green background
+                : AppColors.bgPastelPink;
             final statusFg = isCompleted
-                ? const Color(0xFF2E7D32)
-                : const Color(0xFFE65100);
+                ? const Color(0xFF1A6B3A)  // dark green text
+                : AppColors.textDarkBerry;
 
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
@@ -3904,7 +3895,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8EDE0),
+                                    color: AppColors.brandRed,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child:
@@ -4052,7 +4043,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFAF4ED),
+                            color: AppColors.bgPastelPink,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: _border),
                           ),
@@ -4078,7 +4069,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                             : Icons.star_border_rounded,
                                         size: 14,
                                         color: starIdx < resolvedRating
-                                            ? const Color(0xFFF5A623)
+                                            ? AppColors.brandRed
                                             : _muted.withOpacity(0.3),
                                       );
                                     }),
@@ -4388,7 +4379,7 @@ class _FaqItemState extends State<_FaqItem> {
                 fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w800,
-                color: _expanded ? const Color(0xFF8C4A27) : const Color(0xFF251811),
+                color: _expanded ? AppColors.brandRed : AppColors.darkGarnet,
                 letterSpacing: -0.2,
               ),
               child: Text(widget.question),
@@ -4399,12 +4390,12 @@ class _FaqItemState extends State<_FaqItem> {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _expanded ? const Color(0xFFFBEBE4) : const Color(0xFFFAF4ED),
+                  color: _expanded ? AppColors.bgPastelPink : AppColors.bgPastelPink,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: _expanded ? const Color(0xFF8C4A27) : const Color(0xFF7A6559),
+                  color: _expanded ? AppColors.brandRed : AppColors.textDarkBerry,
                   size: 20,
                 ),
               ),
@@ -4417,7 +4408,7 @@ class _FaqItemState extends State<_FaqItem> {
                   widget.answer,
                   style: const TextStyle(
                     fontSize: 12.5,
-                    color: Color(0xFF7A6559),
+                    color: AppColors.textDarkBerry,
                     height: 1.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -4430,7 +4421,7 @@ class _FaqItemState extends State<_FaqItem> {
           const Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFF5EDDF),
+            color: AppColors.bgPastelPink,
             indent: 20,
             endIndent: 20,
           ),

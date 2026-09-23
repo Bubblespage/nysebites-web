@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 import 'gcash_portal_modal.dart';
+import '../theme/app_colors.dart';
 // ── FIX: Removed StorageUploader because Firebase Storage is locked behind a billing wall
 
 class OrderTrackerModal extends StatefulWidget {
@@ -82,12 +83,12 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
             constraints: const BoxConstraints(maxWidth: 340),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFFDFBF7),
+              color: AppColors.bgPastelPink,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFEFE4D6), width: 1.5),
+              border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF3C2216).withOpacity(0.12),
+                  color: AppColors.darkGarnet.withOpacity(0.12),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -101,13 +102,13 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFBEBE4),
+                    color: AppColors.bgPastelPink,
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFEFE4D6)),
+                    border: Border.all(color: AppColors.bgPastelPink),
                   ),
                   child: const Icon(
                     Icons.phone_in_talk_rounded,
-                    color: Color(0xFF8E4A23),
+                    color: AppColors.textDarkBerry,
                     size: 26,
                   ),
                 ),
@@ -119,7 +120,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                     fontFamily: 'serif',
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF2E1B10),
+                    color: AppColors.darkGarnet,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -128,7 +129,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: Color(0xFF756256),
+                    color: AppColors.textDarkBerry,
                     height: 1.4,
                   ),
                 ),
@@ -148,21 +149,21 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       vertical: 13,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAF2E9),
+                      color: AppColors.bgPastelPink,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE8D5C4)),
+                      border: Border.all(color: AppColors.brandRed),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.call_rounded, size: 16, color: Color(0xFF8E4A23)),
+                        Icon(Icons.call_rounded, size: 16, color: AppColors.textDarkBerry),
                         SizedBox(width: 10),
                         Text(
                           '0995 082 9180',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF2E1B10),
+                            color: AppColors.darkGarnet,
                             letterSpacing: 0.4,
                           ),
                         ),
@@ -175,7 +176,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8E4A23),
+                      backgroundColor: AppColors.brandRed,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
@@ -279,9 +280,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDFBF7),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFEFE4D6)),
+            border: Border.all(color: AppColors.bgPastelPink),
             boxShadow: const [
               BoxShadow(
                 color: Color.fromRGBO(60, 34, 22, 0.22),
@@ -303,7 +304,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 return const SizedBox(
                   height: 250,
                   child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFF8E4A23)),
+                    child: CircularProgressIndicator(color: AppColors.textDarkBerry),
                   ),
                 );
               }
@@ -389,7 +390,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF8E4A23),
+                                color: AppColors.textDarkBerry,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -399,7 +400,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                                 fontFamily: 'serif',
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF2E1B10),
+                                color: AppColors.darkGarnet,
                               ),
                             ),
                           ],
@@ -409,7 +410,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                             IconButton(
                               icon: const Icon(
                                 Icons.refresh,
-                                color: Color(0xFF8E4A23),
+                                color: AppColors.textDarkBerry,
                                 size: 20,
                               ),
                               tooltip: 'Force Sync Stream',
@@ -418,7 +419,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                             IconButton(
                               icon: const Icon(
                                 Icons.close,
-                                color: Color(0xFF756256),
+                                color: AppColors.textDarkBerry,
                               ),
                               onPressed: () => Navigator.pop(context),
                             ),
@@ -433,16 +434,16 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFAF2E9),
+                        color: AppColors.bgPastelPink,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE8D5C4)),
+                        border: Border.all(color: AppColors.brandRed),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
                             Icons.sync,
-                            color: Color(0xFF8E4A23),
+                            color: AppColors.textDarkBerry,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
@@ -450,7 +451,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                             statusLabel.replaceAll('Packing', 'Preparation'),
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF8E4A23),
+                              color: AppColors.textDarkBerry,
                               fontSize: 13,
                             ),
                           ),
@@ -463,7 +464,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFEFE4D6)),
+                        border: Border.all(color: AppColors.bgPastelPink),
                       ),
                       child: isCustom
                           ? _buildCustomTrackerFlow(
@@ -484,9 +485,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9F5F0),
+                        color: AppColors.bgPastelPink,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE8D5C4)),
+                        border: Border.all(color: AppColors.brandRed),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,30 +498,30 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E1B10))),
+                                  const Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkGarnet)),
                                   const SizedBox(height: 2),
                                   Text(
                                     'Order #${widget.orderNumber} • ${_formatDate(widget.placedAt)}',
-                                    style: const TextStyle(fontSize: 10, color: Color(0xFF9E8E84)),
+                                    style: const TextStyle(fontSize: 10, color: AppColors.textDarkBerry),
                                   ),
                                 ],
                               ),
-                              Text('₱${widget.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E4A23))),
+                              Text('₱${widget.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDarkBerry)),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
                             (data['item'] ?? '${widget.itemCount} items').toString(),
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF756256), height: 1.5),
+                            style: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry, height: 1.5),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Address: ${data['address'] ?? 'Not provided'}',
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF756256), height: 1.5),
+                            style: const TextStyle(fontSize: 11, color: AppColors.textDarkBerry, height: 1.5),
                           ),
                           Text(
                             'Contact: ${data['contact'] ?? data['phone'] ?? 'Not provided'}',
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF756256), height: 1.5),
+                            style: const TextStyle(fontSize: 11, color: AppColors.textDarkBerry, height: 1.5),
                           ),
                         ],
                       ),
@@ -533,7 +534,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         child: const Text(
                           'Close Tracker',
                           style: TextStyle(
-                            color: Color(0xFF8E4A23),
+                            color: AppColors.textDarkBerry,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -554,7 +555,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
       margin: const EdgeInsets.only(left: 17),
       height: 18,
       width: 2,
-      color: isActive ? const Color(0xFF8E4A23) : const Color(0xFFE5D5C5),
+      color: isActive ? AppColors.textDarkBerry : AppColors.bgPastelPink,
     );
   }
 
@@ -572,13 +573,13 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDone ? const Color(0xFF8E4A23) : const Color(0xFFF0E5DA),
+          color: isDone ? AppColors.textDarkBerry : AppColors.bgPastelPink,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           size: 18,
-          color: isDone ? Colors.white : const Color(0xFF9E8E84),
+          color: isDone ? Colors.white : AppColors.textDarkBerry,
         ),
       ),
       const SizedBox(width: 14),
@@ -592,13 +593,13 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 color: isDone
-                    ? const Color(0xFF2E1B10)
-                    : const Color(0xFF9E8E84),
+                    ? AppColors.darkGarnet
+                    : AppColors.textDarkBerry,
               ),
             ),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF756256)),
+              style: const TextStyle(fontSize: 11, color: AppColors.textDarkBerry),
             ),
             if (child != null) child, // ADDED
           ],
@@ -659,7 +660,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8E4A23),
+                        backgroundColor: AppColors.brandRed,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -680,8 +681,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF8E4A23)),
-                    foregroundColor: const Color(0xFF8E4A23),
+                    side: const BorderSide(color: AppColors.textDarkBerry),
+                    foregroundColor: AppColors.textDarkBerry,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -789,9 +790,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   margin: const EdgeInsets.only(top: 12),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF2E9),
+                    color: AppColors.bgPastelPink,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE8D5C4)),
+                    border: Border.all(color: AppColors.brandRed),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -834,7 +835,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                           ),
                         ],
                       ),
-                      const Divider(color: Color(0xFFE8D5C4)),
+                      const Divider(color: AppColors.brandRed),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -876,7 +877,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8E4A23),
+                            backgroundColor: AppColors.brandRed,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -929,9 +930,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   margin: const EdgeInsets.only(top: 12),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF2E9),
+                    color: AppColors.bgPastelPink,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE8D5C4)),
+                    border: Border.all(color: AppColors.brandRed),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -968,7 +969,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 4),
-                        child: Divider(color: Color(0xFFE8D5C4)),
+                        child: Divider(color: AppColors.brandRed),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -996,7 +997,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0053E0),
+                            backgroundColor: AppColors.brandRed,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1026,8 +1027,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF0053E0),
-                            side: const BorderSide(color: Color(0xFF0053E0), width: 1.5),
+                            foregroundColor: AppColors.brandRed,
+                            side: const BorderSide(color: AppColors.brandRed, width: 1.5),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -1078,9 +1079,9 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                   margin: const EdgeInsets.only(top: 12),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF2E9),
+                    color: AppColors.bgPastelPink,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE8D5C4)),
+                    border: Border.all(color: AppColors.brandRed),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1091,7 +1092,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0053E0),
+                            backgroundColor: AppColors.brandRed,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1140,7 +1141,7 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8E4A23),
+                                backgroundColor: AppColors.brandRed,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -1161,8 +1162,8 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF8E4A23)),
-                            foregroundColor: const Color(0xFF8E4A23),
+                            side: const BorderSide(color: AppColors.textDarkBerry),
+                            foregroundColor: AppColors.textDarkBerry,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           onPressed: () {
@@ -1204,10 +1205,10 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: isDone ? const Color(0xFF8E4A23) : const Color(0xFFF0E5DA),
+            color: isDone ? AppColors.textDarkBerry : AppColors.bgPastelPink,
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 18, color: isDone ? Colors.white : const Color(0xFF9E8E84)),
+          child: Icon(icon, size: 18, color: isDone ? Colors.white : AppColors.textDarkBerry),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -1219,10 +1220,10 @@ class _OrderTrackerModalState extends State<OrderTrackerModal> {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: isDone ? const Color(0xFF2E1B10) : const Color(0xFF9E8E84),
+                  color: isDone ? AppColors.darkGarnet : AppColors.textDarkBerry,
                 ),
               ),
-              Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF756256))),
+              Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textDarkBerry)),
               if (child != null) child,
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../theme/app_colors.dart';
 
 class ContactSection extends StatefulWidget {
   const ContactSection({super.key});
@@ -29,14 +30,14 @@ class _ContactSectionState extends State<ContactSection> {
           width: 420,
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFA),
+            color: AppColors.bgPastelPink,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFEFE4D6)),
-            boxShadow: const [
+            border: Border.all(color: AppColors.textDarkBerry.withValues(alpha: 0.1)),
+            boxShadow: [
               BoxShadow(
-                color: Color.fromRGBO(60, 34, 22, 0.16),
+                color: AppColors.textDarkBerry.withValues(alpha: 0.15),
                 blurRadius: 24,
-                offset: Offset(0, 10),
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -47,9 +48,9 @@ class _ContactSectionState extends State<ContactSection> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAF2E9),
+                  color: AppColors.bgPastelPink,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE5D5C5)),
+                  border: Border.all(color: AppColors.bgPastelPink),
                 ),
                 child: const Center(
                   child: Text('💌', style: TextStyle(fontSize: 30)),
@@ -63,7 +64,7 @@ class _ContactSectionState extends State<ContactSection> {
                   fontFamily: 'serif',
                   fontSize: 21,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF2E1B10),
+                  color: AppColors.darkGarnet,
                 ),
               ),
               const SizedBox(height: 8),
@@ -72,7 +73,7 @@ class _ContactSectionState extends State<ContactSection> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF756256),
+                  color: AppColors.textDarkBerry,
                   height: 1.45,
                 ),
               ),
@@ -82,7 +83,7 @@ class _ContactSectionState extends State<ContactSection> {
                 height: 44,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8E4A23),
+                    backgroundColor: AppColors.brandRed,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -157,7 +158,7 @@ class _ContactSectionState extends State<ContactSection> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to send note: $e'),
-          backgroundColor: const Color(0xFFD32F2F),
+          backgroundColor: AppColors.brandRed,
         ),
       );
     } finally {
@@ -185,12 +186,12 @@ class _ContactSectionState extends State<ContactSection> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFEFE4D6)),
-            boxShadow: const [
+            border: Border.all(color: AppColors.textDarkBerry.withValues(alpha: 0.1)),
+            boxShadow: [
               BoxShadow(
-                color: Color.fromRGBO(60, 34, 22, 0.06),
+                color: AppColors.textDarkBerry.withValues(alpha: 0.08),
                 blurRadius: 24,
-                offset: Offset(0, 6),
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -206,7 +207,7 @@ class _ContactSectionState extends State<ContactSection> {
                     fontFamily: 'serif',
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF2E1B10),
+                    color: AppColors.darkGarnet,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -214,7 +215,7 @@ class _ContactSectionState extends State<ContactSection> {
                   'Questions about bulk catering, custom themes, or ingredient inquiries? Send our kitchen team a note!',
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: Color(0xFF756256),
+                    color: AppColors.textDarkBerry,
                     height: 1.4,
                   ),
                 ),
@@ -228,15 +229,15 @@ class _ContactSectionState extends State<ContactSection> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDE8E8),
+                      color: AppColors.bgPastelPink,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFF8B4B4)),
+                      border: Border.all(color: AppColors.bgPastelPink),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.error_outline_rounded,
-                          color: Color(0xFF9B1C1C),
+                          color: AppColors.brandRed,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -245,7 +246,7 @@ class _ContactSectionState extends State<ContactSection> {
                             _validationErrorMessage!,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF9B1C1C),
+                              color: AppColors.brandRed,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -273,7 +274,7 @@ class _ContactSectionState extends State<ContactSection> {
                         : null,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF2E1B10),
+                      color: AppColors.darkGarnet,
                     ),
                     decoration: _inputDecoration(
                       hint: 'e.g. Mai Leonhart',
@@ -309,7 +310,7 @@ class _ContactSectionState extends State<ContactSection> {
                     },
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF2E1B10),
+                      color: AppColors.darkGarnet,
                     ),
                     decoration: _inputDecoration(
                       hint: 'e.g. name@example.com',
@@ -336,7 +337,7 @@ class _ContactSectionState extends State<ContactSection> {
                         : null,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF2E1B10),
+                      color: AppColors.darkGarnet,
                     ),
                     decoration: _inputDecoration(
                       hint: 'e.g. Birthday Celebration Bulk Order',
@@ -370,7 +371,7 @@ class _ContactSectionState extends State<ContactSection> {
                     },
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF2E1B10),
+                      color: AppColors.darkGarnet,
                     ),
                     decoration: _inputDecoration(
                       hint:
@@ -387,7 +388,7 @@ class _ContactSectionState extends State<ContactSection> {
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8E4A23),
+                      backgroundColor: AppColors.brandRed,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -431,7 +432,7 @@ class _ContactSectionState extends State<ContactSection> {
           style: const TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 12,
-            color: Color(0xFF2E1B10),
+            color: AppColors.darkGarnet,
           ),
         ),
         const SizedBox(height: 6),
@@ -446,22 +447,22 @@ class _ContactSectionState extends State<ContactSection> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9E8E84)),
-      prefixIcon: Icon(icon, color: const Color(0xFF8E4A23), size: 18),
+      hintStyle: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry),
+      prefixIcon: Icon(icon, color: AppColors.textDarkBerry, size: 18),
       filled: true,
-      fillColor: const Color(0xFFFAFAFA),
+      fillColor: AppColors.bgPastelPink,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+        borderSide: BorderSide(color: AppColors.textDarkBerry.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+        borderSide: BorderSide(color: AppColors.textDarkBerry.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF8E4A23), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.textDarkBerry, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

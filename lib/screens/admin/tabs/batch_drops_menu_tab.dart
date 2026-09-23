@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
 import '../admin_modals.dart';
+import '../../../theme/app_colors.dart';
 
 class BatchDropsMenuTab extends StatefulWidget {
   final List<Map<String, dynamic>> inventory;
@@ -25,13 +26,13 @@ class BatchDropsMenuTab extends StatefulWidget {
 }
 
 class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF1F1209);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF7A6559);
-  static const Color borderLight = Color(0xFFEFE4D6);
-  static const Color creamCard = Color(0xFFFAFAFA);
-  static const Color warmBlush = Color(0xFFFBEBE4);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color darkEspresso = AppColors.brandRed;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.textDarkBerry;
+  static const Color borderLight = AppColors.bgPastelPink;
+  static const Color creamCard = AppColors.bgPastelPink;
+  static const Color warmBlush = AppColors.bgPastelPink;
 
   String _activeCategory = 'All';
 
@@ -96,7 +97,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
               padding: EdgeInsets.all(isMobile ? 16 : 22),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFDF4E9), Color(0xFFF7E7D5)],
+                  colors: [AppColors.brandRed, AppColors.brandRed],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -104,7 +105,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                 border: Border.all(color: borderLight, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF8B7355).withOpacity(0.08),
+                    color: AppColors.brandRed.withOpacity(0.08),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
@@ -179,7 +180,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                               },
                               icon: const Icon(Icons.download_rounded, color: brandCocoa),
                               style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFFFBF7F2),
+                                backgroundColor: AppColors.brandRed,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
                               ),
                             ),
@@ -265,7 +266,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                               icon: const Icon(Icons.download_rounded, size: 16),
                               label: const Text('Export PDF'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFDF4E9),
+                                backgroundColor: AppColors.brandRed,
                                 foregroundColor: brandCocoa,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                                 elevation: 0,
@@ -288,8 +289,8 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
               runSpacing: 12,
               children: [
                 _cuteMetricCard('🍪 Live Sweets', '$activeCount Active', 'Available on storefront', brandCocoa, cardWidth),
-                _cuteMetricCard('🧺 In Tray Counter', '$totalStock Pieces', 'Fresh batches ready', const Color(0xFF2E7D32), cardWidth),
-                _cuteMetricCard('⚠️ Oven Alert', '$lowStockCount Items', '5 or fewer units left', const Color(0xFFC27803), cardWidth),
+                _cuteMetricCard('🧺 In Tray Counter', '$totalStock Pieces', 'Fresh batches ready', AppColors.brandRed, cardWidth),
+                _cuteMetricCard('⚠️ Oven Alert', '$lowStockCount Items', '5 or fewer units left', AppColors.brandRed, cardWidth),
                 _cuteMetricCard('⏱️ Next Batch Drop', '18 mins', 'Preheating deck ovens', darkEspresso, cardWidth),
               ],
             ),
@@ -340,7 +341,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF2E9),
+                    color: AppColors.bgPastelPink,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -393,10 +394,10 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                   return Container(
                     width: productCardWidth,
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : const Color(0xFFFAF7F2),
+                      color: active ? Colors.white : AppColors.brandRed,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: active ? const Color(0xFFEFE2D3) : const Color(0xFFE8E0D7),
+                        color: active ? AppColors.brandRed : AppColors.brandRed,
                         width: 1.4,
                       ),
                     ),
@@ -411,7 +412,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: active ? warmBlush : const Color(0xFFEFEBE6),
+                                color: active ? warmBlush : AppColors.brandRed,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               alignment: Alignment.center,
@@ -427,7 +428,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFAF2E9),
+                                          color: AppColors.bgPastelPink,
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
@@ -474,7 +475,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                             Switch(
                               value: active,
                               activeColor: brandCocoa,
-                              activeTrackColor: const Color(0xFFE8C8B5),
+                              activeTrackColor: AppColors.brandRed,
                               onChanged: (val) => widget.onToggleStatus(originalIndex),
                             ),
                           ],
@@ -499,8 +500,8 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w800,
                                       color: stock == 0
-                                          ? const Color(0xFFD32F2F)
-                                          : (stock <= 5 ? const Color(0xFFE65100) : const Color(0xFF2E7D32)),
+                                          ? AppColors.brandRed
+                                          : (stock <= 5 ? AppColors.brandRed : AppColors.brandRed),
                                     ),
                                   ),
                                   Text(
@@ -515,9 +516,9 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                 child: LinearProgressIndicator(
                                   value: capacityRatio,
                                   minHeight: 5,
-                                  backgroundColor: const Color(0xFFEFE4D6),
+                                  backgroundColor: AppColors.bgPastelPink,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    stock == 0 ? const Color(0xFFE57373) : brandCocoa,
+                                    stock == 0 ? AppColors.brandRed : brandCocoa,
                                   ),
                                 ),
                               ),
@@ -535,7 +536,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFAF4EE),
+                                color: AppColors.brandRed,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: borderLight),
                               ),
@@ -551,7 +552,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       child: Icon(
                                         Icons.remove,
                                         size: 15,
-                                        color: stock > 0 ? textDark : const Color(0xFFC4B8B0),
+                                        color: stock > 0 ? textDark : AppColors.brandRed,
                                       ),
                                     ),
                                   ),
@@ -563,7 +564,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 13,
-                                        color: stock == 0 ? const Color(0xFFD32F2F) : textDark,
+                                        color: stock == 0 ? AppColors.brandRed : textDark,
                                       ),
                                     ),
                                   ),

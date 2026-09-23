@@ -5,6 +5,7 @@ import '../../../utils/pdf_report_generator.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import '../admin_modals.dart';
+import '../../../theme/app_colors.dart';
 
 class CustomCakeDeskTab extends StatefulWidget {
   final List<Map<String, dynamic>> customCakes;
@@ -23,12 +24,12 @@ class CustomCakeDeskTab extends StatefulWidget {
 }
 
 class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF1F1209);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color borderLight = Color(0xFFE5E7EB);
-  static const Color wellBg = Color(0xFFF3F4F6);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color darkEspresso = AppColors.brandRed;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
+  static const Color wellBg = AppColors.brandRed;
 
   int _selectedSubTab = 0; // 0 = Pending Specs, 1 = In Progress, 2 = History, 3 = Schedule & Slots
   DateTime _currentMonth = DateTime.now();
@@ -158,7 +159,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                             },
                             icon: const Icon(Icons.download_rounded, color: brandCocoa),
                             style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFFBF7F2),
+                              backgroundColor: AppColors.brandRed,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
                             ),
                           ),
@@ -378,7 +379,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F5E9),
+                                    color: AppColors.brandRed,
                                     borderRadius: BorderRadius.circular(5),
                                   ),
                                   child: Text(
@@ -386,7 +387,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                     style: const TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF2E7D32),
+                                      color: AppColors.brandRed,
                                     ),
                                   ),
                                 ),
@@ -618,7 +619,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBEBE4),
+        color: AppColors.bgPastelPink,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -639,17 +640,17 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
     final s = status.toLowerCase();
 
     if (s == 'baking') {
-      bg = const Color(0xFFFBEBE4);
+      bg = AppColors.bgPastelPink;
       fg = brandCocoa;
     } else if (s.contains('pending') || s == 'received') {
-      bg = const Color(0xFFFEF6E9);
-      fg = const Color(0xFFC27803);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     } else if (s == 'delivering') {
-      bg = const Color(0xFFE8F0FE);
-      fg = const Color(0xFF1967D2);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     } else if (s == 'delivered' || s.contains('completed')) {
-      bg = const Color(0xFFE8F5E9);
-      fg = const Color(0xFF2E7D32);
+      bg = AppColors.brandRed;
+      fg = AppColors.brandRed;
     }
 
     return Container(
@@ -699,7 +700,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3E2723)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkGarnet),
             onPressed: () {
               Navigator.pop(ctx);
               widget.onUpdateStatus(
@@ -748,7 +749,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
       final bool isFull = order['paymentType'] == 'full';
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC27803),
+          backgroundColor: AppColors.brandRed,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -792,7 +793,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
     if (status == 'baked_payment_verifying') {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC27803),
+          backgroundColor: AppColors.brandRed,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -900,25 +901,25 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                         final String status = order['status']?.toString() ?? '';
                         
                         String badgeText = 'PEND';
-                        Color badgeBg = const Color(0xFFF3F4F6);
-                        Color badgeFg = const Color(0xFF6B7280);
+                        Color badgeBg = AppColors.brandRed;
+                        Color badgeFg = AppColors.brandRed;
 
                         if (payment.contains('full')) {
                           badgeText = 'FULL';
-                          badgeBg = const Color(0xFFE8F5E9);
-                          badgeFg = const Color(0xFF2E7D32);
+                          badgeBg = AppColors.brandRed;
+                          badgeFg = AppColors.brandRed;
                         } else if (payment.contains('half') || payment.contains('deposit')) {
                           badgeText = 'HALF';
-                          badgeBg = const Color(0xFFFFF3E0);
-                          badgeFg = const Color(0xFFE65100);
+                          badgeBg = AppColors.brandRed;
+                          badgeFg = AppColors.brandRed;
                         } else if (status == 'baking' || status == 'ready_to_bake') {
                           badgeText = 'BAKI';
-                          badgeBg = const Color(0xFFFBEBE4);
+                          badgeBg = AppColors.bgPastelPink;
                           badgeFg = brandCocoa;
                         } else if (status.contains('quote') || status.contains('contract')) {
                           badgeText = 'QUOT';
-                          badgeBg = const Color(0xFFE3F2FD);
-                          badgeFg = const Color(0xFF1565C0);
+                          badgeBg = AppColors.brandRed;
+                          badgeFg = AppColors.brandRed;
                         }
 
                         return Container(
@@ -1128,7 +1129,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isCurrentMonth ? Colors.white : const Color(0xFFF9FAFB),
+                      color: isCurrentMonth ? Colors.white : AppColors.brandRed,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: borderLight),
                       boxShadow: [
@@ -1260,7 +1261,7 @@ class _HoverElevateState extends State<HoverElevate> {
           boxShadow: _isHovering
               ? [
                   BoxShadow(
-                    color: const Color(0xFF8B7355).withOpacity(0.08),
+                    color: AppColors.brandRed.withOpacity(0.08),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   )

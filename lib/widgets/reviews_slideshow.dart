@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class ReviewsSlideshow extends StatefulWidget {
   const ReviewsSlideshow({super.key});
@@ -14,52 +15,36 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
   Timer? _autoSlideTimer;
   bool _isHovered = false;
 
-  // Hardcoded reviews only — completely independent of Firebase collection
   final List<Map<String, String>> _fallbackReviews = [
     {
-      'rating': '★★★★★',
-      'comment': 'The customized red velvet cake with gold leaf was the highlight of our party!',
-      'name': '- Law R.',
+      'comment': 'The croissants are absolutely amazing! Fresh, buttery and so delicious.',
+      'name': 'Sarah Johnson',
+      'location': 'New York, USA',
     },
     {
-      'rating': '★★★★★',
-      'comment': 'Ordered a batch of fudge brownies for a family gathering and they were gone in minutes.',
-      'name': '- Mark D.',
+      'comment': 'Best bakery I\'ve ever ordered from. The cakes are always perfect!',
+      'name': 'Michael Brown',
+      'location': 'London, UK',
     },
     {
-      'rating': '★★★★★',
-      'comment': 'Love the less-sweet option! Rich flavors without an overwhelming sugar crash.',
-      'name': '- Hanah L.',
+      'comment': 'Amazing quality and super fast delivery. Highly recommended!',
+      'name': 'Emily Davis',
+      'location': 'Toronto, Canada',
     },
     {
-      'rating': '★★★★',
       'comment': 'Warm them for 2 minutes and they taste like pure bakery perfection. Unmatched quality!',
-      'name': '- Rain P.',
+      'name': 'Rain P.',
+      'location': 'Sydney, Australia',
     },
     {
-      'rating': '★★★★★',
       'comment': 'Fast response and the eco-packaging looked so premium. Every guest asked where we ordered from!',
-      'name': '- Niko V.',
+      'name': 'Niko V.',
+      'location': 'Manila, PH',
     },
     {
-      'rating': '★★★★★',
       'comment': 'The balance of sea salt with rich homemade caramel in the fudge brownies is 10/10.',
-      'name': '- Xander L.',
-    },
-    {
-      'rating': '★★★★',
-      'comment': 'I requested custom oat-milk frosting in the notes box and Nyse Bites delivered perfectly!',
-      'name': '- Patricia L.',
-    },
-    {
-      'rating': '★★★★★',
-      'comment': 'Loaded with toasted walnuts and silky spiced cinnamon cream. Best carrot cake in town.',
-      'name': '- Angelo R.',
-    },
-    {
-      'rating': '★★★★★',
-      'comment': 'The matcha white chocolate cookies are thick, gooey, and packed with real Uji matcha flavor.',
-      'name': '- Sophia K.',
+      'name': 'Xander L.',
+      'location': 'Berlin, Germany',
     },
   ];
 
@@ -85,14 +70,6 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
     });
   }
 
-  void _goToPage(int page) {
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
-
   @override
   void dispose() {
     _autoSlideTimer?.cancel();
@@ -114,156 +91,227 @@ class _ReviewsSlideshowState extends State<ReviewsSlideshow> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Use LayoutBuilder width instead of MediaQuery to support Chrome's "Desktop site" mode correctly
-        final availableWidth = constraints.maxWidth > 0 ? constraints.maxWidth : MediaQuery.of(context).size.width;
-        final isCompact = availableWidth < 980;
+        final isMobile = constraints.maxWidth < 960;
         
-        final mobileCardWidth = availableWidth > 40
-            ? (availableWidth - 40).clamp(200.0, 340.0)
-            : 280.0;
-
-        final reviews = _fallbackReviews;
-        final reviewBatches = _chunkReviews(reviews, 3);
-        final totalPages = isCompact ? reviews.length : reviewBatches.length;
+        final reviewBatches = _chunkReviews(_fallbackReviews, isMobile ? 1 : 3);
+        final totalPages = reviewBatches.length;
 
         _startAutoSlide(totalPages);
 
         return Container(
           width: double.infinity,
-          color: const Color(0xFFF7ECE1),
+          color: AppColors.bgPastelPink,
           padding: EdgeInsets.symmetric(
-            vertical: isCompact ? 24 : 36,
-            horizontal: 16,
+            horizontal: isMobile ? 16.0 : 48.0,
+            vertical: isMobile ? 32.0 : 64.0,
           ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1060),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    'Loved By Sweet Lovers',
-                    style: TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E1B10),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  MouseRegion(
-                    onEnter: (_) => setState(() => _isHovered = true),
-                    onExit: (_) => setState(() => _isHovered = false),
-                    child: SizedBox(
-                      height: 165,
-                      child: PageView.builder(
-                        controller: _pageController,
-                        itemCount: totalPages,
-                        onPageChanged: (index) =>
-                            setState(() => _currentPage = index),
-                        itemBuilder: (context, index) {
-                          if (isCompact) {
-                            return Center(
-                              child: _buildSmallCard(
-                                reviews[index],
-                                width: mobileCardWidth,
-                              ),
-                            );
-                          }
-
-                          final batch = reviewBatches[index];
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: batch.map((review) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                child: _buildSmallCard(review, width: 310),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (totalPages > 1)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(totalPages, (index) {
-                        final isActive = index == _currentPage;
-                        return InkWell(
-                          onTap: () => _goToPage(index),
-                          borderRadius: BorderRadius.circular(10),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: isActive ? 18 : 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? const Color(0xFF8E4A23)
-                                  : const Color(0xFFDDB892),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'What Our Customers Say',
+                          style: TextStyle(
+                            fontFamily: 'serif',
+                            fontSize: isMobile ? 28 : 36,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textDarkBerry,
+                            height: 1.1,
+                            letterSpacing: -0.5,
                           ),
-                        );
-                      }),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Real people. Real love for our baked goods.',
+                          style: TextStyle(
+                            fontSize: isMobile ? 14 : 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isMobile)
+                    InkWell(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.textDarkBerry.withOpacity(0.2)),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'View All',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: AppColors.textDarkBerry,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.textDarkBerry),
+                          ],
+                        ),
+                      ),
                     ),
                 ],
               ),
-            ),
+              const SizedBox(height: 40),
+              
+              // Carousel
+              MouseRegion(
+                onEnter: (_) => setState(() => _isHovered = true),
+                onExit: (_) => setState(() => _isHovered = false),
+                child: SizedBox(
+                  height: 240,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: totalPages,
+                    onPageChanged: (index) => setState(() => _currentPage = index),
+                    itemBuilder: (context, index) {
+                      final batch = reviewBatches[index];
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: batch.map((review) {
+                          return Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 12),
+                              child: _buildReviewCard(review),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              
+              // Dots
+              const SizedBox(height: 24),
+              if (totalPages > 1)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(totalPages, (index) {
+                    final isActive = index == _currentPage;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: isActive ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: isActive ? AppColors.accentGold : AppColors.textDarkBerry.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
+                ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildSmallCard(Map<String, String> review, {required double width}) {
+  Widget _buildReviewCard(Map<String, String> review) {
     return Container(
-      width: width,
-      height: 165,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEFE4D6)),
-        boxShadow: const [
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromRGBO(60, 34, 22, 0.04),
-            blurRadius: 8,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            review['rating'] ?? '★★★★★',
-            style: const TextStyle(
-              color: Color(0xFF8E4A23),
-              fontSize: 15,
-              letterSpacing: 2,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.bgPastelPink,
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/hero_1.jpg'), // Placeholder
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.format_quote_rounded,
+                size: 40,
+                color: AppColors.bgPastelPink.withOpacity(0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Text(
+              '"${review['comment']}"',
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: AppColors.textDarkBerry,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          Text(
-            '"${review['comment'] ?? ''}"',
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12.5,
-              height: 1.35,
-              color: Color(0xFF2E1B10),
-            ),
-          ),
-          Text(
-            review['name'] ?? '- Sweet Customer',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 11.5,
-              color: Color(0xFF756256),
-            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review['name'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: AppColors.textDarkBerry,
+                      ),
+                    ),
+                    Text(
+                      review['location'] ?? '',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
+                  Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
+                  Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
+                  Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
+                  Icon(Icons.star_rounded, color: AppColors.accentGold, size: 14),
+                ],
+              )
+            ],
           ),
         ],
       ),

@@ -109,7 +109,7 @@ class InstagramPostModal extends StatelessWidget {
                           children: [
                             const CircleAvatar(
                               radius: 16,
-                              backgroundImage: AssetImage('assets/images/logo.jpg'),
+                              backgroundImage: AssetImage('assets/images/nysebites_logo.png'),
                             ),
                             const SizedBox(width: 10),
                             const Text(

@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
 import '../data/mock_products.dart';
 import 'checkout_modal.dart';
+import 'checkout_modal.dart';
 import 'custom_cake_modal.dart';
+import '../theme/app_colors.dart';
 
 class CartDrawer extends StatefulWidget {
   final List<Product> cartItems;
@@ -37,10 +39,10 @@ class CartDrawer extends StatefulWidget {
 }
 
 class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateMixin {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF2E1B10);
-  static const Color borderLight = Color(0xFFEFE4D6);
-  static const Color textMuted = Color(0xFF756256);
+  static const Color brandCocoa = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color borderLight = AppColors.bgPastelPink;
+  static const Color textMuted = AppColors.textDarkBerry;
 
   late AnimationController _shimmerController;
 
@@ -119,15 +121,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
           ),
           child: Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFFFFBF7),
-                  Color(0xFFFAF4ED),
-                  Color(0xFFF5EDDF),
-                ],
-              ),
+              color: AppColors.cardWhite,
               borderRadius: BorderRadius.horizontal(left: Radius.circular(24)),
             ),
             child: SafeArea(
@@ -140,7 +134,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                       vertical: 16,
                     ),
                     decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Color(0xFFE5D5C5))),
+                      border: Border(bottom: BorderSide(color: AppColors.bgPastelPink)),
                     ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -152,16 +146,16 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                             height: 34,
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3E7DC),
+                              color: AppColors.bgPastelPink,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: const Color(0xFFE5D5C5),
+                                color: AppColors.bgPastelPink,
                               ),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(6),
                               child: Image.asset(
-                                'assets/images/logo.jpg',
+                                'assets/images/nysebites_logo.png',
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => const Icon(
                                   Icons.shopping_bag_outlined,
@@ -213,16 +207,16 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                   height: 72,
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF3E7DC),
+                                    color: AppColors.bgPastelPink,
                                     borderRadius: BorderRadius.circular(36),
                                     border: Border.all(
-                                      color: const Color(0xFFE5D5C5),
+                                      color: AppColors.bgPastelPink,
                                   ),
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(30),
                                   child: Image.asset(
-                                    'assets/images/logo.jpg',
+                                    'assets/images/nysebites_logo.png',
                                     fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => const Icon(
                                       Icons.cookie_outlined,
@@ -299,8 +293,8 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                     child: product.imgSrc.isEmpty
                                         ? Container(
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFF3E7DC),
-                                              border: Border.all(color: const Color(0xFFE5D5C5)),
+                                              color: AppColors.bgPastelPink,
+                                              border: Border.all(color: AppColors.bgPastelPink),
                                             ),
                                             alignment: Alignment.center,
                                             child: Text(
@@ -341,7 +335,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                               label: const Text('Box of 4', style: TextStyle(fontSize: 12)),
                                               selected: _tempCookieBoxSize == 4,
                                               onSelected: (val) { if(val) setState(() => _tempCookieBoxSize = 4); },
-                                              selectedColor: const Color(0xFFF3E7DC),
+                                              selectedColor: AppColors.bgPastelPink,
                                               checkmarkColor: brandCocoa,
                                               padding: EdgeInsets.zero,
                                             ),
@@ -349,7 +343,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                               label: const Text('Box of 6', style: TextStyle(fontSize: 12)),
                                               selected: _tempCookieBoxSize == 6,
                                               onSelected: (val) { if(val) setState(() => _tempCookieBoxSize = 6); },
-                                              selectedColor: const Color(0xFFF3E7DC),
+                                              selectedColor: AppColors.bgPastelPink,
                                               checkmarkColor: brandCocoa,
                                               padding: EdgeInsets.zero,
                                             ),
@@ -419,9 +413,9 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                             margin: const EdgeInsets.only(right: 12),
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFF9F6F0),
+                                              color: AppColors.bgPastelPink,
                                               borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: const Color(0xFFEFE4D6)),
+                                              border: Border.all(color: AppColors.bgPastelPink),
                                             ),
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +510,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: const Color(0xFFE0D3C4),
+                                          color: AppColors.bgPastelPink,
                                         ),
                                       ),
                                   child: Row(
@@ -584,7 +578,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
                     color: Colors.transparent,
-                    border: Border(top: BorderSide(color: Color(0xFFE5D5C5))),
+                    border: Border(top: BorderSide(color: AppColors.bgPastelPink)),
                   ),
                   child: Column(
                     children: [
@@ -619,19 +613,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                             height: 48,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
-                              gradient: isEnabled
-                                  ? LinearGradient(
-                                      colors: const [
-                                        brandCocoa,
-                                        Color(0xFF5A3E36),
-                                        brandCocoa,
-                                      ],
-                                      stops: const [0.0, 0.5, 1.0],
-                                      begin: Alignment(-2.0 + (_shimmerController.value * 4), 0.0),
-                                      end: Alignment(0.0 + (_shimmerController.value * 4), 0.0),
-                                    )
-                                  : null,
-                              color: !isEnabled ? const Color(0xFFE5D5C5) : null,
+                              color: isEnabled ? AppColors.brandRed : AppColors.bgPastelPink,
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black26,
@@ -655,7 +637,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
-                                      color: isEnabled ? Colors.white : const Color(0xFFA58D7C),
+                                      color: isEnabled ? Colors.white : AppColors.brandRed,
                                     ),
                                   ),
                                 ),

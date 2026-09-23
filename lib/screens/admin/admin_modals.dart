@@ -3,14 +3,15 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:convert'; // Added to decode Base64 images
+import '../../theme/app_colors.dart';
 
 class AdminModals {
-  static const Color brandCocoa = Color(0xFF3E2723);
-  static const Color darkEspresso = Color(0xFF1F1209);
-  static const Color textDark = Color(0xFF111827);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color borderLight = Color(0xFFE5E7EB);
-  static const Color wellBg = Color(0xFFF3F4F6);
+  static const Color brandCocoa = AppColors.darkGarnet;
+  static const Color darkEspresso = AppColors.brandRed;
+  static const Color textDark = AppColors.brandRed;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
+  static const Color wellBg = AppColors.brandRed;
 
   static String _cleanPdfCurrency(dynamic val) {
     if (val == null) return 'Php 0.00';
@@ -632,7 +633,7 @@ class AdminModals {
                     decoration: BoxDecoration(
                       color: wellBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8DACB)),
+                      border: Border.all(color: AppColors.brandRed),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -652,7 +653,7 @@ class AdminModals {
                         _buildSpecItem('Frosting', frosting),
                         if (toppings.isNotEmpty)
                           _buildSpecItem('Toppings', toppings.join(', ')),
-                        const Divider(color: Color(0xFFE8DACB), height: 12),
+                        const Divider(color: AppColors.brandRed, height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -833,7 +834,7 @@ class AdminModals {
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFFFAFAFA),
+          backgroundColor: AppColors.bgPastelPink,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -1144,9 +1145,9 @@ class AdminModals {
           constraints: const BoxConstraints(maxWidth: 420, maxHeight: 700),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFCF9F5),
+              color: AppColors.brandRed,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8D5C4), width: 1.5),
+              border: Border.all(color: AppColors.brandRed, width: 1.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color.fromRGBO(37, 24, 17, 0.18),
@@ -1165,7 +1166,7 @@ class AdminModals {
                       Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0E5DA),
+                          color: AppColors.bgPastelPink,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -1290,7 +1291,7 @@ class AdminModals {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFFE8D5C4))),
+                    border: Border(top: BorderSide(color: AppColors.brandRed)),
                   ),
                   child: Row(
                     children: [
@@ -1374,9 +1375,9 @@ class AdminModals {
           constraints: const BoxConstraints(maxWidth: 420, maxHeight: 700),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFCF9F5),
+              color: AppColors.brandRed,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8D5C4), width: 1.5),
+              border: Border.all(color: AppColors.brandRed, width: 1.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color.fromRGBO(37, 24, 17, 0.18),
@@ -1395,7 +1396,7 @@ class AdminModals {
                       Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0E5DA),
+                          color: AppColors.bgPastelPink,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -1507,7 +1508,7 @@ class AdminModals {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFFE8D5C4))),
+                    border: Border(top: BorderSide(color: AppColors.brandRed)),
                   ),
                   child: Row(
                     children: [
@@ -1617,9 +1618,9 @@ class AdminModals {
           constraints: const BoxConstraints(maxWidth: 560, maxHeight: 780),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFAFAFA),
+              color: AppColors.bgPastelPink,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8DACB), width: 1.5),
+              border: Border.all(color: AppColors.brandRed, width: 1.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color.fromRGBO(37, 24, 17, 0.18),
@@ -1634,12 +1635,12 @@ class AdminModals {
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFAF2E9),
+                    color: AppColors.bgPastelPink,
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(22),
                     ),
                     border: Border(
-                      bottom: BorderSide(color: Color(0xFFEFE4D6)),
+                      bottom: BorderSide(color: AppColors.bgPastelPink),
                     ),
                   ),
                   child: Row(
@@ -1756,14 +1757,14 @@ class AdminModals {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFFEFE4D6))),
+                    border: Border(top: BorderSide(color: AppColors.bgPastelPink)),
                   ),
                   child: Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE57373)),
+                            side: const BorderSide(color: AppColors.brandRed),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -1776,7 +1777,7 @@ class AdminModals {
                           child: const Text(
                             'Reject Spec',
                             style: TextStyle(
-                              color: Color(0xFFD32F2F),
+                              color: AppColors.brandRed,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1911,9 +1912,9 @@ class AdminModals {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFFCF9F5),
+              color: AppColors.brandRed,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8D5C4), width: 1.5),
+              border: Border.all(color: AppColors.brandRed, width: 1.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color.fromRGBO(37, 24, 17, 0.18),
@@ -1931,7 +1932,7 @@ class AdminModals {
                     Container(
                       padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0E5DA),
+                        color: AppColors.bgPastelPink,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -1964,7 +1965,7 @@ class AdminModals {
                   decoration: BoxDecoration(
                     color: wellBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE8DACB)),
+                    border: Border.all(color: AppColors.brandRed),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1972,7 +1973,7 @@ class AdminModals {
                       _buildSlipRow('Order #:', orderId),
                       _buildSlipRow('Customer:', customer),
                       _buildSlipRow('Item:', item),
-                      const Divider(color: Color(0xFFE8DACB), height: 14),
+                      const Divider(color: AppColors.brandRed, height: 14),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

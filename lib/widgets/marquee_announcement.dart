@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class MarqueeAnnouncement extends StatefulWidget {
   final String text;
@@ -77,20 +78,24 @@ class _MarqueeAnnouncementState extends State<MarqueeAnnouncement> {
     final repeatedText =
         '${widget.text}      ✦      ${widget.text}      ✦      ${widget.text}      ✦      ${widget.text}      ✦      ${widget.text}      ✦      ${widget.text}';
 
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      child: Text(
-        repeatedText,
-        style:
-            widget.style ??
-            const TextStyle(
-              color: Color(0xFFFAFAFA),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-            ),
+    return Container(
+      color: AppColors.darkGarnet,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Text(
+          repeatedText,
+          style:
+              widget.style ??
+              const TextStyle(
+                color: AppColors.bgPastelPink,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+              ),
+        ),
       ),
     );
   }

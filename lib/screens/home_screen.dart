@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import '../data/mock_products.dart';
 import '../models/product.dart';
 import '../widgets/app_bar_header.dart';
+import '../theme/app_colors.dart';
 import '../widgets/auth_modal.dart';
 import '../widgets/cart_drawer.dart';
 import '../widgets/category_filter.dart';
@@ -20,7 +21,10 @@ import '../widgets/product_card.dart';
 import '../widgets/customer_profile_modal.dart';
 import '../widgets/reviews_slideshow.dart';
 import '../widgets/order_tracker_modal.dart';
+import '../widgets/our_story_section.dart';
 import '../widgets/oven_gallery_section.dart';
+import '../widgets/promo_banner.dart';
+import 'menu_screen_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,9 +41,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _menuKey = GlobalKey();
   final GlobalKey _reviewsKey = GlobalKey();
+  final GlobalKey _ourStoryKey = GlobalKey();
   final GlobalKey _galleryKey = GlobalKey();
   final GlobalKey _sweetNoteKey = GlobalKey();
   final GlobalKey _footerKey = GlobalKey();
+  final GlobalKey _shopKey = GlobalKey();
 
   String _selectedCategory = 'all';
   String _searchQuery = '';
@@ -57,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _lastAddedItemName;
   Timer? _lastAddedTimer;
   Set<String> _favorites = {};
+  bool _isMenuMode = false;
 
   // ── FIX: Declared here inside _HomeScreenState so it tracks profile picture updates ──
   Uint8List? _globalProfileBytes;
@@ -69,7 +76,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     'Twix Chocolate': 1,
     'Snicker-Doodle Hug': 2,
     'Dark Chocolate Noir': 3,
-    'Red Velvet Kiss Blossom': 4,
     'Belgian Choco Chip': 5,
     // Brownies
     "Hershey's Almond Cloud Squares": 6,
@@ -323,15 +329,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 constraints: const BoxConstraints(maxWidth: 420),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3C2216),
+                  color: AppColors.darkGarnet,
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: const Color(0xFFFBEBE4).withOpacity(0.2),
+                    color: AppColors.bgPastelPink.withOpacity(0.2),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF3C2216).withOpacity(0.4),
+                      color: AppColors.darkGarnet.withOpacity(0.4),
                       blurRadius: 24,
                       spreadRadius: 4,
                       offset: const Offset(0, 10),
@@ -344,12 +350,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFBEBE4).withOpacity(0.15),
+                        color: AppColors.bgPastelPink.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.notifications_active_rounded,
-                        color: Color(0xFFFBEBE4),
+                        color: AppColors.bgPastelPink,
                         size: 22,
                       ),
                     ),
@@ -372,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           Text(
                             message.notification!.body ?? '',
                             style: TextStyle(
-                              color: const Color(0xFFFBEBE4).withOpacity(0.95),
+                              color: AppColors.bgPastelPink.withOpacity(0.95),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -436,21 +442,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _scrollToTop() {
-    _scrollController.animateTo(
-      0.0,
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOutCubic,
-    );
+    if (_isMenuMode) {
+      _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+      );
+    } else {
+      _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  void _onLogoClick() {
+    setState(() => _isMenuMode = false);
+    _scrollToTop();
   }
 
   void _onMenuClick() {
-    setState(() => _selectedCategory = 'all');
-    _scrollToKey(_menuKey);
+    setState(() {
+      _selectedCategory = 'all';
+      _isMenuMode = true;
+    });
   }
 
   void _onCustomCakesClick() {
-    setState(() => _selectedCategory = 'cakes');
-    _scrollToKey(_menuKey);
+    setState(() {
+      _selectedCategory = 'cakes';
+      _isMenuMode = true;
+    });
   }
 
   void _onDailyBatchesClick() {
@@ -460,6 +483,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _onReviewsClick() {
     _scrollToKey(_reviewsKey, alignment: 0.0);
+  }
+
+  void _onOurStoryClick() {
+    _scrollToKey(_ourStoryKey, alignment: 0.0);
   }
 
   void _onGalleryClick() {
@@ -669,7 +696,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (!acceptCustomCakes) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFF251811),
+          backgroundColor: Colors.transparent,
           content: Text(
             'Custom cake commissions are currently paused by the bakery.',
           ),
@@ -714,17 +741,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return Scaffold(
           key: _scaffoldKey,
           resizeToAvoidBottomInset: false,
-          backgroundColor: const Color(0xFFFAF4ED),
+          backgroundColor: Colors.transparent,
           drawer: MobileNavDrawer(
             currentUser: _currentUser,
             profileImageBytes: _globalProfileBytes,
             onProfileClick: () => _openCustomerProfileModal(acceptCustomCakes),
+            onLogoClick: _onLogoClick,
             onMenuClick: _onMenuClick,
             onCustomCakesClick: _onCustomCakesClick,
             onDailyBatchesClick: _onDailyBatchesClick,
             onReviewsClick: _onReviewsClick,
+            onOurStoryClick: _onOurStoryClick,
             onGalleryClick: _onGalleryClick,
-            onSweetNoteClick: _onSweetNoteClick,
             onContactClick: _onContactClick,
             onOpenAuth: _openAuthModal,
             onLogout: _logout,
@@ -747,23 +775,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             currentUser: _currentUser,
             profileImageBytes: _globalProfileBytes,
             isAuthChecking: _isAuthChecking,
+            cartItemCount: _cart.length,
+            hasActiveOrder: _activeOrderNumber != null,
             onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
             onOpenAuth: _openAuthModal,
             onLogout: _logout,
             onProfileClick: () => _openCustomerProfileModal(acceptCustomCakes),
             onLogoClick: _scrollToTop,
             onMenuClick: _onMenuClick,
-            onCustomCakesClick: _onCustomCakesClick,
-            onDailyBatchesClick: _onDailyBatchesClick,
-            onReviewsClick: _onReviewsClick,
+            onOurStoryClick: _onOurStoryClick,
             onGalleryClick: _onGalleryClick,
-            onSweetNoteClick: _onSweetNoteClick,
             onContactClick: _onContactClick,
+            onCartClick: () => _scaffoldKey.currentState?.openEndDrawer(),
+            onTrackOrderClick: _openOrderTracker,
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: _buildFloatingActions(),
-          body: Container(
-            color: const Color(0xFFEFE2D2),
+          body: _isMenuMode
+              ? MenuScreenView(
+                  selectedCategory: _selectedCategory,
+                  onCategoryChanged: (cat) => setState(() => _selectedCategory = cat),
+                  productsStream: _productsStream,
+                  currentUser: _currentUser,
+                  favorites: _favorites,
+                  onAddToCart: _addToCart,
+                  onToggleFavorite: _toggleFavorite,
+                  onCustomize: (prod) => _openCustomCakeBuilder(prod, acceptCustomCakes),
+                  acceptCustomCakes: acceptCustomCakes,
+                  onBack: _onLogoClick,
+                )
+              : Container(
+                  color: AppColors.bgPastelPink,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1440),
@@ -774,11 +816,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       end: Alignment.bottomCenter,
                       stops: [0.0, 0.25, 0.55, 0.85, 1.0],
                       colors: [
-                        Color(0xFFFAF2E9),
-                        Color(0xFFFBF6F0),
-                        Color(0xFFF8EFE4),
-                        Color(0xFFF5E9DB),
-                        Color(0xFFEFE2D2),
+                        AppColors.bgPastelPink,
+                        AppColors.bgPastelPink,
+                        AppColors.bgPastelPink,
+                        AppColors.bgPastelPink,
+                        AppColors.bgPastelPink,
                       ],
                     ),
                   ),
@@ -786,55 +828,99 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               controller: _scrollController,
               child: Column(
                 children: [
-                  Container(
-                    width: double.infinity,
-                    height: 36,
-                    color: const Color(0xFF251811),
-                    alignment: Alignment.center,
-                    child: _MarqueeTicker(
-                      announcement1: announcement1,
-                      announcement2: announcement2,
-                      announcement3: announcement3,
-                      velocity: 38.0,
-                    ),
-                  ),
-                  if (!isStoreOpen)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 16,
-                      ),
-                      color: const Color(0xFFD32F2F),
-                      child: const Center(
-                        child: Text(
-                          '⚠️ Online order checkout is temporarily paused by the kitchen admin.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
                   HeroBanner(
                     key: _heroKey,
                     onExploreMenu: _onMenuClick,
                     onBuildCustomCake: _onCustomCakesClick,
+                    topAnnouncementWidget: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 36,
+                          color: Colors.black.withOpacity(0.15),
+                          alignment: Alignment.center,
+                          child: _MarqueeTicker(
+                            announcement1: announcement1,
+                            announcement2: announcement2,
+                            announcement3: announcement3,
+                            velocity: 38.0,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                        if (!isStoreOpen)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
+                            ),
+                            color: AppColors.brandRed,
+                            child: const Center(
+                              child: Text(
+                                '⚠️ Online order checkout is temporarily paused by the kitchen admin.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  _buildMenuSection(isMobile, acceptCustomCakes),
 
-                  SizedBox(height: isMobile ? 48 : 80),
+                  // Categories
+                  CategoryFilter(
+                    key: _menuKey,
+                    selectedCategory: _selectedCategory == 'daily_batches'
+                        ? 'all'
+                        : _selectedCategory,
+                    onSelectCategory: (cat) {
+                      setState(() {
+                        _selectedCategory = cat;
+                        _isMenuMode = true;
+                      });
+                      _scrollToTop();
+                    },
+                  ),
 
+                  // Best Sellers
+                  _buildBestSellersSection(isMobile, acceptCustomCakes),
+
+                  // Our Story
+                  OurStorySection(
+                    key: _ourStoryKey,
+                    onLearnMore: _onMenuClick,
+                  ),
+
+                  // Testimonials
                   Container(
                     key: _reviewsKey,
                     alignment: Alignment.center,
                     child: const ReviewsSlideshow(),
                   ),
 
-                  OvenGallerySection(key: _galleryKey),
-                  ContactSection(key: _sweetNoteKey),
-                  Footer(key: _footerKey),
+                  // Oven Gallery
+                  OvenGallerySection(
+                    key: _galleryKey,
+                  ),
+
+                  // Promo Banner
+                  const PromoBanner(),
+                  
+                  Footer(
+                    key: _footerKey,
+                    onHomeClick: _scrollToTop,
+                    onShopClick: _onMenuClick,
+                    onAboutClick: _onOurStoryClick,
+                  ),
                 ],
               ),       // Column
             ),         // SingleChildScrollView
@@ -844,6 +930,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),           // outer Container (bg color)
         );
       },
+    );
+  }
+  Widget _buildSectionDivider(bool isMobile) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 32.0 : 64.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Divider(
+              color: AppColors.textDarkBerry.withValues(alpha: 0.15),
+              thickness: 1.5,
+              endIndent: 16,
+              indent: 0,
+            ),
+          ),
+          Icon(
+            Icons.star_border_rounded,
+            color: AppColors.textDarkBerry.withValues(alpha: 0.3),
+            size: 16,
+          ),
+          Expanded(
+            child: Divider(
+              color: AppColors.textDarkBerry.withValues(alpha: 0.15),
+              thickness: 1.5,
+              indent: 16,
+              endIndent: 0,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -868,12 +985,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: const Color(0xFF2E1B10),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.brandRed,
+                    AppColors.darkGarnet,
+                  ],
+                ),
                 shape: BoxShape.circle,
                 border: Border.all(
                     color: isGlowing
-                        ? const Color(0xFFF2E3C6)
-                        : const Color(0xFFDCC8B8),
+                        ? AppColors.bgPastelPink
+                        : AppColors.bgPastelPink,
                     width: isGlowing ? 3.0 : 1.2),
                 boxShadow: isGlowing
                     ? const [
@@ -911,7 +1035,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8E4A23),
+                          color: AppColors.textDarkBerry,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
@@ -940,174 +1064,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildFloatingActions() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.2),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
-          ),
-          child: _lastAddedItemName != null
-              ? Padding(
-                  key: ValueKey(_lastAddedItemName),
-                  padding: const EdgeInsets.only(bottom: 12, right: 12),
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3C2216),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.favorite_rounded,
-                            color: Color(0xFFF2E3C6), size: 16),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            '+1 $_lastAddedItemName',
-                            style: const TextStyle(
-                              color: Color(0xFFF2E3C6),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(key: ValueKey('empty')),
-        ),
-        if (_activeOrderNumber != null) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10, right: 12),
-            child: ElevatedButton.icon(
-              onPressed: _openOrderTracker,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFAF2E9),
-                foregroundColor: const Color(0xFF8E4A23),
-                elevation: 4,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 11,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(22),
-                  side: const BorderSide(color: Color(0xFFE5D5C5)),
-                ),
-              ),
-              icon: const Icon(Icons.local_shipping_outlined, size: 18),
-              label: const Text(
-                'Track Order',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-        ],
-        _buildIconOnlyFloatingTrayButton(),
-      ],
-    );
+  Widget? _buildFloatingActions() {
+    return null; // Track Order is now in the app bar
   }
 
-  Widget _buildMenuSection(bool isMobile, bool acceptCustomCakes) {
+  Widget _buildShopSection(bool isMobile, bool acceptCustomCakes) {
     return Container(
-      key: _menuKey,
-      constraints: const BoxConstraints(maxWidth: 1200),
+      key: _shopKey,
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 16 : 24,
-        vertical: isMobile ? 8 : 10,
+        horizontal: isMobile ? 16 : 48,
+        vertical: 32,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _selectedCategory == 'daily_batches'
-                ? "Today's Daily Oven Drops"
-                : 'Our Sweet Menu',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'serif',
-              fontSize: isMobile ? 24 : 32,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF2E1B10),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _selectedCategory == 'daily_batches'
-                ? 'Small-batch cookies and fudge brownies baked fresh this morning.'
-                : 'Handcrafted fresh daily • Click "Build" on cakes to customize layers & piping!',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF756256), fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 540),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: InputDecoration(
-                hintText: 'Search cookies, fudge brownies, cakes...',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF8E4A23)),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(
-                          Icons.cancel,
-                          color: Color(0xFF8E4A23),
-                          size: 18,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 16,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: const BorderSide(color: Color(0xFFEFE4D6)),
+          Row(
+            children: [
+              Text(
+                _selectedCategory == 'all' 
+                    ? 'All Treats' 
+                    : _selectedCategory == 'cakes' 
+                        ? 'Layer Cakes' 
+                        : _selectedCategory[0].toUpperCase() + _selectedCategory.substring(1),
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: isMobile ? 28 : 36,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textDarkBerry,
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              const Icon(Icons.arrow_drop_down_rounded, color: AppColors.textDarkBerry, size: 32),
+            ],
           ),
-          const SizedBox(height: 10),
-          CategoryFilter(
-            selectedCategory: _selectedCategory == 'daily_batches'
-                ? 'all'
-                : _selectedCategory,
-            onSelectCategory: (cat) => setState(() => _selectedCategory = cat),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: _productsStream,
             builder: (context, snapshot) {
@@ -1118,8 +1108,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     .map((doc) => Product.fromMap(doc.id, doc.data()))
                     .toList();
                 
-                // Merge any mock products that haven't been seeded to Firestore yet
-                // AND force override category and imgSrc in case Firebase is outdated
                 final existingIds = rawList.map((p) => p.id.toString().replaceAll('sku_', '')).toList();
                 for (final mp in mockProducts) {
                   final index = existingIds.indexOf(mp.id.toString());
@@ -1127,18 +1115,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     rawList.add(mp);
                   } else {
                     rawList[index] = Product(
-                      id: rawList[index].id,         // Keep Firebase ID
-                      name: mp.name,                 // Force override
-                      order: mp.order,               // Force override
-                      category: mp.category,         // Force override
-                      price: mp.price,               // Force override
-                      priceBox6: mp.priceBox6,       // Force override
-                      servingSize: mp.servingSize,   // Force override
-                      description: mp.description,   // Force override
-                      imgSrc: mp.imgSrc,             // Force override
-                      icon: mp.icon,                 // Force override
-                      stock: rawList[index].stock,   // Keep Firebase Stock
-                      active: rawList[index].active, // Keep Firebase Active Status
+                      id: rawList[index].id,
+                      name: mp.name,
+                      order: mp.order,
+                      category: mp.category,
+                      price: mp.price,
+                      priceBox6: mp.priceBox6,
+                      servingSize: mp.servingSize,
+                      description: mp.description,
+                      imgSrc: mp.imgSrc,
+                      icon: mp.icon,
+                      stock: rawList[index].stock,
+                      active: rawList[index].active,
                     );
                   }
                 }
@@ -1146,40 +1134,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 rawList = List.from(mockProducts);
               }
 
-              rawList.sort((a, b) {
-                final int orderA = _productOrderMap[a.name] ?? a.order;
-                final int orderB = _productOrderMap[b.name] ?? b.order;
-                return orderA.compareTo(orderB);
-              });
+              final List<Product> products = rawList
+                  .where((p) => p.active && (_selectedCategory == 'all' || p.category == _selectedCategory))
+                  .toList();
 
-              final List<Product> products = rawList.where((Product p) {
-                bool matchesCategory;
-                final cat = p.category.toLowerCase();
-                if (_selectedCategory == 'daily_batches') {
-                  matchesCategory = cat == 'cookies' || cat == 'brownies';
-                } else if (_selectedCategory == 'all') {
-                  matchesCategory = true;
-                } else {
-                  matchesCategory = cat == _selectedCategory.toLowerCase();
-                }
-
-                final matchesSearch = p.name
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase()) ||
-                    p.description
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase());
-
-                return matchesCategory && matchesSearch && p.active;
-              }).toList();
+              products.sort((a, b) => a.order.compareTo(b.order));
 
               if (products.isEmpty) {
                 return Container(
                   padding: const EdgeInsets.all(40),
                   alignment: Alignment.center,
                   child: const Text(
-                    'No delicious treats match your search or allergen settings.',
-                    style: TextStyle(color: Color(0xFF756256)),
+                    'No delicious treats match this category.',
+                    style: TextStyle(color: AppColors.textDarkBerry),
                   ),
                 );
               }
@@ -1215,6 +1182,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         key: ValueKey(product.name),
                         product: product,
                         cardWidth: cardWidth,
+                        isTopSeller: false,
                         isFavorite: _currentUser != null &&
                             _favorites.contains(product.id.toString()),
                         onFavoriteToggle: () => _toggleFavorite(product),
@@ -1228,6 +1196,208 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               );
             },
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBestSellersSection(bool isMobile, bool acceptCustomCakes) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 32,
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.darkGarnet, // Maintaining the requested brand colors
+          // Removed border radius for full width
+        ),
+        padding: EdgeInsets.all(isMobile ? 24 : 48),
+        child: Column(
+          children: [
+            isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBestSellersTitle(isMobile),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(child: _buildBestSellersTitle(isMobile)),
+                    ],
+                  ),
+            const SizedBox(height: 32),
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _productsStream,
+              builder: (context, snapshot) {
+                List<Product> rawList = [];
+
+                if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                  rawList = snapshot.data!.docs
+                      .map((doc) => Product.fromMap(doc.id, doc.data()))
+                      .toList();
+                  
+                  final existingIds = rawList.map((p) => p.id.toString().replaceAll('sku_', '')).toList();
+                  for (final mp in mockProducts) {
+                    final index = existingIds.indexOf(mp.id.toString());
+                    if (index == -1) {
+                      rawList.add(mp);
+                    } else {
+                      rawList[index] = Product(
+                        id: rawList[index].id,
+                        name: mp.name,
+                        order: mp.order,
+                        category: mp.category,
+                        price: mp.price,
+                        priceBox6: mp.priceBox6,
+                        servingSize: mp.servingSize,
+                        description: mp.description,
+                        imgSrc: mp.imgSrc,
+                        icon: mp.icon,
+                        stock: rawList[index].stock,
+                        active: rawList[index].active,
+                      );
+                    }
+                  }
+                } else {
+                  rawList = List.from(mockProducts);
+                }
+
+                // Filter for only the specific 4 best sellers
+                final bestSellerNames = [
+                  'Belgian Choco Chip',
+                  'Dark Chocolate Noir',
+                  "Hershey's Almond Cloud Squares",
+                  'Banana Cake Loaf Overload',
+                ];
+
+                final List<Product> products = rawList
+                    .where((p) => bestSellerNames.contains(p.name) && p.active)
+                    .toList();
+
+                // Sort them in the order requested
+                products.sort((a, b) => bestSellerNames.indexOf(a.name).compareTo(bestSellerNames.indexOf(b.name)));
+
+              if (products.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(40),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'No delicious treats match your search or allergen settings.',
+                    style: TextStyle(color: AppColors.textDarkBerry),
+                  ),
+                );
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final availableWidth = constraints.maxWidth;
+
+                  final columnCount = availableWidth <= 550
+                      ? 2
+                      : availableWidth <= 850
+                          ? 3
+                          : 4;
+
+                  final spacing = availableWidth < 760 ? 12.0 : 20.0;
+                  final cardWidth =
+                      (availableWidth - (columnCount - 1) * spacing) /
+                          columnCount;
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: products.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columnCount,
+                      mainAxisExtent: ProductCard.computeHeight(cardWidth),
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                    ),
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return ProductCard(
+                        key: ValueKey(product.name),
+                        product: product,
+                        cardWidth: cardWidth,
+                        isTopSeller: index == 0, // Highlight the first one as top seller
+                        isFavorite: _currentUser != null &&
+                            _favorites.contains(product.id.toString()),
+                        onFavoriteToggle: () => _toggleFavorite(product),
+                        onAddToCart: _addToCart,
+                        onCustomize: (prod) =>
+                            _openCustomCakeBuilder(prod, acceptCustomCakes),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    ));
+  }
+
+  Widget _buildBestSellersTitle(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Our Best Sellers',
+              style: TextStyle(
+                fontFamily: 'sans-serif',
+                fontSize: isMobile ? 28 : 36,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Icon(Icons.workspace_premium_rounded, color: AppColors.accentGold, size: 28),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Handpicked favorites, loved by our customers.',
+          style: TextStyle(
+            fontSize: isMobile ? 14 : 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withOpacity(0.9),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBestSellersViewAll() {
+    return OutlinedButton(
+      onPressed: _onMenuClick,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: BorderSide(color: Colors.white.withOpacity(0.5)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'View All',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: 6),
+          Icon(Icons.arrow_forward_rounded, size: 16, color: Colors.white),
         ],
       ),
     );
@@ -1343,7 +1513,7 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8E4A23),
+                  color: AppColors.textDarkBerry,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
@@ -1368,7 +1538,7 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
                 item['body']!,
                 style: widget.style ??
                     const TextStyle(
-                      color: Color(0xFFFAFAFA),
+                      color: AppColors.textDarkBerry,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.3,
@@ -1377,7 +1547,7 @@ class _MarqueeTickerState extends State<_MarqueeTicker> {
               const SizedBox(width: 24),
               const Text(
                 '✦',
-                style: TextStyle(color: Color(0xFFC89269), fontSize: 11),
+                style: TextStyle(color: AppColors.brandRed, fontSize: 11),
               ),
             ],
           );

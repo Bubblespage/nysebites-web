@@ -1,295 +1,290 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'dart:math' as math;
+import '../theme/app_colors.dart';
 
-class HeroBanner extends StatefulWidget {
+class HeroBanner extends StatelessWidget {
   final VoidCallback onExploreMenu;
   final VoidCallback onBuildCustomCake;
+  final Widget? topAnnouncementWidget;
 
   const HeroBanner({
     super.key,
     required this.onExploreMenu,
     required this.onBuildCustomCake,
+    this.topAnnouncementWidget,
   });
-
-  @override
-  State<HeroBanner> createState() => _HeroBannerState();
-}
-
-class _HeroBannerState extends State<HeroBanner> with SingleTickerProviderStateMixin {
-  late final AnimationController _animController;
-  Timer? _carouselTimer;
-  int _currentIndex = 0;
-
-  final List<String> _carouselImages = [
-    'assets/images/premium_baked_goods.jpg',
-    'assets/images/cookiesbatch.jpg',
-  ];
-  
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this, 
-      duration: const Duration(milliseconds: 1400)
-    );
-    _animController.forward();
-
-    _carouselTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (mounted) {
-        setState(() {
-          _currentIndex = (_currentIndex + 1) % _carouselImages.length;
-        });
-      }
-    });
-  }
-  
-  @override
-  void dispose() {
-    _animController.dispose();
-    _carouselTimer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth > 0 ? constraints.maxWidth : MediaQuery.of(context).size.width;
-        final isMobile = width < 960;
         final screenHeight = MediaQuery.of(context).size.height;
-        final dynamicHeight = isMobile ? (screenHeight - 100) : 600.0;
+        final isMobile = width < 960;
 
-        return Container(
-          width: double.infinity,
-          height: dynamicHeight,
-          margin: EdgeInsets.only(bottom: isMobile ? 48.0 : 64.0),
-          child: Stack(
-            children: [
-              // 1. Background Carousel
-              Positioned.fill(
-                child: AnimatedSwitcher(
-                  duration: const Duration(seconds: 2),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  child: Image.asset(
-                    _carouselImages[_currentIndex],
-                    key: ValueKey<int>(_currentIndex),
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: isMobile ? 0 : 32.0,
+          ),
+          child: Container(
+            width: double.infinity,
+            height: isMobile ? (screenHeight > 600 ? screenHeight - 75 : 600) : null,
+            decoration: BoxDecoration(
+              color: AppColors.darkGarnet,
+              // Background image for mobile only
+              image: isMobile
+                  ? DecorationImage(
+                      image: const AssetImage('assets/images/hero_2.jpg'),
+                      fit: BoxFit.cover,
+                      // A solid dark overlay rather than a blend makes the image look natural but dark enough for text
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.65),
+                        BlendMode.darken,
+                      ),
+                    )
+                  : null,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.darkGarnet.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-
-              // 2. Dark Overlay for Legibility
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF1F1209).withOpacity(0.6), // Dark warm brown overlay
-                        const Color(0xFF1F1209).withOpacity(0.8), 
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
-              ),
-
-              // 3. Foreground Content
-              Positioned.fill(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: isMobile ? 40 : 80, 
-                    bottom: isMobile ? 24 : 32,
-                    left: isMobile ? 24 : 48,
-                    right: isMobile ? 24 : 48,
-                  ),
-                  child: Align(
-                    alignment: Alignment.topCenter, // Anchor from top instead of center
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: _buildCenteredTextContent(isMobile),
-                    ),
-                  ),
-                ),
-              ),
-            // Close the Stack and Container
-            ],
-          ), // closes Stack
-        ); // closes Container
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (topAnnouncementWidget != null) topAnnouncementWidget!,
+                isMobile
+                    ? Expanded(
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: _buildTextContent(isMobile),
+                          ),
+                        ),
+                      )
+                    : Row(
+                        children: [
+                          Expanded(flex: 1, child: _buildTextContent(isMobile)),
+                          Expanded(flex: 1, child: _buildImageContent(isMobile)),
+                        ],
+                      ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildCenteredTextContent(bool isMobile) {
-    return _FadeSlideTransition(
-      animation: CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
-      ),
+  Widget _buildTextContent(bool isMobile) {
+    return Padding(
+      padding: EdgeInsets.all(isMobile ? 20.0 : 64.0),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.favorite_rounded,
-                  size: 16,
-                  color: Colors.white,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'BAKED FRESH WITH LOVE DAILY',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: isMobile ? 16 : 24),
           Text(
-            'Warm, Chewy, &\nIrresistibly Cute.',
-            textAlign: TextAlign.center,
+            'Freshly Baked',
             style: TextStyle(
               fontFamily: 'serif',
-              fontSize: isMobile ? 34 : 58,
+              fontSize: isMobile ? 22 : 32,
+              fontWeight: FontWeight.w600,
+              color: isMobile ? AppColors.accentGold : AppColors.bgPastelPink,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Goodness\nin Every Bite',
+            style: TextStyle(
+              fontFamily: 'sans-serif',
+              fontSize: isMobile ? 38 : 64,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               height: 1.1,
               letterSpacing: -1,
-              shadows: const [
-                Shadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 8)),
-              ],
             ),
           ),
-          SizedBox(height: isMobile ? 16 : 24),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
-            child: Text(
-              'From molten Belgian chocolate chip cookies to artisanal custom layer cakes. Made from scratch daily with 100% pure dairy butter.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isMobile ? 14 : 18,
-                height: 1.6,
-                color: Colors.white.withOpacity(0.9),
-                fontWeight: FontWeight.w500,
-              ),
+          const SizedBox(height: 16),
+          Text(
+            'From molten Belgian chocolate chip cookies to rich chocolate cakes, we bake happiness with the finest ingredients. Fresh. Homemade. Always.',
+            style: TextStyle(
+              fontSize: isMobile ? 13 : 16,
+              height: 1.5,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: isMobile ? 24 : 48),
-          if (isMobile)
-            Column(
-              children: [
-                _buildHeroButton(isPrimary: true, isMobile: true),
-                const SizedBox(height: 16),
-                _buildHeroButton(isPrimary: false, isMobile: true),
-              ],
-            )
-          else
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildHeroButton(isPrimary: true, isMobile: false),
-                _buildHeroButton(isPrimary: false, isMobile: false),
-              ],
-            ),
+          const SizedBox(height: 24),
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton(
+                      onPressed: onExploreMenu,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentGold,
+                        foregroundColor: AppColors.textDarkBerry,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Shop Now →',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: onBuildCustomCake,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        'Build Custom Cake',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    ElevatedButton(
+                      onPressed: onExploreMenu,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentGold,
+                        foregroundColor: AppColors.textDarkBerry,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Shop Now →',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: onBuildCustomCake,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        'Build Custom Cake',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+          const SizedBox(height: 32),
+          
+          // Trust Badges
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTrustBadge(Icons.eco_rounded, '100% Fresh Ingredients', isMobile),
+                    const SizedBox(height: 10),
+                    _buildTrustBadge(Icons.local_shipping_rounded, 'Fast & Safe Delivery', isMobile),
+                    const SizedBox(height: 10),
+                    _buildTrustBadge(Icons.sentiment_very_satisfied_rounded, 'Happiness Guaranteed', isMobile),
+                  ],
+                )
+              : Wrap(
+                  spacing: 24,
+                  runSpacing: 16,
+                  children: [
+                    _buildTrustBadge(Icons.eco_rounded, '100% Fresh\nIngredients', isMobile),
+                    _buildTrustBadge(Icons.local_shipping_rounded, 'Fast & Safe\nDelivery', isMobile),
+                    _buildTrustBadge(Icons.sentiment_very_satisfied_rounded, 'Happiness\nGuaranteed', isMobile),
+                  ],
+                ),
         ],
       ),
     );
   }
 
-  Widget _buildHeroButton({required bool isPrimary, required bool isMobile}) {
-    final padding = EdgeInsets.symmetric(
-      horizontal: isMobile ? 16 : 40, 
-      vertical: isMobile ? 12 : 24,
-    );
-
-    final style = isPrimary
-        ? ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF8E4A23),
-            foregroundColor: Colors.white,
-            padding: padding,
-            shape: const StadiumBorder(),
-            elevation: 12,
-            shadowColor: const Color(0xFF8E4A23).withOpacity(0.6),
-            textStyle: TextStyle(
-              fontSize: isMobile ? 12 : 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
-          )
-        : OutlinedButton.styleFrom(
-            foregroundColor: Colors.white,
-            side: const BorderSide(color: Colors.white, width: 2),
-            padding: padding,
-            shape: const StadiumBorder(),
-            textStyle: TextStyle(
-              fontSize: isMobile ? 12 : 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
-          );
-
-    final button = isPrimary
-        ? ElevatedButton.icon(
-            onPressed: widget.onExploreMenu,
-            icon: const Icon(Icons.cookie, size: 20),
-            label: const Text('Order Fresh Sweets'),
-            style: style,
-          )
-        : OutlinedButton.icon(
-            onPressed: widget.onBuildCustomCake,
-            icon: const Icon(Icons.cake, size: 20),
-            label: const Text('Build Custom Cake'),
-            style: style,
-          );
-
-    return isMobile ? SizedBox(width: double.infinity, child: button) : button;
-  }
-}
-
-class _FadeSlideTransition extends StatelessWidget {
-  final Widget child;
-  final Animation<double> animation;
-
-  const _FadeSlideTransition({
-    required this.child,
-    required this.animation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, childWidget) {
-        return Opacity(
-          opacity: animation.value,
-          child: Transform.translate(
-            offset: Offset(0, 40 * (1 - animation.value)),
-            child: childWidget,
+  Widget _buildTrustBadge(IconData icon, String text, bool isMobile) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: AppColors.accentGold, size: isMobile ? 16 : 28),
+        SizedBox(width: isMobile ? 4 : 8),
+        Text(
+          text,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
           ),
-        );
-      },
-      child: child,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageContent(bool isMobile) {
+    // Only used on desktop now.
+    return SizedBox(
+      height: 600,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/hero_2.jpg',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 100,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.darkGarnet,
+                    AppColors.darkGarnet.withOpacity(0.0),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
+            ),
+          ),
+
+        ],
+      ),
     );
   }
 }

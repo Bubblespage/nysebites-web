@@ -53,7 +53,7 @@ class PdfReportGenerator {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('NYSE BITES - Report', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF8E4A23))),
+        pw.Text('NYSE BITES - Report', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF2E151A))),
         pw.SizedBox(height: 4),
         pw.Text(title, style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
         pw.SizedBox(height: 4),
@@ -69,7 +69,7 @@ class PdfReportGenerator {
       data: data,
       columnWidths: columnWidths,
       headerStyle: _headerStyle,
-      headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF8E4A23)),
+      headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF2E151A)),
       cellStyle: _cellStyle,
       cellPadding: const pw.EdgeInsets.all(6),
       cellAlignments: {
@@ -293,7 +293,7 @@ class PdfReportGenerator {
             ),
 
             pw.SizedBox(height: 24),
-            pw.Text('Comprehensive Transactions Log', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF2E1B10))),
+            pw.Text('Comprehensive Transactions Log', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF3D1C23))),
             pw.SizedBox(height: 10),
             _buildTable(headers, data, columnWidths: {
               0: const pw.FlexColumnWidth(1.2),
@@ -369,8 +369,8 @@ class PdfReportGenerator {
     final pdf = pw.Document();
 
     final cocoa = const PdfColor.fromInt(0xFF8C4A27);
-    final espresso = const PdfColor.fromInt(0xFF3E2723);
-    final cream = const PdfColor.fromInt(0xFFFAF4ED);
+    final espresso = const PdfColor.fromInt(0xFF3D1C23);
+    final cream = const PdfColor.fromInt(0xFFFDF1F2);
     final muted = const PdfColor.fromInt(0xFF757575);
     final white = PdfColors.white;
 
@@ -538,16 +538,16 @@ class PdfReportGenerator {
       width: 135,
       padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
-        color: const PdfColor.fromInt(0xFFFAF2E9),
-        border: pw.Border.all(color: const PdfColor.fromInt(0xFFEFE4D6)),
+        color: const PdfColor.fromInt(0xFFFDF1F2),
+        border: pw.Border.all(color: const PdfColor.fromInt(0xFFFDF1F2)),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text(title, style: const pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(0xFF8E4A23))),
+          pw.Text(title, style: const pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(0xFF2E151A))),
           pw.SizedBox(height: 6),
-          pw.Text(value, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF2E1B10))),
+          pw.Text(value, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF3D1C23))),
         ],
       ),
     );

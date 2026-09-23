@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class CakeRadiusVisualizer extends StatefulWidget {
   final String selectedSize;
@@ -26,6 +27,11 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
       _hoveredDiameter ?? (_isSelected8Inch ? 8 : 6);
 
   bool get _displayIs8Inch => _activeDiameter == 8;
+
+  bool get _has6InchOption =>
+      widget.availableSizes.isEmpty || widget.availableSizes.any((s) => s.contains('6"'));
+  bool get _has8InchOption =>
+      widget.availableSizes.isEmpty || widget.availableSizes.any((s) => s.contains('8"'));
 
   String get _servingGuide => _displayIs8Inch
       ? '10–14 party slices (~20 cm)'
@@ -55,9 +61,9 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF4ED),
+        color: AppColors.bgPastelPink,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8D7C6), width: 1.2),
+        border: Border.all(color: AppColors.bgPastelPink, width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(60, 34, 22, 0.04),
@@ -83,8 +89,8 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _hoveredDiameter != null
-                    ? const Color(0xFF8E4A23).withValues(alpha: 0.5)
-                    : const Color(0xFFEFE4D6),
+                    ? AppColors.brandRed.withValues(alpha: 0.5)
+                    : AppColors.brandRed,
               ),
             ),
             child: Column(
@@ -94,7 +100,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
                     const Icon(
                       Icons.groups_outlined,
                       size: 18,
-                      color: Color(0xFF8E4A23),
+                      color: AppColors.brandRed,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -102,7 +108,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
                         text: TextSpan(
                           style: const TextStyle(
                             fontSize: 12.5,
-                            color: Color(0xFF3C2216),
+                            color: AppColors.brandRed,
                           ),
                           children: [
                             TextSpan(
@@ -115,7 +121,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
                               text: _servingGuide,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF8E4A23),
+                                color: AppColors.brandRed,
                               ),
                             ),
                           ],
@@ -131,7 +137,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
                     const Icon(
                       Icons.lightbulb_outline_rounded,
                       size: 16,
-                      color: Color(0xFFD48B55),
+                      color: AppColors.brandRed,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -139,7 +145,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
                         _sliceRecommendation,
                         style: const TextStyle(
                           fontSize: 11.5,
-                          color: Color(0xFF6B584C),
+                          color: AppColors.brandRed,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -160,9 +166,9 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFDF9),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEBE0D2)),
+        border: Border.all(color: AppColors.bgPastelPink),
       ),
       child: Column(
         children: [
@@ -174,6 +180,8 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
               size: Size.infinite,
               painter: _CleanCakePainter(
                 is8InchSelected: _displayIs8Inch,
+                has6InchOption: _has6InchOption,
+                has8InchOption: _has8InchOption,
               ),
             ),
           ),
@@ -185,47 +193,50 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                onEnter: (_) =>
-                    setState(() => _hoveredDiameter = 6),
-                onExit: (_) =>
-                    setState(() => _hoveredDiameter = null),
-                child: InkWell(
-                  onTap: () {
-                    _switchToDiameter(6);
-                    setState(() => _hoveredDiameter = null);
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: _buildSizeLegendPill(
-                    label: '6" Cake (~15 cm)',
-                    isActive: _activeDiameter == 6,
-                    isSelected: !_isSelected8Inch,
-                    color: const Color(0xFFD48B55),
+              if (_has6InchOption)
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) =>
+                      setState(() => _hoveredDiameter = 6),
+                  onExit: (_) =>
+                      setState(() => _hoveredDiameter = null),
+                  child: InkWell(
+                    onTap: () {
+                      _switchToDiameter(6);
+                      setState(() => _hoveredDiameter = null);
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: _buildSizeLegendPill(
+                      label: '6" Cake (~15 cm)',
+                      isActive: _activeDiameter == 6,
+                      isSelected: !_isSelected8Inch,
+                      color: AppColors.brandRed,
+                    ),
+                  ),  
+                ),
+              if (_has6InchOption && _has8InchOption)
+                const SizedBox(width: 14),
+              if (_has8InchOption)
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) =>
+                      setState(() => _hoveredDiameter = 8),
+                  onExit: (_) =>
+                      setState(() => _hoveredDiameter = null),
+                  child: InkWell(
+                    onTap: () {
+                      _switchToDiameter(8);
+                      setState(() => _hoveredDiameter = null);
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: _buildSizeLegendPill(
+                      label: '8" Cake (~20 cm)',
+                      isActive: _activeDiameter == 8,
+                      isSelected: _isSelected8Inch,
+                      color: AppColors.brandRed,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                onEnter: (_) =>
-                    setState(() => _hoveredDiameter = 8),
-                onExit: (_) =>
-                    setState(() => _hoveredDiameter = null),
-                child: InkWell(
-                  onTap: () {
-                    _switchToDiameter(8);
-                    setState(() => _hoveredDiameter = null);
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: _buildSizeLegendPill(
-                    label: '8" Cake (~20 cm)',
-                    isActive: _activeDiameter == 8,
-                    isSelected: _isSelected8Inch,
-                    color: const Color(0xFF8E4A23),
-                  ),
-                ),
-              ),
             ],
           ),
         ],
@@ -248,7 +259,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
             : (isSelected ? color.withValues(alpha: 0.08) : Colors.white),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isActive ? color : (isSelected ? color : const Color(0xFFDAC8B8)),
+          color: isActive ? color : (isSelected ? color : AppColors.brandRed),
           width: isActive ? 1.8 : 1.0,
         ),
         boxShadow: isActive
@@ -270,7 +281,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
             decoration: BoxDecoration(
               color: isActive
                   ? color
-                  : (isSelected ? color : const Color(0xFFB5A192)),
+                  : (isSelected ? color : AppColors.brandRed),
               shape: BoxShape.circle,
             ),
           ),
@@ -282,7 +293,7 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
               fontWeight: isActive || isSelected
                   ? FontWeight.bold
                   : FontWeight.w600,
-              color: isActive || isSelected ? color : const Color(0xFF756256),
+              color: isActive || isSelected ? color : AppColors.textDarkBerry,
             ),
           ),
         ],
@@ -294,8 +305,14 @@ class _CakeRadiusVisualizerState extends State<CakeRadiusVisualizer> {
 /// Clean cake top-down canvas painter without math equations
 class _CleanCakePainter extends CustomPainter {
   final bool is8InchSelected;
+  final bool has6InchOption;
+  final bool has8InchOption;
 
-  _CleanCakePainter({required this.is8InchSelected});
+  _CleanCakePainter({
+    required this.is8InchSelected,
+    this.has6InchOption = true,
+    this.has8InchOption = true,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -307,105 +324,109 @@ class _CleanCakePainter extends CustomPainter {
 
     // 1. Outer plate
     final platePaint = Paint()
-      ..color = const Color(0xFFF6EDE2)
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, r8 + 7, platePaint);
 
     final plateBorderPaint = Paint()
-      ..color = const Color(0xFFE4D3C0)
+      ..color = AppColors.bgPastelPink
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     canvas.drawCircle(center, r8 + 7, plateBorderPaint);
 
     // 2. Draw 8" Cake Layer
-    final r8FillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = is8InchSelected
-          ? const Color(0xFFFAF0E4)
-          : const Color(0xFFFAF6F0);
-    canvas.drawCircle(center, r8, r8FillPaint);
+    if (has8InchOption) {
+      final r8FillPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = is8InchSelected
+            ? AppColors.brandRed
+            : AppColors.bgPastelPink;
+      canvas.drawCircle(center, r8, r8FillPaint);
 
-    if (is8InchSelected) {
-      // Highlighted 8" border
-      final r8Stroke = Paint()
-        ..color = const Color(0xFF8E4A23)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.4;
-      canvas.drawCircle(center, r8, r8Stroke);
-
-      // Clean slice lines for 8" (8 slices)
-      final slicePaint = Paint()
-        ..color = const Color(0xFF8E4A23).withValues(alpha: 0.20)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2;
-      for (int i = 0; i < 8; i++) {
-        final angle = i * (math.pi / 4);
-        final p2 = Offset(
-          center.dx + r8 * math.cos(angle),
-          center.dy + r8 * math.sin(angle),
-        );
-        canvas.drawLine(center, p2, slicePaint);
-      }
-    } else {
-      // Dashed unselected 8" border
-      _drawDashedCircle(
-        canvas,
-        center,
-        r8,
-        Paint()
-          ..color = const Color(0xFFC7B3A2)
+      if (is8InchSelected) {
+        // Highlighted 8" border
+        final r8Stroke = Paint()
+          ..color = AppColors.brandRed
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
-      );
+          ..strokeWidth = 2.4;
+        canvas.drawCircle(center, r8, r8Stroke);
+
+        // Clean slice lines for 8" (8 slices)
+        final slicePaint = Paint()
+          ..color = AppColors.brandRed.withValues(alpha: 0.20)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2;
+        for (int i = 0; i < 8; i++) {
+          final angle = i * (math.pi / 4);
+          final p2 = Offset(
+            center.dx + r8 * math.cos(angle),
+            center.dy + r8 * math.sin(angle),
+          );
+          canvas.drawLine(center, p2, slicePaint);
+        }
+      } else {
+        // Dashed unselected 8" border
+        _drawDashedCircle(
+          canvas,
+          center,
+          r8,
+          Paint()
+            ..color = AppColors.brandRed
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2,
+        );
+      }
     }
 
     // 3. Draw 6" Cake Layer
-    final r6FillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = !is8InchSelected
-          ? const Color(0xFFF5E4D3)
-          : (is8InchSelected
-              ? const Color(0xFFF1E4D6).withValues(alpha: 0.6)
-              : const Color(0xFFEFE4D6));
-    canvas.drawCircle(center, r6, r6FillPaint);
+    if (has6InchOption) {
+      final r6FillPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = !is8InchSelected
+            ? AppColors.brandRed
+            : (is8InchSelected
+                ? AppColors.brandRed.withValues(alpha: 0.6)
+                : AppColors.bgPastelPink);
+      canvas.drawCircle(center, r6, r6FillPaint);
 
-    if (!is8InchSelected) {
-      // Highlighted 6" border
-      final r6Stroke = Paint()
-        ..color = const Color(0xFF8E4A23)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.4;
-      canvas.drawCircle(center, r6, r6Stroke);
-
-      // Clean slice lines for 6" (6 slices)
-      final slicePaint = Paint()
-        ..color = const Color(0xFF8E4A23).withValues(alpha: 0.25)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2;
-      for (int i = 0; i < 6; i++) {
-        final angle = i * (math.pi / 3);
-        final p2 = Offset(
-          center.dx + r6 * math.cos(angle),
-          center.dy + r6 * math.sin(angle),
-        );
-        canvas.drawLine(center, p2, slicePaint);
-      }
-    } else {
-      // Dashed reference boundary for 6"
-      _drawDashedCircle(
-        canvas,
-        center,
-        r6,
-        Paint()
-          ..color = const Color(0xFF8E4A23).withValues(alpha: 0.35)
+      if (!is8InchSelected) {
+        // Highlighted 6" border
+        final r6Stroke = Paint()
+          ..color = AppColors.brandRed
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
-      );
+          ..strokeWidth = 2.4;
+        canvas.drawCircle(center, r6, r6Stroke);
+
+        // Clean slice lines for 6" (6 slices)
+        final slicePaint = Paint()
+          ..color = AppColors.brandRed.withValues(alpha: 0.25)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2;
+        for (int i = 0; i < 6; i++) {
+          final angle = i * (math.pi / 3);
+          final p2 = Offset(
+            center.dx + r6 * math.cos(angle),
+            center.dy + r6 * math.sin(angle),
+          );
+          canvas.drawLine(center, p2, slicePaint);
+        }
+      } else {
+        // Dashed reference boundary for 6"
+        _drawDashedCircle(
+          canvas,
+          center,
+          r6,
+          Paint()
+            ..color = AppColors.brandRed.withValues(alpha: 0.35)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2,
+        );
+      }
     }
 
     // 4. Center decorative cake rosette / topper
     final centerPaint = Paint()
-      ..color = const Color(0xFF8E4A23)
+      ..color = AppColors.brandRed
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 3.5, centerPaint);
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
+import '../theme/app_colors.dart';
 
 class GCashPortalModal {
   static Future<bool?> show({
@@ -129,14 +130,14 @@ class _GCashDialogState extends State<_GCashDialog> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Dialog.fullscreen(
-      backgroundColor: const Color(0xFFF4F5F7),
+      backgroundColor: AppColors.darkGarnet,
       child: Column(
         children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF0053E0),
+              color: AppColors.darkGarnet,
             ),
             child: SafeArea(
               bottom: false,
@@ -150,7 +151,6 @@ class _GCashDialogState extends State<_GCashDialog> {
                   const Icon(
                     Icons.account_balance_wallet,
                     color: Colors.white,
-                    size: 22,
                   ),
                   const SizedBox(width: 8),
                   const Text(
@@ -194,7 +194,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                             const SizedBox(height: 24),
                             const Icon(
                               Icons.check_circle,
-                              color: Color(0xFF10B981),
+                              color: AppColors.brandRed,
                               size: 72,
                             ),
                             const SizedBox(height: 24),
@@ -203,7 +203,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF1E3A5F),
+                                color: AppColors.brandRed,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -212,7 +212,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                               'Your order is now being processed.\n\nPlease refer to the Live Kitchen Tracker to monitor your order\'s progress.',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Color(0xFF4B5563),
+                                color: AppColors.brandRed,
                                 height: 1.5,
                               ),
                               textAlign: TextAlign.center,
@@ -222,7 +222,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0053E0),
+                                  backgroundColor: AppColors.brandRed,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
@@ -247,7 +247,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                               'Securely complete the payment with your GCash app',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Color(0xFF7A8A9E),
+                                color: AppColors.textDarkBerry,
                                 fontWeight: FontWeight.w500,
                               ),
                               textAlign: TextAlign.center,
@@ -257,7 +257,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                               'Log in to GCash and scan this QR with the QR Scanner.',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Color(0xFF1E3A5F),
+                                color: AppColors.textDarkBerry,
                                 fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
@@ -269,7 +269,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                            border: Border.all(color: AppColors.brandRed, width: 2),
                           ),
                           clipBehavior: Clip.hardEdge,
                           child: FittedBox(
@@ -290,7 +290,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0053E0),
+                            color: AppColors.textDarkBerry,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -305,7 +305,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                             hintText: 'e.g. 1029384756',
                             prefixIcon: const Icon(
                               Icons.receipt_long,
-                              color: Color(0xFF0053E0),
+                              color: AppColors.brandRed,
                             ),
                             filled: true,
                             fillColor: Colors.white,
@@ -327,9 +327,9 @@ class _GCashDialogState extends State<_GCashDialog> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0F6FF),
+                              color: AppColors.brandRed,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF0053E0).withOpacity(0.3)),
+                              border: Border.all(color: AppColors.brandRed.withOpacity(0.3)),
                             ),
                             child: const Column(
                               children: [
@@ -337,7 +337,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
-                                    color: Color(0xFF0053E0),
+                                    color: AppColors.brandRed,
                                     strokeWidth: 2.5,
                                   ),
                                 ),
@@ -345,7 +345,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                 Text(
                                   'Processing Image...',
                                   style: TextStyle(
-                                    color: Color(0xFF0053E0),
+                                    color: AppColors.brandRed,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -358,9 +358,9 @@ class _GCashDialogState extends State<_GCashDialog> {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF0053E0),
+                                foregroundColor: AppColors.brandRed,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                side: const BorderSide(color: Color(0xFF0053E0)),
+                                side: const BorderSide(color: AppColors.brandRed),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -381,15 +381,15 @@ class _GCashDialogState extends State<_GCashDialog> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F6),
+                              color: AppColors.brandRed,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE5E7EB)),
+                              border: Border.all(color: AppColors.brandRed),
                             ),
                             child: Row(
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: const Color(0xFFD1D5DB)),
+                                    border: Border.all(color: AppColors.brandRed),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: ClipRRect(
@@ -414,7 +414,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13,
-                                          color: Color(0xFF1F2937),
+                                          color: AppColors.brandRed,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -422,7 +422,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                         'Ready to submit',
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: Color(0xFF10B981),
+                                          color: AppColors.brandRed,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -436,7 +436,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                       _paymentProofFileName = null;
                                     });
                                   },
-                                  icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                                  icon: const Icon(Icons.close, color: AppColors.brandRed),
                                   tooltip: 'Remove',
                                 ),
                               ],
@@ -447,19 +447,19 @@ class _GCashDialogState extends State<_GCashDialog> {
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
+                              color: AppColors.brandRed,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                              border: Border.all(color: AppColors.brandRed),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 16),
+                                const Icon(Icons.error_outline, color: AppColors.brandRed, size: 16),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _errorMessage!,
                                     style: const TextStyle(
-                                      color: Color(0xFFDC2626),
+                                      color: AppColors.brandRed,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -475,7 +475,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0053E0),
+                                backgroundColor: AppColors.brandRed,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
@@ -515,7 +515,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                               child: const Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  color: Color(0xFF8A8A8A),
+                                  color: AppColors.brandRed,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -536,7 +536,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                   child: const Text(
                                     'Cancel',
                                     style: TextStyle(
-                                      color: Color(0xFF8A8A8A),
+                                      color: AppColors.brandRed,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
@@ -548,7 +548,7 @@ class _GCashDialogState extends State<_GCashDialog> {
                                 flex: 2,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0053E0),
+                                    backgroundColor: AppColors.brandRed,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     shape: RoundedRectangleBorder(

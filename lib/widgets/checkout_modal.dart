@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'gcash_portal_modal.dart';
 import '../models/product.dart';
+import '../theme/app_colors.dart';
 // ── FIX: Removed StorageUploader — Firebase Storage requires the Blaze
 // billing plan, which isn't enabled on this project. Reverted to base64,
 // matching the same fix already applied in order_tracker_modal.dart.
@@ -245,7 +246,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
     if (!isStoreOpen) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFFD32F2F),
+          backgroundColor: AppColors.brandRed,
           content: Text('The bakery is currently closed for new orders.'),
         ),
       );
@@ -262,7 +263,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
     if (hasCustomCake && _targetDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFFD32F2F),
+          backgroundColor: AppColors.brandRed,
           content: Text(
             'Please select a scheduled delivery date for your custom cake.',
           ),
@@ -273,7 +274,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
     if (_targetDate != null && _targetTimeSlot == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFFD32F2F),
+          backgroundColor: AppColors.brandRed,
           content: Text('Please select a delivery time slot.'),
         ),
       );
@@ -315,7 +316,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
           setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              backgroundColor: const Color(0xFFD32F2F),
+              backgroundColor: AppColors.brandRed,
               content: Text('Failed to submit order: $e'),
             ),
           );
@@ -345,13 +346,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFFFF7F2), Color(0xFFFFFFFF)],
-            ),
+            color: AppColors.cardWhite,
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0xFFFFEAD9), width: 1.5),
+            border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
             boxShadow: const [
               BoxShadow(
                 color: Color.fromRGBO(60, 34, 22, 0.15),
@@ -406,12 +403,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             Container(
                               padding: const EdgeInsets.all(7),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFAF2E9),
+                                color: AppColors.bgPastelPink,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
                                 Icons.local_taxi_outlined,
-                                color: Color(0xFF8E4A23),
+                                color: AppColors.textDarkBerry,
                                 size: 20,
                               ),
                             ),
@@ -422,7 +419,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 fontFamily: 'serif',
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF2E1B10),
+                                color: AppColors.darkGarnet,
                               ),
                             ),
                           ],
@@ -430,14 +427,14 @@ class _CheckoutModalState extends State<CheckoutModal> {
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: Color(0xFF756256),
+                            color: AppColors.textDarkBerry,
                           ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(color: Color(0xFFEFE4D6), height: 1),
+                  const Divider(color: AppColors.bgPastelPink, height: 1),
 
                   Flexible(
                     fit: FlexFit.loose,
@@ -498,9 +495,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                         fontSize: 16,
                                                         fontWeight:
                                                             FontWeight.bold,
-                                                        color: Color(
-                                                          0xFF2E1B10,
-                                                        ),
+                                                        color: AppColors.darkGarnet,
                                                       ),
                                                     ),
                                                     const SizedBox(height: 10),
@@ -509,12 +504,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                         colorScheme:
                                                             const ColorScheme.light(
                                                               primary: Color(
-                                                                0xFF8E4A23,
+                                                                0xFF2E151A,
                                                               ),
                                                               onPrimary:
                                                                   Colors.white,
                                                               onSurface: Color(
-                                                                0xFF2E1B10,
+                                                                0xFF3D1C23,
                                                               ),
                                                             ),
                                                       ),
@@ -552,7 +547,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                             'Cancel',
                                                             style: TextStyle(
                                                               color: Color(
-                                                                0xFF756256,
+                                                                0xFF2E151A,
                                                               ),
                                                             ),
                                                           ),
@@ -564,7 +559,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                           style: ElevatedButton.styleFrom(
                                                             backgroundColor:
                                                                 const Color(
-                                                                  0xFF8E4A23,
+                                                                  0xFF2E151A,
                                                                 ),
                                                             shape: RoundedRectangleBorder(
                                                               borderRadius:
@@ -625,12 +620,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           border: Border.all(
-                                            color: const Color(0xFFEFE4D6),
+                                            color: AppColors.bgPastelPink,
                                           ),
                                           boxShadow: [
                                             BoxShadow(
                                               color: const Color(
-                                                0xFF8E4A23,
+                                                0xFF2E151A,
                                               ).withValues(alpha: 0.04),
                                               blurRadius: 8,
                                               offset: const Offset(0, 2),
@@ -644,7 +639,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             const Icon(
                                               Icons.calendar_month_rounded,
                                               size: 18,
-                                              color: Color(0xFF8E4A23),
+                                              color: AppColors.textDarkBerry,
                                             ),
                                             const SizedBox(width: 8),
                                             Flexible(
@@ -660,8 +655,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                   color:
                                                       _targetDate == null &&
                                                           hasCustomCake
-                                                      ? const Color(0xFFD32F2F)
-                                                      : const Color(0xFF8E4A23),
+                                                      ? AppColors.brandRed
+                                                      : AppColors.textDarkBerry,
                                                 ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -689,12 +684,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           border: Border.all(
-                                            color: const Color(0xFFEFE4D6),
+                                            color: AppColors.bgPastelPink,
                                           ),
                                           boxShadow: [
                                             BoxShadow(
                                               color: const Color(
-                                                0xFF8E4A23,
+                                                0xFF2E151A,
                                               ).withValues(alpha: 0.04),
                                               blurRadius: 8,
                                               offset: const Offset(0, 2),
@@ -708,13 +703,13 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             isDense: true,
                                             icon: const Icon(
                                               Icons.access_time,
-                                              color: Color(0xFF8E4A23),
+                                              color: AppColors.textDarkBerry,
                                               size: 18,
                                             ),
                                             style: const TextStyle(
                                               fontSize: 11.5,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF8E4A23),
+                                              color: AppColors.textDarkBerry,
                                             ),
                                             dropdownColor: Colors.white,
                                             borderRadius: BorderRadius.circular(
@@ -767,7 +762,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                               16,
                                             ),
                                             border: Border.all(
-                                              color: const Color(0xFFFFD6D6),
+                                              color: AppColors.brandRed,
                                             ),
                                             boxShadow: [
                                               BoxShadow(
@@ -782,7 +777,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           child: const Icon(
                                             Icons.close,
                                             size: 18,
-                                            color: Color(0xFFD32F2F),
+                                            color: AppColors.brandRed,
                                           ),
                                         ),
                                       ),
@@ -797,7 +792,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     '* Custom cakes require a minimum 2-week lead time.',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF756256),
+                                      color: AppColors.textDarkBerry,
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
@@ -814,7 +809,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF2E1B10),
+                                        color: AppColors.darkGarnet,
                                       ),
                                       decoration: InputDecoration(
                                         labelText: 'Recipient Name *',
@@ -827,7 +822,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           child: Icon(
                                             Icons.person_outline,
                                             size: 18,
-                                            color: Color(0xFF8E4A23),
+                                            color: AppColors.textDarkBerry,
                                           ),
                                         ),
                                         prefixIconConstraints:
@@ -848,7 +843,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFFEFE4D6),
+                                            color: AppColors.bgPastelPink,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
@@ -856,7 +851,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFFEFE4D6),
+                                            color: AppColors.bgPastelPink,
                                           ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
@@ -864,7 +859,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF8E4A23),
+                                            color: AppColors.brandRed,
                                             width: 1.5,
                                           ),
                                         ),
@@ -887,7 +882,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF2E1B10),
+                                        color: AppColors.darkGarnet,
                                       ),
                                       decoration: InputDecoration(
                                         counterText: '',
@@ -905,11 +900,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                               horizontal: 10,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFFDF8F5),
+                                              color: AppColors.bgPastelPink,
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                               border: Border.all(
-                                                color: const Color(0xFFE8D0C3),
+                                                color: AppColors.bgPastelPink,
                                               ),
                                             ),
                                             child: const Row(
@@ -918,7 +913,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                 Icon(
                                                   Icons.phone_outlined,
                                                   size: 14,
-                                                  color: Color(0xFF8E4A23),
+                                                  color: AppColors.brandRed,
                                                 ),
                                                 SizedBox(width: 4),
                                                 Text(
@@ -926,7 +921,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.w900,
                                                     fontSize: 12,
-                                                    color: Color(0xFF2E1B10),
+                                                    color: AppColors.brandRed,
                                                   ),
                                                 ),
                                               ],
@@ -951,7 +946,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFFEFE4D6),
+                                            color: AppColors.bgPastelPink,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
@@ -959,7 +954,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFFEFE4D6),
+                                            color: AppColors.bgPastelPink,
                                           ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
@@ -967,7 +962,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             16,
                                           ),
                                           borderSide: const BorderSide(
-                                            color: Color(0xFF8E4A23),
+                                            color: AppColors.brandRed,
                                             width: 1.5,
                                           ),
                                         ),
@@ -997,7 +992,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF2E1B10),
+                                  color: AppColors.darkGarnet,
                                 ),
                                 decoration: InputDecoration(
                                   labelText: 'Complete Delivery Address *',
@@ -1011,7 +1006,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     child: Icon(
                                       Icons.location_on_outlined,
                                       size: 18,
-                                      color: Color(0xFF8E4A23),
+                                      color: AppColors.textDarkBerry,
                                     ),
                                   ),
                                   prefixIconConstraints: const BoxConstraints(
@@ -1026,39 +1021,39 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     vertical: 12,
                                   ),
                                   errorStyle: const TextStyle(
-                                    color: Color(0xFFD32F2F),
+                                    color: AppColors.brandRed,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                   ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFFEFE4D6),
+                                      color: AppColors.bgPastelPink,
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFFEFE4D6),
+                                      color: AppColors.bgPastelPink,
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFF8E4A23),
+                                      color: AppColors.brandRed,
                                       width: 1.0,
                                     ),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFFE57373),
+                                      color: AppColors.brandRed,
                                     ),
                                   ),
                                   focusedErrorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFFD32F2F),
+                                      color: AppColors.brandRed,
                                       width: 1.0,
                                     ),
                                   ),
@@ -1075,16 +1070,16 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 controller: _noteController,
                                 style: const TextStyle(
                                   fontSize: 12.5,
-                                  color: Color(0xFF2E1B10),
+                                  color: AppColors.darkGarnet,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: 'e.g. call upon arrival...',
                                   hintStyle: const TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF9E8E84),
+                                    color: AppColors.textDarkBerry,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFFDF8F5),
+                                  fillColor: Colors.white,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 14,
                                     vertical: 12,
@@ -1092,19 +1087,19 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFFE8D0C3),
+                                      color: AppColors.brandRed,
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFFE8D0C3),
+                                      color: AppColors.bgPastelPink,
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: const BorderSide(
-                                      color: Color(0xFF8E4A23),
+                                      color: AppColors.brandRed,
                                       width: 1.5,
                                     ),
                                   ),
@@ -1114,10 +1109,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFAF2E9),
+                                  color: AppColors.bgPastelPink,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFFFEAD9),
+                                    color: AppColors.bgPastelPink,
                                   ),
                                 ),
                                 child: Row(
@@ -1125,7 +1120,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   children: [
                                     const Icon(
                                       Icons.cookie_outlined,
-                                      color: Color(0xFF8E4A23),
+                                      color: AppColors.textDarkBerry,
                                       size: 28,
                                     ),
                                     const SizedBox(width: 12),
@@ -1138,7 +1133,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             'Freshly Baked Promise',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w900,
-                                              color: Color(0xFF2E1B10),
+                                              color: AppColors.darkGarnet,
                                               fontSize: 12.5,
                                             ),
                                           ),
@@ -1147,7 +1142,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             'Your sweet treats are prepared with love and the finest ingredients.',
                                             style: TextStyle(
                                               fontSize: 10.5,
-                                              color: Color(0xFF756256),
+                                              color: AppColors.textDarkBerry,
                                             ),
                                           ),
                                         ],
@@ -1168,16 +1163,16 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     vertical: 14,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFDF8F5),
+                                    color: Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: const Color(0xFFE8D0C3),
+                                      color: AppColors.bgPastelPink,
                                       width: 1.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(
-                                          0xFF8E4A23,
+                                          0xFF2E151A,
                                         ).withValues(alpha: 0.05),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
@@ -1189,7 +1184,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       Icon(
                                         Icons.account_balance_wallet,
                                         size: 20,
-                                        color: Color(0xFF8E4A23),
+                                        color: AppColors.textDarkBerry,
                                       ),
                                       SizedBox(width: 12),
                                       Text(
@@ -1197,7 +1192,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 13.5,
-                                          color: Color(0xFF2E1B10),
+                                          color: AppColors.darkGarnet,
                                         ),
                                       ),
                                     ],
@@ -1208,17 +1203,17 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFAF2E9),
+                                    color: AppColors.bgPastelPink,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: const Color(0xFFE8D0C3),
+                                      color: AppColors.brandRed,
                                     ),
                                   ),
                                   child: const Row(
                                     children: [
                                       Icon(
                                         Icons.info_outline,
-                                        color: Color(0xFF8E4A23),
+                                        color: AppColors.textDarkBerry,
                                         size: 20,
                                       ),
                                       SizedBox(width: 10),
@@ -1228,7 +1223,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: Color(0xFF756256),
+                                            color: AppColors.textDarkBerry,
                                             height: 1.4,
                                           ),
                                         ),
@@ -1247,12 +1242,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: const Color(0xFFEFE4D6),
+                                      color: AppColors.bgPastelPink,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(
-                                          0xFF8E4A23,
+                                          0xFF2E151A,
                                         ).withValues(alpha: 0.04),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4),
@@ -1266,7 +1261,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       Icon(
                                         Icons.info_outline,
                                         size: 20,
-                                        color: Color(0xFF8E4A23),
+                                        color: AppColors.textDarkBerry,
                                       ),
                                       SizedBox(width: 10),
                                       Expanded(
@@ -1274,7 +1269,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           'Payment for custom cakes is not required at checkout. It will be securely handled via GCash inside your Order Tracker once our bakers review and approve your cake design.',
                                           style: TextStyle(
                                             fontSize: 12.5,
-                                            color: Color(0xFF756256),
+                                            color: AppColors.textDarkBerry,
                                             height: 1.4,
                                           ),
                                         ),
@@ -1293,10 +1288,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF0F0),
+                                  color: AppColors.bgPastelPink,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: const Color(0xFFFFD6D6),
+                                    color: AppColors.bgPastelPink,
                                     width: 1.5,
                                   ),
                                   boxShadow: [
@@ -1314,7 +1309,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   children: [
                                     const Icon(
                                       Icons.info_outline,
-                                      color: Color(0xFFD32F2F),
+                                      color: AppColors.brandRed,
                                       size: 18,
                                     ),
                                     const SizedBox(width: 10),
@@ -1328,7 +1323,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.w900,
                                               fontSize: 11.5,
-                                              color: Color(0xFFD32F2F),
+                                              color: AppColors.brandRed,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -1336,7 +1331,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             'You must pay the ${hasCustomCake ? 'GrabCar' : 'Lalamove'} driver directly in cash for the delivery fee upon arrival.',
                                             style: const TextStyle(
                                               fontSize: 10.5,
-                                              color: Color(0xFFD32F2F),
+                                              color: AppColors.brandRed,
                                               height: 1.4,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -1351,16 +1346,16 @@ class _CheckoutModalState extends State<CheckoutModal> {
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF9F5),
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: const Color(0xFFFFE4D6),
+                                    color: AppColors.bgPastelPink,
                                     width: 1.5,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(
-                                        0xFF8E4A23,
+                                        0xFF2E151A,
                                       ).withValues(alpha: 0.04),
                                       blurRadius: 12,
                                       offset: const Offset(0, 6),
@@ -1382,7 +1377,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFFE4D6),
+                                          color: AppColors.bgPastelPink,
                                           borderRadius: BorderRadius.circular(
                                             10,
                                           ),
@@ -1392,7 +1387,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w800,
-                                            color: Color(0xFFD86A35),
+                                            color: AppColors.textDarkBerry,
                                           ),
                                         ),
                                       ),
@@ -1404,7 +1399,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     ),
                                     const SizedBox(height: 12),
                                     const Divider(
-                                      color: Color(0xFFFFE4D6),
+                                      color: AppColors.bgPastelPink,
                                       thickness: 1.5,
                                       height: 1,
                                     ),
@@ -1418,7 +1413,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.w900,
                                             fontSize: 12.5,
-                                            color: Color(0xFF2E1B10),
+                                            color: AppColors.darkGarnet,
                                           ),
                                         ),
                                         Container(
@@ -1427,7 +1422,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             vertical: 3,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF8E4A23),
+                                            color: AppColors.brandRed,
                                             borderRadius: BorderRadius.circular(
                                               10,
                                             ),
@@ -1463,7 +1458,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     const VerticalDivider(
                                       width: 48,
                                       thickness: 1.0,
-                                      color: Color(0xFFF5EBE1),
+                                      color: AppColors.bgPastelPink,
                                     ),
                                     Expanded(
                                       flex: 4,
@@ -1504,7 +1499,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                       boxShadow: [
                         BoxShadow(
                           color: const Color(
-                            0xFF8E4A23,
+                            0xFF2E151A,
                           ).withValues(alpha: 0.04),
                           blurRadius: 32,
                           offset: const Offset(0, -2),
@@ -1519,7 +1514,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                           TextButton.icon(
                             onPressed: () => Navigator.pop(context),
                             style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF756256),
+                              foregroundColor: AppColors.textDarkBerry,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 12,
@@ -1556,7 +1551,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       : 'Custom Cake Inquiry',
                                   style: const TextStyle(
                                     fontSize: 9.5,
-                                    color: Color(0xFF756256),
+                                    color: AppColors.textDarkBerry,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1566,7 +1561,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF8E4A23),
+                                      color: AppColors.textDarkBerry,
                                     ),
                                   )
                                 else
@@ -1575,7 +1570,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF8E4A23),
+                                      color: AppColors.textDarkBerry,
                                     ),
                                   ),
                               ],
@@ -1584,16 +1579,18 @@ class _CheckoutModalState extends State<CheckoutModal> {
                             Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                   colors: [
-                                    Color(0xFFD97241),
-                                    Color(0xFF8E4A23),
+                                    AppColors.brandRed,
+                                    AppColors.darkGarnet,
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(
-                                      0xFF8E4A23,
+                                      0xFF2E151A,
                                     ).withValues(alpha: 0.3),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
@@ -1665,11 +1662,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
 
   Widget _qrFallback() {
     return Container(
-      color: const Color(0xFFFAF2E9),
+      color: AppColors.bgPastelPink,
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.qr_code_2, size: 40, color: Color(0xFF8E4A23)),
+          Icon(Icons.qr_code_2, size: 40, color: AppColors.textDarkBerry),
           SizedBox(height: 4),
           Text(
             'Official QR Ready\nat Counter',
@@ -1677,7 +1674,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
             style: TextStyle(
               fontSize: 9.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF756256),
+              color: AppColors.textDarkBerry,
             ),
           ),
         ],
@@ -1691,7 +1688,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 14, color: Color(0xFF8E4A23)),
+          const Icon(Icons.star_rounded, size: 14, color: AppColors.textDarkBerry),
           const SizedBox(width: 6),
           Text(
             label,
@@ -1699,7 +1696,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
               fontSize: 10.5,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.2,
-              color: Color(0xFF8E4A23),
+              color: AppColors.textDarkBerry,
             ),
           ),
         ],
@@ -1713,14 +1710,14 @@ class _CheckoutModalState extends State<CheckoutModal> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF756256)),
+          style: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry),
         ),
         Text(
           value,
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF2E1B10),
+            color: AppColors.darkGarnet,
           ),
         ),
       ],
@@ -1733,7 +1730,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF756256)),
+          style: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry),
         ),
         valueWidget,
       ],

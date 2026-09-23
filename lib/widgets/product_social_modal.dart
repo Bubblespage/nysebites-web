@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/product.dart';
+import '../theme/app_colors.dart';
 
 class ProductSocialModal extends StatelessWidget {
   final Product product;
@@ -42,7 +43,7 @@ class ProductSocialModal extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF4A3428)),
+            border: Border.all(color: AppColors.textDarkBerry),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.5),
@@ -67,7 +68,7 @@ class ProductSocialModal extends StatelessWidget {
         Expanded(
           flex: 6,
           child: Container(
-            color: const Color(0xFF0F0B08),
+            color: AppColors.brandRed,
             child: InteractiveViewer(
               child: Center(
                 child: product.imgSrc.startsWith('http')
@@ -81,13 +82,13 @@ class ProductSocialModal extends StatelessWidget {
         ),
 
         // Vertical divider
-        Container(width: 1, color: const Color(0xFF2E1F18)),
+        Container(width: 1, color: AppColors.brandRed),
 
         // Right: Instagram style details & comments sidebar
         Expanded(
           flex: 4,
           child: Container(
-            color: const Color(0xFF140E0A),
+            color: AppColors.brandRed,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -99,7 +100,7 @@ class ProductSocialModal extends StatelessWidget {
                   ),
                   decoration: const BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: Color(0xFF2E1F18)),
+                      bottom: BorderSide(color: AppColors.brandRed),
                     ),
                   ),
                   child: Row(
@@ -110,7 +111,7 @@ class ProductSocialModal extends StatelessWidget {
                           const CircleAvatar(
                             radius: 16,
                             backgroundImage: AssetImage(
-                              'assets/images/logo.jpg',
+                              'assets/images/nysebites_logo.png',
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -161,7 +162,7 @@ class ProductSocialModal extends StatelessWidget {
                             const CircleAvatar(
                               radius: 14,
                               backgroundImage: AssetImage(
-                                'assets/images/logo.jpg',
+                                'assets/images/nysebites_logo.png',
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -178,7 +179,7 @@ class ProductSocialModal extends StatelessWidget {
                                     TextSpan(
                                       text: '${product.name}\n\n',
                                       style: const TextStyle(
-                                        color: Color(0xFFE8C39E),
+                                        color: AppColors.brandRed,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -205,7 +206,7 @@ class ProductSocialModal extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFF2E1F18))),
+                    border: Border(top: BorderSide(color: AppColors.brandRed)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +247,7 @@ class ProductSocialModal extends StatelessWidget {
                         child: OutlinedButton.icon(
                           onPressed: _openInstagram,
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF8E4A23)),
+                            side: const BorderSide(color: AppColors.textDarkBerry),
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -255,12 +256,12 @@ class ProductSocialModal extends StatelessWidget {
                           icon: const Icon(
                             Icons.camera_alt,
                             size: 15,
-                            color: Color(0xFFDDB892),
+                            color: AppColors.bgPastelPink,
                           ),
                           label: const Text(
                             'View on Instagram Feed',
                             style: TextStyle(
-                              color: Color(0xFFDDB892),
+                              color: AppColors.bgPastelPink,
                               fontSize: 12,
                             ),
                           ),
@@ -292,7 +293,7 @@ class ProductSocialModal extends StatelessWidget {
                 children: const [
                   CircleAvatar(
                     radius: 14,
-                    backgroundImage: AssetImage('assets/images/logo.jpg'),
+                    backgroundImage: AssetImage('assets/images/nysebites_logo.png'),
                   ),
                   SizedBox(width: 10),
                   Text(
@@ -381,11 +382,11 @@ class ProductSocialModal extends StatelessWidget {
                   icon: const Icon(
                     Icons.camera_alt,
                     size: 14,
-                    color: Color(0xFFDDB892),
+                    color: AppColors.bgPastelPink,
                   ),
                   label: const Text(
                     'View post on Instagram Feed',
-                    style: TextStyle(color: Color(0xFFDDB892), fontSize: 11.5),
+                    style: TextStyle(color: AppColors.bgPastelPink, fontSize: 11.5),
                   ),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'admin_dashboard_screen.dart';
+import '../../theme/app_colors.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -14,11 +15,11 @@ class AdminLoginScreen extends StatefulWidget {
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
   // Premium Palette
-  static const Color primaryDark = Color(0xFF111827); // Rich dark text
-  static const Color brandCocoa = Color(0xFF3E2723); // Deep Espresso
-  static const Color textMuted = Color(0xFF6B7280); // Gray muted text
-  static const Color borderLight = Color(0xFFE5E7EB); // Soft gray border
-  static const Color cardBg = Color(0xFFFAFAFA); // Crisp off-white
+  static const Color primaryDark = AppColors.brandRed; // Rich dark text
+  static const Color brandCocoa = AppColors.darkGarnet; // Deep Espresso
+  static const Color textMuted = AppColors.brandRed; // Gray muted text
+  static const Color borderLight = AppColors.brandRed; // Soft gray border
+  static const Color cardBg = AppColors.bgPastelPink; // Crisp off-white
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -248,11 +249,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   end: Alignment.bottomCenter,
                   stops: [0.0, 0.25, 0.55, 0.85, 1.0],
                   colors: [
-                    Color(0xFFFAF2E9),
-                    Color(0xFFFBF6F0),
-                    Color(0xFFF8EFE4),
-                    Color(0xFFF5E9DB),
-                    Color(0xFFEFE2D2),
+                    AppColors.bgPastelPink,
+                    AppColors.bgPastelPink,
+                    AppColors.bgPastelPink,
+                    AppColors.bgPastelPink,
+                    AppColors.bgPastelPink,
                   ],
                 ),
               ),
@@ -328,17 +329,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                         height: isSmallMobile ? 42 : 48,
                                         padding: const EdgeInsets.all(3),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFF8F0E5),
+                                          color: AppColors.brandRed,
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: const Color(0xFFEADCCF),
+                                            color: AppColors.brandRed,
                                             width: 2,
                                           ),
                                         ),
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(8),
                                           child: Image.asset(
-                                            'assets/images/logo.jpg',
+                                            'assets/images/nysebites_logo.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -479,10 +480,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                         vertical: 12,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFEF2F2),
+                                        color: AppColors.brandRed,
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: const Color(0xFFFCA5A5),
+                                          color: AppColors.brandRed,
                                         ),
                                       ),
                                       child: Row(
@@ -490,14 +491,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                           const Icon(
                                             Icons.error_outline_rounded,
                                             size: 16,
-                                            color: Color(0xFFDC2626),
+                                            color: AppColors.brandRed,
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
                                               _errorMessage!,
                                               style: const TextStyle(
-                                                color: Color(0xFFB91C1C),
+                                                color: AppColors.brandRed,
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.w600,
                                               ),

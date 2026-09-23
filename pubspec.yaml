@@ -40,13 +40,13 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/images/logo.jpg
+  image_path: assets/images/nysebites_logo.png
   adaptive_icon_background: '#F3E7DC'
-  adaptive_icon_foreground: assets/images/logo.jpg
+  adaptive_icon_foreground: assets/images/nysebites_logo.png
 
   web:
     generate: true
-    image_path: assets/images/logo.jpg
+    image_path: assets/images/nysebites_logo.png
     background_color: "#F3E7DC"
     theme_color: "#8C4A27"
 

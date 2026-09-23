@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
 import '../../../utils/pdf_report_generator.dart';
+import '../../../theme/app_colors.dart';
 
 class DashboardOverviewTab extends StatefulWidget {
   final List<Map<String, dynamic>> orders;
@@ -14,12 +15,12 @@ class DashboardOverviewTab extends StatefulWidget {
 }
 
 class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
-  static const Color brandCocoa = Color(0xFF8C4A27);
-  static const Color darkEspresso = Color(0xFF251811);
-  static const Color textDark = Color(0xFF3A2312);
-  static const Color textMuted = Color(0xFF6E5D53);
-  static const Color borderLight = Color(0xFFEFE3D5);
-  static const Color wellBg = Color(0xFFF4EDE6);
+  static const Color brandCocoa = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color textDark = AppColors.textDarkBerry;
+  static const Color textMuted = AppColors.brandRed;
+  static const Color borderLight = AppColors.brandRed;
+  static const Color wellBg = AppColors.brandRed;
 
   String _inventoryCategoryFilter = 'All';
 
@@ -149,7 +150,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
               onPressed: () => _exportPdf(realizedRevenue, completedOrders, customCakesCount, bakingOrders),
               icon: const Icon(Icons.download_rounded, color: brandCocoa),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFFBF7F2),
+                backgroundColor: AppColors.brandRed,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: borderLight)),
               ),
             ),
@@ -192,7 +193,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                   'ACTIVE ORDERS',
                   '${widget.orders.length} Orders',
                   '$customCakesCount custom cakes',
-                  const Color(0xFFC27803),
+                  AppColors.brandRed,
                   cardWidth,
                 ),
                 _metricCard(
@@ -206,7 +207,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                   'DELIVERIES DONE',
                   '${completedOrders.length} Orders',
                   'Completed drops',
-                  const Color(0xFF2E7D32),
+                  AppColors.brandRed,
                   cardWidth,
                 ),
               ],
@@ -234,14 +235,14 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
-                          color: Color(0xFF3E2723),
+                          color: AppColors.darkGarnet,
                         ),
                       ),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4EDE6),
+                          color: AppColors.brandRed,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -249,7 +250,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                           style: const TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF8C4A27),
+                            color: AppColors.brandRed,
                           ),
                         ),
                       ),
@@ -258,7 +259,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                   const SizedBox(height: 4),
                   const Text(
                     'Cumulative revenue from completed deliveries over time',
-                    style: TextStyle(fontSize: 11.5, color: Color(0xFF6E5D53)),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.brandRed),
                   ),
                   const SizedBox(height: 20),
                   Builder(builder: (context) {
@@ -273,13 +274,13 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                         height: 160,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4EDE6),
+                          color: AppColors.brandRed,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
                           'No completed orders yet — revenue will appear here once deliveries are done.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Color(0xFF6E5D53)),
+                          style: TextStyle(fontSize: 12, color: AppColors.brandRed),
                         ),
                       );
                     }
@@ -321,7 +322,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                             drawVerticalLine: false,
                             horizontalInterval: maxY / 4,
                             getDrawingHorizontalLine: (_) => const FlLine(
-                              color: Color(0xFFEFE3D5),
+                              color: AppColors.brandRed,
                               strokeWidth: 1,
                               dashArray: [4, 4],
                             ),
@@ -334,7 +335,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                 interval: maxY / 4,
                                 getTitlesWidget: (v, _) => Text(
                                   '₱${v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}k' : v.toStringAsFixed(0)}',
-                                  style: const TextStyle(fontSize: 9.5, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
+                                  style: const TextStyle(fontSize: 9.5, color: AppColors.brandRed, fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ),
@@ -348,7 +349,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                   // show every nth label to avoid crowding
                                   final step = (completed.length / 4).ceil().clamp(1, 999);
                                   if (idx % step != 0 && idx != completed.length - 1) return const SizedBox.shrink();
-                                  return Text('${idx + 1}', style: const TextStyle(fontSize: 9.5, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600));
+                                  return Text('${idx + 1}', style: const TextStyle(fontSize: 9.5, color: AppColors.brandRed, fontWeight: FontWeight.w600));
                                 },
                               ),
                             ),
@@ -360,7 +361,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                             LineChartBarData(
                               spots: spots,
                               isCurved: true,
-                              color: const Color(0xFF8C4A27),
+                              color: AppColors.brandRed,
                               barWidth: 2.5,
                               isStrokeCapRound: true,
                               dotData: FlDotData(
@@ -369,15 +370,15 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                   radius: 4,
                                   color: Colors.white,
                                   strokeWidth: 2,
-                                  strokeColor: const Color(0xFF8C4A27),
+                                  strokeColor: AppColors.brandRed,
                                 ),
                               ),
                               belowBarData: BarAreaData(
                                 show: true,
                                 gradient: LinearGradient(
                                   colors: [
-                                    const Color(0xFF8C4A27).withOpacity(0.18),
-                                    const Color(0xFF8C4A27).withOpacity(0.0),
+                                    AppColors.brandRed.withOpacity(0.18),
+                                    AppColors.brandRed.withOpacity(0.0),
                                   ],
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
@@ -431,10 +432,10 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                               children: [
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFAF2E9),
+                                    backgroundColor: AppColors.bgPastelPink,
                                     foregroundColor: brandCocoa,
                                     elevation: 0,
-                                    side: const BorderSide(color: Color(0xFFE8DACB)),
+                                    side: const BorderSide(color: AppColors.brandRed),
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
@@ -455,13 +456,13 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F0FE),
+                                    color: AppColors.brandRed,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     '${bakingOrders.length} Active Trays',
                                     style: const TextStyle(
-                                      color: Color(0xFF1967D2),
+                                      color: AppColors.brandRed,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11,
                                     ),
@@ -492,10 +493,10 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                               children: [
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFAF2E9),
+                                    backgroundColor: AppColors.bgPastelPink,
                                     foregroundColor: brandCocoa,
                                     elevation: 0,
-                                    side: const BorderSide(color: Color(0xFFE8DACB)),
+                                    side: const BorderSide(color: AppColors.brandRed),
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
@@ -517,13 +518,13 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F0FE),
+                                    color: AppColors.brandRed,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     '${bakingOrders.length} Active Trays',
                                     style: const TextStyle(
-                                      color: Color(0xFF1967D2),
+                                      color: AppColors.brandRed,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11.5,
                                     ),
@@ -547,7 +548,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                       decoration: BoxDecoration(
                         color: wellBg,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFEFE4D6)),
+                        border: Border.all(color: AppColors.bgPastelPink),
                       ),
                       alignment: Alignment.center,
                       child: const Text(
@@ -564,10 +565,10 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                          border: Border.all(color: AppColors.brandRed, width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF8B7355).withOpacity(0.04),
+                              color: AppColors.brandRed.withOpacity(0.04),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -582,7 +583,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFAF2E9),
+                                    color: AppColors.bgPastelPink,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Text('🔥', style: TextStyle(fontSize: 18)),
@@ -597,7 +598,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 14,
-                                          color: Color(0xFF1F1209),
+                                          color: AppColors.brandRed,
                                           letterSpacing: -0.2,
                                         ),
                                         maxLines: 1,
@@ -608,7 +609,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                         'Order ${o['id'] ?? o['docId']} • ${o['customer'] ?? 'Guest'}',
                                         style: const TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF6B7280),
+                                          color: AppColors.brandRed,
                                           fontWeight: FontWeight.w500,
                                         ),
                                         maxLines: 1,
@@ -620,13 +621,13 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFFF8EE),
+                                    color: AppColors.brandRed,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
                                     'Baking',
                                     style: TextStyle(
-                                      color: Color(0xFFB45309),
+                                      color: AppColors.brandRed,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 0.5,
@@ -798,7 +799,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                           final shortName = name.length > 8 ? '${name.substring(0, 8)}..' : name;
                                           return Padding(
                                             padding: const EdgeInsets.only(top: 10.0),
-                                            child: Text(shortName, style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280), fontWeight: FontWeight.w700)),
+                                            child: Text(shortName, style: const TextStyle(fontSize: 10, color: AppColors.brandRed, fontWeight: FontWeight.w700)),
                                           );
                                         },
                                       ),
@@ -809,7 +810,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                         reservedSize: 36,
                                         interval: 10,
                                         getTitlesWidget: (value, meta) {
-                                          return Text(value.toInt().toString(), style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.bold));
+                                          return Text(value.toInt().toString(), style: const TextStyle(fontSize: 11, color: AppColors.brandRed, fontWeight: FontWeight.bold));
                                         },
                                       ),
                                     ),
@@ -821,7 +822,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                     drawVerticalLine: false,
                                     horizontalInterval: 10,
                                     getDrawingHorizontalLine: (value) => FlLine(
-                                      color: const Color(0xFFE5E7EB),
+                                      color: AppColors.brandRed,
                                       strokeWidth: 1,
                                       dashArray: [4, 4],
                                     ),
@@ -835,13 +836,13 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                       barRods: [
                                         BarChartRodData(
                                           toY: stock.toDouble(),
-                                          color: isLowStock ? const Color(0xFFB45309) : const Color(0xFF8B7355),
+                                          color: isLowStock ? AppColors.brandRed : AppColors.brandRed,
                                           width: 22,
                                           borderRadius: BorderRadius.circular(4),
                                           backDrawRodData: BackgroundBarChartRodData(
                                             show: true,
                                             toY: 50,
-                                            color: const Color(0xFFF3F4F6),
+                                            color: AppColors.brandRed,
                                           ),
                                         ),
                                       ],
@@ -853,9 +854,9 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                           const SizedBox(height: 30),
                           const Row(
                             children: [
-                              Icon(Icons.warning_rounded, color: Color(0xFFB45309), size: 18),
+                              Icon(Icons.warning_rounded, color: AppColors.brandRed, size: 18),
                               SizedBox(width: 8),
-                              Text('Low Stock Alerts', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFB45309))),
+                              Text('Low Stock Alerts', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.brandRed)),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -867,12 +868,12 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFF8EE),
+                                color: AppColors.brandRed,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFEDD5A0)),
+                                border: Border.all(color: AppColors.brandRed),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFB45309).withOpacity(0.05),
+                                    color: AppColors.brandRed.withOpacity(0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -881,11 +882,11 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F1209))),
+                                  Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.brandRed)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFB45309),
+                                      color: AppColors.brandRed,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text('$stock units left', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -898,7 +899,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               alignment: Alignment.center,
-                              child: const Text('All items are well-stocked! 🎉', style: TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w600)),
+                              child: const Text('All items are well-stocked! 🎉', style: TextStyle(color: AppColors.brandRed, fontSize: 13, fontWeight: FontWeight.w600)),
                             ),
                         ],
                       );
@@ -1029,8 +1030,8 @@ class _PipelineNodeState extends State<_PipelineNode> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     final color = widget.isCompleted || widget.isActive
-        ? const Color(0xFF8C4A27) // brandCocoa
-        : const Color(0xFFD1D5DB); // grey-300
+        ? AppColors.brandRed // brandCocoa
+        : AppColors.brandRed; // grey-300
 
     return Column(
       children: [
@@ -1083,7 +1084,7 @@ class _PipelineNodeState extends State<_PipelineNode> with SingleTickerProviderS
           style: TextStyle(
             fontSize: 10,
             fontWeight: widget.isActive ? FontWeight.bold : FontWeight.w600,
-            color: widget.isActive ? const Color(0xFF1F1209) : const Color(0xFF9CA3AF),
+            color: widget.isActive ? AppColors.brandRed : AppColors.brandRed,
           ),
         ),
       ],
@@ -1103,7 +1104,7 @@ class _PipelineLine extends StatelessWidget {
         height: 2,
         margin: const EdgeInsets.only(top: 6, left: 4, right: 4), // align with center of 14x14 circle
         decoration: BoxDecoration(
-          color: isCompleted ? const Color(0xFF8C4A27) : const Color(0xFFE5E7EB),
+          color: isCompleted ? AppColors.brandRed : AppColors.brandRed,
           borderRadius: BorderRadius.circular(2),
         ),
       ),
