@@ -200,26 +200,7 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                 child: AnimatedCrossFade(
                   duration: const Duration(milliseconds: 250),
                   crossFadeState: _isSearchExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                  layoutBuilder: (topChild, topKey, bottomChild, bottomKey) {
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.centerRight,
-                      children: [
-                        Positioned(
-                          key: bottomKey,
-                          right: 0,
-                          left: 0,
-                          child: bottomChild,
-                        ),
-                        Positioned(
-                          key: topKey,
-                          right: 0,
-                          left: 0,
-                          child: topChild,
-                        ),
-                      ],
-                    );
-                  },
+
                   firstChild: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
