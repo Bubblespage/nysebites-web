@@ -103,7 +103,6 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
     final isMobile = screenWidth < 960;
 
     return Container(
-      height: 80,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -122,7 +121,7 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
       ),
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 48,
-        vertical: 12,
+        vertical: 14,
       ),
       child: Center(
         child: ConstrainedBox(
