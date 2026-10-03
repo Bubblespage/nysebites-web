@@ -15,5 +15,8 @@ flutter --version
 flutter config --enable-web
 flutter pub get
 
+# Generate .env file from Vercel environment variables
+echo "GEMINI_API_KEY=$GEMINI_API_KEY" > .env
+
 # Build the release web package
 flutter build web --release
