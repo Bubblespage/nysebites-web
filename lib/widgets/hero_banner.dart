@@ -82,7 +82,7 @@ class HeroBanner extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20.0 : 64.0,
-        vertical: isMobile ? 24.0 : 64.0,
+        vertical: isMobile ? 24.0 : 32.0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +215,7 @@ class HeroBanner extends StatelessWidget {
   Widget _buildImageContent(bool isMobile) {
     // Only used on desktop now.
     return SizedBox(
-      height: 600,
+      height: 480,
       width: double.infinity,
       child: Stack(
         children: [
