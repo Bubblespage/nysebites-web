@@ -9,7 +9,6 @@ import 'data/mock_products.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 
-import 'screens/splash_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 import 'theme/app_colors.dart';
 
@@ -108,8 +107,7 @@ class NyseBitesApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/': (context) => const HomeScreen(),
         '/admin': (context) => const AdminLoginScreen(),
       },
       onGenerateRoute: (settings) {
