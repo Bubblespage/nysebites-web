@@ -134,14 +134,6 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isMobile)
-                      IconButton(
-                        icon: const Icon(Icons.menu_rounded, color: AppColors.textDarkBerry),
-                        onPressed: widget.onOpenDrawer,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    if (isMobile) const SizedBox(width: 8),
                     InkWell(
                       onTap: widget.onLogoClick,
                       borderRadius: BorderRadius.circular(12),
@@ -150,17 +142,15 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                         children: [
                           ScaleTransition(
                             scale: _pulseAnimation,
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/images/nysebites_logo.png',
-                                width: 44,
-                                height: 44,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.cookie,
-                                  color: AppColors.accentGold,
-                                  size: 32,
-                                ),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.cookie,
+                                color: AppColors.accentGold,
+                                size: 32,
                               ),
                             ),
                           ),

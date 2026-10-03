@@ -211,7 +211,7 @@ class HeroBanner extends StatelessWidget {
   Widget _buildImageContent(bool isMobile) {
     // Only used on desktop now.
     return SizedBox(
-      height: 600,
+      height: 700,
       width: double.infinity,
       child: Stack(
         children: [
