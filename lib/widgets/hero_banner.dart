@@ -25,7 +25,11 @@ class HeroBanner extends StatelessWidget {
           padding: EdgeInsets.only(
             bottom: isMobile ? 0 : 32.0,
           ),
-          child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (topAnnouncementWidget != null) topAnnouncementWidget!,
+              Container(
             width: double.infinity,
             height: isMobile ? (screenHeight > 600 ? screenHeight - 75 : 600) : null,
             decoration: BoxDecoration(
@@ -35,7 +39,6 @@ class HeroBanner extends StatelessWidget {
                   ? DecorationImage(
                       image: const AssetImage('assets/images/hero_2.jpg'),
                       fit: BoxFit.cover,
-                      // A solid dark overlay rather than a blend makes the image look natural but dark enough for text
                       colorFilter: ColorFilter.mode(
                         Colors.black.withOpacity(0.65),
                         BlendMode.darken,
@@ -51,28 +54,24 @@ class HeroBanner extends StatelessWidget {
               ],
             ),
             clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (topAnnouncementWidget != null) topAnnouncementWidget!,
-                isMobile
-                    ? Expanded(
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: SingleChildScrollView(
-                            child: _buildTextContent(isMobile),
-                          ),
-                        ),
-                      )
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 1, child: _buildTextContent(isMobile)),
-                          Expanded(flex: 1, child: _buildImageContent(isMobile)),
-                        ],
+            child: isMobile
+                ? Expanded(
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: SingleChildScrollView(
+                        child: _buildTextContent(isMobile),
                       ),
-              ],
-            ),
+                    ),
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 1, child: _buildTextContent(isMobile)),
+                      Expanded(flex: 1, child: _buildImageContent(isMobile)),
+                    ],
+                  ),
+              ),
+            ],
           ),
         );
       },
