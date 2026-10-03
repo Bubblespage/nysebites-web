@@ -158,6 +158,7 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                                 ),
                               ),
                             ),
+                          ),
                           const SizedBox(width: 12),
                           if (!isMobile)
                             RichText(
