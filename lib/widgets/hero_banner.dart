@@ -57,13 +57,15 @@ class HeroBanner extends StatelessWidget {
                 if (topAnnouncementWidget != null) topAnnouncementWidget!,
                 isMobile
                     ? Expanded(
-                        child: Center(
+                        child: Align(
+                          alignment: Alignment.topLeft,
                           child: SingleChildScrollView(
                             child: _buildTextContent(isMobile),
                           ),
                         ),
                       )
                     : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(flex: 1, child: _buildTextContent(isMobile)),
                           Expanded(flex: 1, child: _buildImageContent(isMobile)),
@@ -80,7 +82,7 @@ class HeroBanner extends StatelessWidget {
   Widget _buildTextContent(bool isMobile) {
     return Padding(
       padding: EdgeInsets.only(
-        top: isMobile ? 24.0 : 32.0, 
+        top: isMobile ? 24.0 : 0, 
         bottom: isMobile ? 24.0 : 64.0, 
         left: isMobile ? 20.0 : 64.0, 
         right: isMobile ? 20.0 : 64.0
