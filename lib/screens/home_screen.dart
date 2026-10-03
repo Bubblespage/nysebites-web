@@ -851,7 +851,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         Container(
                           width: double.infinity,
                           height: 36,
-                          color: Colors.black.withOpacity(0.15),
+                          color: const Color(0xFF3A0A0A),
                           alignment: Alignment.center,
                           child: _MarqueeTicker(
                             announcement1: announcement1,
