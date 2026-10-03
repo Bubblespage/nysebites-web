@@ -14,7 +14,7 @@ class CategoryFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = [
-      {'label': 'All Sweets', 'sub': 'All Our Treats', 'value': 'all', 'image': 'assets/images/nyse_allsweets.jpg'},
+      {'label': 'All Sweets', 'sub': 'All Our Treats', 'value': 'all', 'image': 'assets/images/all_sweets.jpg'},
       {'label': 'Cookies', 'sub': 'Soft & Chewy', 'value': 'cookies', 'image': 'assets/images/og.jpg'},
       {'label': 'Brownies', 'sub': 'Rich & Fudgy', 'value': 'brownies', 'image': 'assets/images/brownies.jpg'},
       {'label': 'Cake Loafs', 'sub': 'Moist & Sweet', 'value': 'cake loafs', 'image': 'assets/images/banana_cake_loaf.jpg'},
@@ -156,83 +156,135 @@ class CategoryFilter extends StatelessWidget {
 
   Widget _buildCategoryCard(Map<String, dynamic> cat, bool isMobile, double? cardWidth) {
     final isSelected = selectedCategory == cat['value'];
-
-    return GestureDetector(
+    return _CategoryCard(
+      cat: cat,
+      isMobile: isMobile,
+      cardWidth: cardWidth,
+      isSelected: isSelected,
       onTap: () => onSelectCategory(cat['value'] as String),
-      child: Container(
-        width: isMobile ? cardWidth : null,
-        height: isMobile ? 220 : 280,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.darkGarnet : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.asset(
-                cat['image'] as String,
-                height: isMobile ? 110 : 150,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      cat['label'] as String,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: isMobile ? 14 : 18,
-                        color: isSelected ? Colors.white : AppColors.textDarkBerry,
-                      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatefulWidget {
+  final Map<String, dynamic> cat;
+  final bool isMobile;
+  final double? cardWidth;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.cat,
+    required this.isMobile,
+    this.cardWidth,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends State<_CategoryCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          width: widget.isMobile ? widget.cardWidth : null,
+          height: widget.isMobile ? 220 : 280,
+          transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
+          decoration: BoxDecoration(
+            color: widget.isSelected ? AppColors.darkGarnet : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(_isHovered ? 0.12 : 0.06),
+                blurRadius: _isHovered ? 24 : 10,
+                offset: Offset(0, _isHovered ? 12 : 4),
+              )
+            ],
+          ),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: SizedBox(
+                  height: widget.isMobile ? 110 : 150,
+                  width: double.infinity,
+                  child: AnimatedScale(
+                    scale: _isHovered ? 1.08 : 1.0,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                    child: Image.asset(
+                      widget.cat['image'] as String,
+                      fit: BoxFit.cover,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      cat['sub'] as String,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: isMobile ? 11 : 13,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white.withOpacity(0.7) : Colors.grey[500],
-                      ),
-                    ),
-                    const Spacer(),
-                    isSelected
-                        ? Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.accentGold,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_forward_rounded, 
-                              size: 16, 
-                              color: AppColors.textDarkBerry
-                            ),
-                          )
-                        : Icon(
-                            Icons.arrow_forward_rounded, 
-                            size: 20, 
-                            color: Colors.grey[400]
-                          ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(widget.isMobile ? 12.0 : 16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.cat['label'] as String,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: widget.isMobile ? 14 : 18,
+                          color: widget.isSelected ? Colors.white : AppColors.textDarkBerry,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.cat['sub'] as String,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: widget.isMobile ? 11 : 13,
+                          fontWeight: FontWeight.w500,
+                          color: widget.isSelected ? Colors.white.withOpacity(0.7) : Colors.grey[500],
+                        ),
+                      ),
+                      const Spacer(),
+                      widget.isSelected
+                          ? Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.accentGold,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_rounded, 
+                                size: 16, 
+                                color: AppColors.textDarkBerry
+                              ),
+                            )
+                          : AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              transform: Matrix4.translationValues(_isHovered ? 4 : 0, 0, 0),
+                              child: Icon(
+                                Icons.arrow_forward_rounded, 
+                                size: 20, 
+                                color: _isHovered ? AppColors.darkGarnet : Colors.grey[400]
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

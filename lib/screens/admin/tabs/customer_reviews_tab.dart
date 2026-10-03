@@ -5,7 +5,8 @@ import '../../../utils/pdf_report_generator.dart';
 import '../../../theme/app_colors.dart';
 
 class CustomerReviewsTab extends StatefulWidget {
-  const CustomerReviewsTab({super.key});
+  final String searchQuery;
+  const CustomerReviewsTab({super.key, this.searchQuery = ''});
 
   @override
   State<CustomerReviewsTab> createState() => _CustomerReviewsTabState();
@@ -244,6 +245,16 @@ class _CustomerReviewsTabState extends State<CustomerReviewsTab> {
                   });
                 } catch (e) {
                   debugPrint('Sorting error: $e');
+                }
+
+                if (widget.searchQuery.trim().isNotEmpty) {
+                  final q = widget.searchQuery.toLowerCase();
+                  docs.retainWhere((doc) {
+                    final data = doc.data();
+                    return (data['customerName'] ?? '').toString().toLowerCase().contains(q) ||
+                           (data['reviewText'] ?? '').toString().toLowerCase().contains(q) ||
+                           (data['orderId'] ?? '').toString().toLowerCase().contains(q);
+                  });
                 }
 
                 if (docs.isEmpty) {

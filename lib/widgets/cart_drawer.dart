@@ -61,6 +61,7 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
     super.dispose();
   }
 
+
   Map<String, List<Product>> get _groupedItems {
     final Map<String, List<Product>> grouped = {};
     for (final item in widget.cartItems) {
@@ -110,9 +111,13 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
       builder: (context, snapshot) {
         final settings = snapshot.data?.data() ?? {};
         final bool isStoreOpen = settings['isStoreOpen'] ?? true;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final double rightMargin = screenWidth > 1440 ? (screenWidth - 1440) / 2 : 0;
 
-        return Drawer(
-          width: drawerWidth,
+        return Padding(
+          padding: EdgeInsets.only(right: rightMargin),
+          child: Drawer(
+            width: drawerWidth,
           backgroundColor: Colors.transparent,
           elevation: 24,
           shadowColor: Colors.black26,
@@ -439,7 +444,9 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
                                         ],
                                         const SizedBox(height: 3),
                                         Text(
-                                          '₱${itemTotal.toStringAsFixed(2)}',
+                                          product.id.toString().startsWith('custom_')
+                                              ? 'Pending Quote'
+                                              : '₱${itemTotal.toStringAsFixed(2)}',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w900,
                                             fontSize: 13.5,
@@ -653,7 +660,8 @@ class _CartDrawerState extends State<CartDrawer> with SingleTickerProviderStateM
             ),
           ),
           ), // Closes Container
-        ); // Closes Drawer
+          ), // Closes Drawer
+        ); // Closes Padding
       },
     );
   }

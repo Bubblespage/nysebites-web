@@ -285,7 +285,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           final photoBase64 = doc.data()!['photoBase64'] as String?;
           if (photoBase64 != null && photoBase64.isNotEmpty && mounted) {
             try {
-              final bytes = base64Decode(photoBase64);
+              final bytes = base64Decode((photoBase64.contains(',') ? photoBase64.split(',').last : photoBase64).trim().replaceAll(RegExp(r'\s+'), ''));
               setState(() {
                 _profileImageBytes = bytes;
               });
@@ -1527,14 +1527,13 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardWhite,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _border),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: _espresso.withOpacity(0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      color: Color.fromRGBO(0, 0, 0, 0.05),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -1593,14 +1592,13 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardWhite,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _border),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: _espresso.withOpacity(0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      color: Color.fromRGBO(0, 0, 0, 0.05),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -3087,13 +3085,14 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
           child: Container(
             width: double.infinity,
             constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 16.0),
             decoration: BoxDecoration(
               color: _cream,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3102,19 +3101,16 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     const SizedBox(width: 36),
                     Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: _cocoa,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.receipt_long_rounded,
-                            size: 28,
-                            color: Colors.white,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            'assets/images/nysebites_logo.png',
+                            height: 48,
+                            width: 48,
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         const Text(
                           'E-Receipt',
                           style: TextStyle(
@@ -3124,7 +3120,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             color: _espresso,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           dateStr,
                           style: const TextStyle(
@@ -3132,6 +3128,19 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                             color: _muted,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Nyse Bites Bakeshop',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: _espresso,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text('N.I.A Rd, Imus, Cavite, Philippines', style: TextStyle(fontSize: 11, color: _muted)),
+                        const SizedBox(height: 2),
+                        const Text('+63 995 082 9180 • nysebites@gmail.com', style: TextStyle(fontSize: 11, color: _muted)),
                       ],
                     ),
                     IconButton(
@@ -3145,9 +3154,9 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildDottedDivider(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildInfoRow('Order ID', orderNumber),
                 const SizedBox(height: 8),
                 _buildInfoRow('Payment Method', paymentMethod),
@@ -3155,10 +3164,10 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   const SizedBox(height: 8),
                   _buildInfoRow('GCash Ref', reference),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -3184,7 +3193,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -3286,7 +3295,22 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                const Column(
+                  children: [
+
+                    Text(
+                      'Thank you for your sweet order! 🤎',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _muted,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -3336,6 +3360,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                   ],
                 ),
               ],
+            ),
             ),
           ),
         );
@@ -4188,7 +4213,7 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                               ),
                               const SizedBox(width: 8),
                               if (!isCompleted) ...[
-                                OutlinedButton.icon(
+                                OutlinedButton(
                                   onPressed: () {
                                     int itemCount = 1;
                                     if (data['items'] is List) {
@@ -4230,24 +4255,15 @@ class _CustomerProfileModalState extends State<CustomerProfileModal>
                                       color: _cocoa,
                                       width: 1.2,
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 0,
-                                    ),
+                                    padding: EdgeInsets.zero,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
+                                    minimumSize: const Size(40, 40),
                                   ),
-                                  icon: const Icon(
+                                  child: const Icon(
                                     Icons.local_shipping_outlined,
-                                    size: 16,
-                                  ),
-                                  label: const Text(
-                                    'Track Order',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 13,
-                                    ),
+                                    size: 18,
                                   ),
                                 ),
                                 const SizedBox(width: 8),

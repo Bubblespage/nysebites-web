@@ -377,77 +377,53 @@ class _GCashDialogState extends State<_GCashDialog> {
                             ),
                           )
                         else
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.brandRed,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.brandRed),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: AppColors.brandRed),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(7),
-                                    child: Image.memory(
-                                      _paymentProofBytes!,
-                                      width: 48,
-                                      height: 48,
-                                      fit: BoxFit.cover,
-                                    ),
+                          Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(11),
+                                  child: Image.memory(
+                                    _paymentProofBytes!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _paymentProofFileName ?? 'screenshot.png',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                          color: AppColors.brandRed,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      const Text(
-                                        'Ready to submit',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.brandRed,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Material(
+                                  color: Colors.black54,
+                                  shape: const CircleBorder(),
+                                  child: IconButton(
+                                    iconSize: 20,
+                                    onPressed: () {
+                                      setState(() {
+                                        _paymentProofBytes = null;
+                                        _paymentProofFileName = null;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.close, color: Colors.white),
+                                    tooltip: 'Remove Image',
                                   ),
                                 ),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _paymentProofBytes = null;
-                                      _paymentProofFileName = null;
-                                    });
-                                  },
-                                  icon: const Icon(Icons.close, color: AppColors.brandRed),
-                                  tooltip: 'Remove',
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         if (_errorMessage != null) ...[
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                             decoration: BoxDecoration(
-                              color: AppColors.brandRed,
+                              color: AppColors.brandRed.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: AppColors.brandRed),
                             ),

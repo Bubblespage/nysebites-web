@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'gcash_portal_modal.dart';
 import '../models/product.dart';
 import '../theme/app_colors.dart';
+
 // ── FIX: Removed StorageUploader — Firebase Storage requires the Blaze
 // billing plan, which isn't enabled on this project. Reverted to base64,
 // matching the same fix already applied in order_tracker_modal.dart.
@@ -49,7 +50,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
   final TextEditingController _refNumberController = TextEditingController();
 
   final String _selectedPaymentMethod = 'GCash';
-  final double _packagingFee = 15.0;
   bool _isSubmitting = false;
   DateTime? _targetDate;
   String? _targetTimeSlot;
@@ -125,7 +125,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
     }
 
     final String deliveryMethod = hasCustomCake ? 'GrabCar' : 'Lalamove';
-    final String deliverySpeedLabel = '$deliveryMethod Delivery (Paid to Rider)';
+    final String deliverySpeedLabel =
+        '$deliveryMethod Delivery (Paid to Rider)';
 
     final String rawPhone = _phoneController.text.trim();
     final String completePhone = rawPhone.startsWith('+63')
@@ -177,11 +178,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
       'note': _noteController.text.trim().isEmpty
           ? null
           : _noteController.text.trim(),
-      'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
+      'total':
+          '₱${calculatedGrandTotal.toStringAsFixed(2)}${hasCustomCake ? ' + Quote' : ''}',
       'subtotal': widget.totalAmount,
       'baseCakePrice': hasCustomCake ? widget.totalAmount : null,
       'deliveryFee': 0.0, // Paid to rider
-      'packagingFee': _packagingFee,
+      'packagingFee': 0.0,
       'status': status,
       'statusLabel': statusLabel,
       'payment': 'GCash',
@@ -215,7 +217,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
           'template_params': {
             'order_id': orderId,
             'customer_name': customerName,
-            'total': '₱${calculatedGrandTotal.toStringAsFixed(2)}',
+            'total':
+                '₱${calculatedGrandTotal.toStringAsFixed(2)}${hasCustomCake ? ' + Quote' : ''}',
             'items': itemizedSummary,
           },
         }),
@@ -379,9 +382,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                 }
               }
 
-              final double grandTotal = regularItemsTotal > 0
-                  ? regularItemsTotal + _packagingFee
-                  : 0.0;
+              final double grandTotal = regularItemsTotal;
 
               final bool hasCustomCake = widget.cartItems.any(
                 (item) => item.category.toLowerCase() == 'cakes',
@@ -495,7 +496,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                                         fontSize: 16,
                                                         fontWeight:
                                                             FontWeight.bold,
-                                                        color: AppColors.darkGarnet,
+                                                        color: AppColors
+                                                            .darkGarnet,
                                                       ),
                                                     ),
                                                     const SizedBox(height: 10),
@@ -666,10 +668,13 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       ),
                                     ),
                                   ),
-                                  if (_targetDate != null && 
-                                      !(_targetDate!.year == DateTime.now().year && 
-                                        _targetDate!.month == DateTime.now().month && 
-                                        _targetDate!.day == DateTime.now().day)) ...[
+                                  if (_targetDate != null &&
+                                      !(_targetDate!.year ==
+                                              DateTime.now().year &&
+                                          _targetDate!.month ==
+                                              DateTime.now().month &&
+                                          _targetDate!.day ==
+                                              DateTime.now().day)) ...[
                                     const SizedBox(width: 8),
                                     Expanded(
                                       flex: 4,
@@ -1063,11 +1068,13 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     ? 'Please enter your full delivery address'
                                     : null,
                               ),
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 14),
                               _sectionLabel('RIDER / BAKE NOTES (Optional)'),
                               const SizedBox(height: 10),
                               TextFormField(
                                 controller: _noteController,
+                                maxLines: 4,
+                                minLines: 4,
                                 style: const TextStyle(
                                   fontSize: 12.5,
                                   color: AppColors.darkGarnet,
@@ -1105,7 +1112,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 14),
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -1158,9 +1165,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 _sectionLabel('PAYMENT METHOD'),
                                 const SizedBox(height: 8),
                                 Container(
+                                  width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
-                                    vertical: 14,
+                                    vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -1198,10 +1206,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 8),
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(14),
+                                  padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: AppColors.bgPastelPink,
                                     borderRadius: BorderRadius.circular(16),
@@ -1221,10 +1229,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                         child: Text(
                                           'You will be redirected to the secure GCash payment portal after clicking Place Sweet Order.',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 9.5,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.textDarkBerry,
-                                            height: 1.4,
+                                            height: 1.3,
                                           ),
                                         ),
                                       ),
@@ -1233,11 +1241,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 ),
                               ],
                               if (hasCustomCake) ...[
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 8),
                                 _sectionLabel('CUSTOM CAKE PAYMENT'),
                                 const SizedBox(height: 8),
                                 Container(
-                                  padding: const EdgeInsets.all(16),
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(16),
@@ -1268,7 +1277,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                         child: Text(
                                           'Payment for custom cakes is not required at checkout. It will be securely handled via GCash inside your Order Tracker once our bakers review and approve your cake design.',
                                           style: TextStyle(
-                                            fontSize: 12.5,
+                                            fontSize: 10,
                                             color: AppColors.textDarkBerry,
                                             height: 1.4,
                                           ),
@@ -1278,14 +1287,14 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 8),
                               _sectionLabel('PAYMENT BREAKDOWN'),
                               const SizedBox(height: 8),
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
-                                  vertical: 8,
+                                  vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.bgPastelPink,
@@ -1322,7 +1331,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             'Delivery Fee Not Included',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w900,
-                                              fontSize: 11.5,
+                                              fontSize: 10.5,
                                               color: AppColors.brandRed,
                                             ),
                                           ),
@@ -1330,9 +1339,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           Text(
                                             'You must pay the ${hasCustomCake ? 'GrabCar' : 'Lalamove'} driver directly in cash for the delivery fee upon arrival.',
                                             style: const TextStyle(
-                                              fontSize: 10.5,
+                                              fontSize: 9.5,
                                               color: AppColors.brandRed,
-                                              height: 1.4,
+                                              height: 1.3,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -1342,9 +1351,10 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.all(14),
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
@@ -1366,7 +1376,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                   children: [
                                     _receiptRow(
                                       'Items Subtotal (${widget.cartItems.length} items)',
-                                      '₱${widget.totalAmount.toStringAsFixed(2)}',
+                                      '₱${widget.totalAmount.toStringAsFixed(2)}${hasCustomCake ? ' + Quote' : ''}',
                                     ),
                                     const SizedBox(height: 8),
                                     _receiptRowWidget(
@@ -1392,11 +1402,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
-                                    _receiptRow(
-                                      'Bakery Eco Seal Packaging',
-                                      '₱${_packagingFee.toStringAsFixed(2)}',
-                                    ),
+                                    if (regularItemsTotal > 0) ...[
+                                      const SizedBox(height: 8),
+                                    ],
                                     const SizedBox(height: 12),
                                     const Divider(
                                       color: AppColors.bgPastelPink,
@@ -1412,7 +1420,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                           'Grand Total:',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w900,
-                                            fontSize: 12.5,
+                                            fontSize: 11.5,
                                             color: AppColors.darkGarnet,
                                           ),
                                         ),
@@ -1428,16 +1436,30 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                             ),
                                           ),
                                           child: Text(
-                                            '₱${grandTotal.toStringAsFixed(2)}',
+                                            '₱${grandTotal.toStringAsFixed(2)}${hasCustomCake ? ' + Quote' : ''}',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w900,
-                                              fontSize: 14,
+                                              fontSize: 12.5,
                                               color: Colors.white,
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
+                                    if (hasCustomCake) ...[
+                                      const SizedBox(height: 6),
+                                      const Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Text(
+                                          '* Final quote and contract will be sent to your Order Tracker after admin review',
+                                          style: TextStyle(
+                                            fontSize: 8.5,
+                                            fontStyle: FontStyle.italic,
+                                            color: AppColors.textDarkBerry,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -1557,7 +1579,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                 ),
                                 if (grandTotal > 0)
                                   Text(
-                                    '₱${grandTotal.toStringAsFixed(2)}',
+                                    '₱${grandTotal.toStringAsFixed(2)}${hasCustomCake ? ' + Quote' : ''}',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w900,
@@ -1688,7 +1710,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 14, color: AppColors.textDarkBerry),
+          const Icon(
+            Icons.star_rounded,
+            size: 14,
+            color: AppColors.textDarkBerry,
+          ),
           const SizedBox(width: 6),
           Text(
             label,
@@ -1710,12 +1736,12 @@ class _CheckoutModalState extends State<CheckoutModal> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry),
+          style: const TextStyle(fontSize: 11, color: AppColors.textDarkBerry),
         ),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
             color: AppColors.darkGarnet,
           ),
@@ -1730,7 +1756,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textDarkBerry),
+          style: const TextStyle(fontSize: 11, color: AppColors.textDarkBerry),
         ),
         valueWidget,
       ],

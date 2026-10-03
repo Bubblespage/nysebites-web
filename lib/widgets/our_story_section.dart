@@ -124,19 +124,19 @@ class OurStorySection extends StatelessWidget {
 
   Widget _buildIconsAndButton(bool isMobile) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         // Icons Row constrained to exactly the paragraph width
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Wrap(
+          spacing: 36.0,
+          runSpacing: 24.0,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _buildFeatureIcon(Icons.coffee, 'Premium\nIngredients'),
-            _buildFeatureIcon(
-              Icons.bakery_dining_outlined,
-              'Made\nFresh Daily',
-            ),
+            _buildFeatureIcon(Icons.bakery_dining_outlined, 'Made\nFresh Daily'),
             _buildFeatureIcon(Icons.favorite_outline, 'Crafted\nwith Passion'),
+            _buildFeatureIcon(Icons.cake_outlined, 'Made\nto Order'),
           ],
         ),
         const SizedBox(height: 48),
@@ -251,7 +251,7 @@ class OurStorySection extends StatelessWidget {
                     bottomRight: Radius.circular(32),
                   ),
                   child: Image.asset(
-                    'assets/images/hero_1.jpg',
+                    'assets/images/cookiesbatch.jpg',
                     fit: BoxFit.cover,
                     height: double.infinity,
                   ),
@@ -304,7 +304,7 @@ class OurStorySection extends StatelessWidget {
                           topRight: Radius.circular(32),
                         ),
                         child: Image.asset(
-                          'assets/images/hero_3.jpg',
+                          'assets/images/banana_cake_loaf.jpg',
                           fit: BoxFit.cover,
                           width: double.infinity,
                         ),

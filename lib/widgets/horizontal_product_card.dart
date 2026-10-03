@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../data/mock_products.dart';
 import '../theme/app_colors.dart';
+import 'product_details_dialog.dart';
 
 class HorizontalProductCard extends StatefulWidget {
   final Product product;
   final Function(Product) onAddToCart;
   final Function(Product) onCustomize;
   final bool acceptCustomCakes;
+  final bool isFavorite;
+  final Function(Product) onToggleFavorite;
 
   const HorizontalProductCard({
     super.key,
@@ -15,6 +18,8 @@ class HorizontalProductCard extends StatefulWidget {
     required this.onAddToCart,
     required this.onCustomize,
     this.acceptCustomCakes = true,
+    required this.isFavorite,
+    required this.onToggleFavorite,
   });
 
   @override
@@ -77,16 +82,49 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
     );
   }
 
-  void _handleAction() {
+  void _handleAction([Product? customProduct]) {
+    final productToAdd = customProduct ?? widget.product;
+    if (productToAdd.category == 'cakes') {
+      widget.onCustomize(productToAdd);
+    } else {
+      Product finalProduct = productToAdd;
+      if (customProduct == null) {
+        if (finalProduct.priceBox6 != null) {
+          if (!finalProduct.name.contains('Box of 4')) {
+            finalProduct = finalProduct.copyWith(name: '${finalProduct.name} (Box of 4)');
+          }
+        } else if (finalProduct.servingSize != null) {
+          if (!finalProduct.name.contains(finalProduct.servingSize!)) {
+            finalProduct = finalProduct.copyWith(name: '${finalProduct.name} (${finalProduct.servingSize})');
+          }
+        }
+      }
+      widget.onAddToCart(finalProduct);
+    }
+  }
+
+  void _showDetails() {
     if (widget.product.category == 'cakes') {
       widget.onCustomize(widget.product);
-    } else {
-      widget.onAddToCart(widget.product);
+      return;
     }
+
+    showDialog(
+      context: context,
+      builder: (context) => ProductDetailsDialog(
+        product: widget.product,
+        onAddToCart: (p) => _handleAction(p),
+        isFavorite: widget.isFavorite,
+        onToggleFavorite: widget.onToggleFavorite,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -107,26 +145,26 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: _handleAction,
+            onTap: _showDetails,
             borderRadius: BorderRadius.circular(20),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: EdgeInsets.all(isMobile ? 10.0 : 12.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Left Square Image with rounded corners
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: isMobile ? 70 : 80,
+                    height: isMobile ? 70 : 80,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(isMobile ? 14 : 16),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(isMobile ? 14 : 16),
                       child: _buildImage(),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: isMobile ? 12 : 16),
                   
                   // Middle Content
                   Expanded(
@@ -136,9 +174,9 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
                       children: [
                         Text(
                           widget.product.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 16,
+                            fontSize: isMobile ? 14 : 16,
                             color: AppColors.textDarkBerry,
                           ),
                           maxLines: 1,
@@ -150,7 +188,7 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
                               ? 'Freshly baked for you.'
                               : widget.product.description,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: isMobile ? 11 : 12,
                             color: Colors.grey[500],
                             height: 1.3,
                           ),
@@ -158,31 +196,90 @@ class _HorizontalProductCardState extends State<HorizontalProductCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          '₱${widget.product.price.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            color: AppColors.textDarkBerry,
-                          ),
-                        ),
+                        widget.product.category == 'cakes'
+                            ? Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 6 : 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.bgPastelPink,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.brandRed.withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome,
+                                      size: isMobile ? 10 : 12,
+                                      color: AppColors.brandRed,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Customizable',
+                                      style: TextStyle(
+                                        fontSize: isMobile ? 9.5 : 10.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.brandRed,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Row(
+                                children: [
+                                  Text(
+                                    '₱${widget.product.price.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: isMobile ? 14 : 16,
+                                      color: AppColors.textDarkBerry,
+                                    ),
+                                  ),
+                                  if (widget.product.servingSize != null) ...[
+                                    SizedBox(width: isMobile ? 6 : 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.bgPastelPink.withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        widget.product.priceBox6 != null ? 'Box of 4 / 6' : widget.product.servingSize!,
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 9 : 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.brandRed,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: isMobile ? 8 : 12),
 
                   // Right Plus Button
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      color: AppColors.darkGarnet, // Match the user's color theme but dark
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 20,
+                  GestureDetector(
+                    onTap: _handleAction,
+                    child: Container(
+                      width: isMobile ? 28 : 32,
+                      height: isMobile ? 28 : 32,
+                      decoration: const BoxDecoration(
+                        color: AppColors.darkGarnet, // Match the user's color theme but dark
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: isMobile ? 16 : 20,
+                      ),
                     ),
                   ),
                 ],

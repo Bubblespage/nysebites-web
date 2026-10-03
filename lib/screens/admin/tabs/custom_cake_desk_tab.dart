@@ -25,11 +25,11 @@ class CustomCakeDeskTab extends StatefulWidget {
 
 class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
   static const Color brandCocoa = AppColors.darkGarnet;
-  static const Color darkEspresso = AppColors.brandRed;
-  static const Color textDark = AppColors.brandRed;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
-  static const Color wellBg = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color textDark = AppColors.textDarkBerry;
+  static const Color textMuted = Colors.grey;
+  static const Color borderLight = Color(0xFFE0E0E0);
+  static const Color wellBg = Color(0xFFF5F5F5);
 
   int _selectedSubTab = 0; // 0 = Pending Specs, 1 = In Progress, 2 = History, 3 = Schedule & Slots
   DateTime _currentMonth = DateTime.now();
@@ -387,7 +387,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                     style: const TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.brandRed,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -486,7 +486,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                                 children: [
                                                   ClipRRect(
                                                     borderRadius: BorderRadius.circular(12),
-                                                    child: Image.memory(base64Decode(refImageBase64!), fit: BoxFit.contain),
+                                                    child: Image.memory(base64Decode((refImageBase64!.contains(',') ? refImageBase64!.split(',').last : refImageBase64!).trim().replaceAll(RegExp(r'\s+'), '')), fit: BoxFit.contain),
                                                   ),
                                                   IconButton(
                                                     icon: const Icon(Icons.close, color: Colors.white, size: 30),
@@ -499,7 +499,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                                         },
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(8),
-                                          child: Image.memory(base64Decode(refImageBase64), width: 140, height: 140, fit: BoxFit.cover),
+                                          child: Image.memory(base64Decode((refImageBase64.contains(',') ? refImageBase64.split(',').last : refImageBase64).trim().replaceAll(RegExp(r'\s+'), '')), width: 140, height: 140, fit: BoxFit.cover),
                                         ),
                                       ),
                                     ],
@@ -644,13 +644,13 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
       fg = brandCocoa;
     } else if (s.contains('pending') || s == 'received') {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     } else if (s == 'delivering') {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     } else if (s == 'delivered' || s.contains('completed')) {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     }
 
     return Container(
@@ -670,54 +670,126 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
     final TextEditingController riderNameController = TextEditingController(text: order['riderName']?.toString());
     final TextEditingController trackingLinkController = TextEditingController(text: order['trackingLink']?.toString());
 
-    showDialog(
+        showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Dispatch Order'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: riderNameController,
-              decoration: const InputDecoration(
-                labelText: 'Rider Details (Name / Plate No)',
-                hintText: 'e.g. Juan Dela Cruz - GrabCar',
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          width: 440,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(37, 24, 17, 0.12),
+                blurRadius: 20,
+                offset: Offset(0, 6),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: trackingLinkController,
-              decoration: const InputDecoration(
-                labelText: 'Tracking Link (URL)',
-                hintText: 'https://...',
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Dispatch Order',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF381014),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: riderNameController,
+                decoration: InputDecoration(
+                  labelText: 'Rider Details (Name / Plate No)',
+                  hintText: 'e.g. Juan Dela Cruz - GrabCar',
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF381014)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: trackingLinkController,
+                decoration: InputDecoration(
+                  labelText: 'Tracking Link (URL)',
+                  hintText: 'https://...',
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF381014)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF381014),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      widget.onUpdateStatus(
+                        targetDocId,
+                        'delivering',
+                        '🛵 Out for Delivery',
+                        {
+                          if (riderNameController.text.trim().isNotEmpty)
+                            'riderName': riderNameController.text.trim(),
+                          if (trackingLinkController.text.trim().isNotEmpty)
+                            'trackingLink': trackingLinkController.text.trim(),
+                        },
+                      );
+                    },
+                    child: const Text('Dispatch', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkGarnet),
-            onPressed: () {
-              Navigator.pop(ctx);
-              widget.onUpdateStatus(
-                targetDocId,
-                'delivering',
-                '🛵 Out for Delivery',
-                {
-                  if (riderNameController.text.trim().isNotEmpty)
-                    'riderName': riderNameController.text.trim(),
-                  if (trackingLinkController.text.trim().isNotEmpty)
-                    'trackingLink': trackingLinkController.text.trim(),
-                },
-              );
-            },
-            child: const Text('Dispatch', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
@@ -758,7 +830,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
           order,
           () => widget.onUpdateStatus(orderId, 'ready_to_bake', '✓ Ready for Oven'),
         ),
-        child: Text(isFull ? 'Verify Full Payment' : 'Verify Retainer', style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+        child: const Text('Verify Payment', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
       );
     }
     if (status == 'ready_to_bake') {
@@ -907,11 +979,11 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                         if (payment.contains('full')) {
                           badgeText = 'FULL';
                           badgeBg = AppColors.brandRed;
-                          badgeFg = AppColors.brandRed;
+                          badgeFg = Colors.white;
                         } else if (payment.contains('half') || payment.contains('deposit')) {
                           badgeText = 'HALF';
                           badgeBg = AppColors.brandRed;
-                          badgeFg = AppColors.brandRed;
+                          badgeFg = Colors.white;
                         } else if (status == 'baking' || status == 'ready_to_bake') {
                           badgeText = 'BAKI';
                           badgeBg = AppColors.bgPastelPink;
@@ -919,7 +991,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                         } else if (status.contains('quote') || status.contains('contract')) {
                           badgeText = 'QUOT';
                           badgeBg = AppColors.brandRed;
-                          badgeFg = AppColors.brandRed;
+                          badgeFg = Colors.white;
                         }
 
                         return Container(
@@ -1129,7 +1201,7 @@ class _CustomCakeDeskTabState extends State<CustomCakeDeskTab> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isCurrentMonth ? Colors.white : AppColors.brandRed,
+                      color: isCurrentMonth ? Colors.white : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: borderLight),
                       boxShadow: [

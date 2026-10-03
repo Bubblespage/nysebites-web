@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../data/mock_products.dart';
 import '../theme/app_colors.dart';
+import 'product_details_dialog.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -131,6 +132,33 @@ class _ProductCardState extends State<ProductCard> {
     }
   }
 
+  void _showDetails() {
+    if (widget.product.category == 'cakes') {
+      widget.onCustomize(widget.product);
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => ProductDetailsDialog(
+        product: widget.product,
+        onAddToCart: (p) {
+          if (p.category == 'cakes') {
+            widget.onCustomize(p);
+          } else {
+            widget.onAddToCart(p);
+          }
+        },
+        isFavorite: widget.isFavorite,
+        onToggleFavorite: (p) {
+          if (widget.onFavoriteToggle != null) {
+            widget.onFavoriteToggle!();
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCake = widget.product.category == 'cakes';
@@ -146,23 +174,25 @@ class _ProductCardState extends State<ProductCard> {
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
-          decoration: BoxDecoration(
-            color: AppColors.cardWhite,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromRGBO(0, 0, 0, 0.05),
-                blurRadius: _isHovered ? 16 : 8,
-                offset: Offset(0, _isHovered ? 8 : 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: GestureDetector(
+          onTap: _showDetails,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
+            decoration: BoxDecoration(
+              color: AppColors.cardWhite,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromRGBO(0, 0, 0, 0.05),
+                  blurRadius: _isHovered ? 16 : 8,
+                  offset: Offset(0, _isHovered ? 8 : 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Top Image Area
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -247,14 +277,48 @@ class _ProductCardState extends State<ProductCard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        '\$${_currentPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          color: AppColors.textDarkBerry,
-                        ),
-                      ),
+                      widget.product.category == 'cakes'
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.bgPastelPink,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.brandRed.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    size: 12,
+                                    color: AppColors.brandRed,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Customizable',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.brandRed,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Text(
+                              '₱${_currentPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                color: AppColors.textDarkBerry,
+                              ),
+                            ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -326,10 +390,11 @@ class _ProductCardState extends State<ProductCard> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
+          ), // Closes Column
+        ), // Closes AnimatedContainer
+        ), // Closes GestureDetector
+      ), // Closes MouseRegion
+    ); // Closes MediaQuery
   }
 
   Widget _buildBoxSizeChip(int size, String label, {bool compact = false}) {

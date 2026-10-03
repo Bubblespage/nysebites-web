@@ -15,12 +15,12 @@ class DashboardOverviewTab extends StatefulWidget {
 }
 
 class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
-  static const Color brandCocoa = AppColors.brandRed;
+  static const Color brandCocoa = AppColors.darkGarnet;
   static const Color darkEspresso = AppColors.darkGarnet;
   static const Color textDark = AppColors.textDarkBerry;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
-  static const Color wellBg = AppColors.brandRed;
+  static const Color textMuted = Colors.grey;
+  static const Color borderLight = Color(0xFFE0E0E0);
+  static const Color wellBg = Color(0xFFF5F5F5);
 
   String _inventoryCategoryFilter = 'All';
 
@@ -250,7 +250,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                           style: const TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.brandRed,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -259,7 +259,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                   const SizedBox(height: 4),
                   const Text(
                     'Cumulative revenue from completed deliveries over time',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.brandRed),
+                    style: TextStyle(fontSize: 11.5, color: textMuted),
                   ),
                   const SizedBox(height: 20),
                   Builder(builder: (context) {
@@ -274,13 +274,13 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                         height: 160,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.brandRed,
+                          color: wellBg,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
                           'No completed orders yet — revenue will appear here once deliveries are done.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: AppColors.brandRed),
+                          style: TextStyle(fontSize: 12, color: textMuted),
                         ),
                       );
                     }
@@ -395,6 +395,60 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
             ),
             const SizedBox(height: 20),
 
+            // Section 4: Action Center (Needs Attention)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: borderLight),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Text('⚡', style: TextStyle(fontSize: 18)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Action Center',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Items that need your immediate attention right now',
+                    style: TextStyle(fontSize: 11.5, color: textMuted),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  isMobile
+                      ? Column(
+                          children: [
+                            _buildRecentOrdersCard(),
+                            const SizedBox(height: 16),
+                            _buildUnreadChatsCard(),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: _buildRecentOrdersCard()),
+                            const SizedBox(width: 20),
+                            Expanded(child: _buildUnreadChatsCard()),
+                          ],
+                        ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Section 2: Baking in Oven Deck Monitor
             Container(
               width: double.infinity,
@@ -462,7 +516,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                   child: Text(
                                     '${bakingOrders.length} Active Trays',
                                     style: const TextStyle(
-                                      color: AppColors.brandRed,
+                                      color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11,
                                     ),
@@ -524,7 +578,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                   child: Text(
                                     '${bakingOrders.length} Active Trays',
                                     style: const TextStyle(
-                                      color: AppColors.brandRed,
+                                      color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11.5,
                                     ),
@@ -627,7 +681,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                                   child: const Text(
                                     'Baking',
                                     style: TextStyle(
-                                      color: AppColors.brandRed,
+                                      color: Colors.white,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 0.5,
@@ -882,7 +936,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.brandRed)),
+                                  Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
@@ -899,7 +953,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               alignment: Alignment.center,
-                              child: const Text('All items are well-stocked! 🎉', style: TextStyle(color: AppColors.brandRed, fontSize: 13, fontWeight: FontWeight.w600)),
+                              child: const Text('All items are well-stocked! 🎉', style: TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
                             ),
                         ],
                       );
@@ -908,9 +962,197 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                 ],
               ),
             ),
+
+
           ],
         );
       },
+    );
+  }
+
+
+
+  Widget _buildRecentOrdersCard() {
+    final pending = widget.orders.where((o) {
+      final s = (o['status'] ?? '').toString().toLowerCase();
+      return s == 'pending_spec_review' || s == 'pending_cod' || s == 'pending_ewallet' || s == 'received';
+    }).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.brandRed.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Recent Pending Orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: AppColors.darkGarnet)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: pending.isNotEmpty ? AppColors.brandRed : Colors.green.shade400, 
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (pending.isNotEmpty ? AppColors.brandRed : Colors.green).withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text('${pending.length} Pending', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (pending.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(12)),
+              child: const Text('All caught up! 🎉', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textMuted)),
+            )
+          else
+            ...pending.take(3).map((o) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: AppColors.bgPastelPink, borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.receipt_long, size: 16, color: AppColors.brandRed),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Order ${o['id']}',
+                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.brandRed),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${o['item']}',
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: textDark),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnreadChatsCard() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('support_chats').where('adminUnread', isEqualTo: true).snapshots(),
+      builder: (context, snapshot) {
+        final docs = snapshot.data?.docs ?? [];
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.brandRed.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Unread Support Chats', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: AppColors.darkGarnet)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: docs.isNotEmpty ? AppColors.brandRed : Colors.green.shade400,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (docs.isNotEmpty ? AppColors.brandRed : Colors.green).withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text('${docs.length} Unread', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (docs.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(color: wellBg, borderRadius: BorderRadius.circular(12)),
+                  child: const Text('Inbox zero! 🌟', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textMuted)),
+                )
+              else
+                ...docs.take(3).map((d) {
+                  final data = d.data();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: AppColors.bgPastelPink, borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.chat_bubble, size: 16, color: AppColors.brandRed),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${data['userName']}',
+                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.brandRed),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${data['lastMessage']}',
+                                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: textDark),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
+        );
+      }
     );
   }
 
@@ -1030,8 +1272,8 @@ class _PipelineNodeState extends State<_PipelineNode> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     final color = widget.isCompleted || widget.isActive
-        ? AppColors.brandRed // brandCocoa
-        : AppColors.brandRed; // grey-300
+        ? AppColors.darkGarnet // brandCocoa
+        : Colors.grey.shade300; // grey-300
 
     return Column(
       children: [
@@ -1084,7 +1326,7 @@ class _PipelineNodeState extends State<_PipelineNode> with SingleTickerProviderS
           style: TextStyle(
             fontSize: 10,
             fontWeight: widget.isActive ? FontWeight.bold : FontWeight.w600,
-            color: widget.isActive ? AppColors.brandRed : AppColors.brandRed,
+            color: widget.isActive ? AppColors.darkGarnet : Colors.grey,
           ),
         ),
       ],
@@ -1104,7 +1346,7 @@ class _PipelineLine extends StatelessWidget {
         height: 2,
         margin: const EdgeInsets.only(top: 6, left: 4, right: 4), // align with center of 14x14 circle
         decoration: BoxDecoration(
-          color: isCompleted ? AppColors.brandRed : AppColors.brandRed,
+          color: isCompleted ? AppColors.darkGarnet : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(2),
         ),
       ),

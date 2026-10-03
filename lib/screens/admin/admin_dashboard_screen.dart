@@ -12,6 +12,8 @@ import 'tabs/sweet_notes_tab.dart';
 import 'tabs/customer_reviews_tab.dart';
 import 'tabs/store_settings_tab.dart';
 import 'tabs/security_permissions_tab.dart';
+import 'tabs/support_chats_tab.dart';
+import 'tabs/support_chats_tab.dart';
 import 'admin_login_screen.dart';
 import '../../data/mock_products.dart';
 import '../../theme/app_colors.dart';
@@ -36,10 +38,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   static const Color brandCocoa = AppColors.darkGarnet;
   static const Color darkEspresso = AppColors.brandRed;
   static const Color creamCanvas = AppColors.bgPastelPink;
-  static const Color textDark = AppColors.brandRed;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
-  static const Color wellBg = AppColors.brandRed;
+  static const Color textDark = AppColors.textDarkBerry;
+  static const Color textMuted = Colors.grey;
+  static const Color borderLight = Color(0xFFE0E0E0);
+  static const Color wellBg = Color(0xFFF5F5F5);
 
   int _selectedNavIndex = 0;
   String _searchQuery = '';
@@ -409,6 +411,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return 'Search reviews...';
       case 6:
         return 'Search permissions...';
+      case 8:
+        return 'Search live chats...';
       default:
         return 'Search admin desk...';
     }
@@ -487,7 +491,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       isSmallMobile: isSmallMobile,
                     ),
                     Expanded(
-                      child: SingleChildScrollView(
+                      child: _selectedNavIndex == 8 ? Container(
+                        padding: EdgeInsets.zero,
+                        child: FadeTransition(
+                          opacity: _fadeAnim,
+                          child: SlideTransition(
+                            position: _slideAnim,
+                            child: _buildActiveTabContent(isDesktop),
+                          ),
+                        ),
+                      ) : SingleChildScrollView(
                         padding: EdgeInsets.all(
                           isDesktop ? 28 : (isSmallMobile ? 12 : 16),
                         ),
@@ -554,118 +567,132 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     .where((d) => d.data()['status'] == 'new')
                     .length;
 
-                return Container(
-                  color: darkEspresso,
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          'assets/images/nysebites_logo.png',
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 40,
-                            height: 40,
-                            color: borderLight,
-                            alignment: Alignment.center,
-                            child: const Text(
-                              '🍪',
-                              style: TextStyle(fontSize: 20),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
+                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _firestore.collection('support_chats').snapshots(),
+                  builder: (context, chatsSnap) {
+                    final chatsDocs = chatsSnap.data?.docs ?? [];
+                    final int unreadChatsCount = chatsDocs
+                        .where((d) => d.data()['adminUnread'] == true)
+                        .length;
+
+                    return Container(
+                      color: darkEspresso,
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'NYSE BITES.',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
+                          Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.asset(
+                                  'assets/images/nysebites_logo.png',
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    width: 40,
+                                    height: 40,
+                                    color: borderLight,
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                      '🍪',
+                                      style: TextStyle(fontSize: 20),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'NYSE BITES.',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    widget.currentRole.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: brandCocoa,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 9,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          Text(
-                            widget.currentRole.toUpperCase(),
-                            style: const TextStyle(
-                              color: brandCocoa,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 9,
-                              letterSpacing: 1.2,
-                            ),
+                          const SizedBox(height: 32),
+                          _buildNavItem(
+                            0,
+                            '📋 Live Orders',
+                            count: '$liveOrdersCount',
+                            isDrawer: isDrawer,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  _buildNavItem(
-                    0,
-                    '📋 Live Orders',
-                    count: '$liveOrdersCount',
-                    isDrawer: isDrawer,
-                  ),
-                  if (!isDispatcher) ...[
-                    _buildNavItem(1, '📊 Dashboard', isDrawer: isDrawer),
-                    _buildNavItem(
-                      2,
-                      '🎂 Custom Cake Desk',
-                      count: pendingCustomCakesCount > 0
-                          ? '$pendingCustomCakesCount'
-                          : null,
-                      isDrawer: isDrawer,
-                    ),
-                    _buildNavItem(
-                      3,
-                      '🍪 Batch Drops & Menu',
-                      isDrawer: isDrawer,
-                    ),
-                    _buildNavItem(
-                      4,
-                      '✉️ Sweet Notes Inbox',
-                      count: unreadNotesCount > 0 ? '$unreadNotesCount' : null,
-                      isDrawer: isDrawer,
-                    ),
-                    _buildNavItem(
-                      5,
-                      '⭐ Customer Reviews',
-                      count: unreadReviewsCount > 0 ? '$unreadReviewsCount' : null,
-                      isDrawer: isDrawer,
-                    ),
-                  ],
-                  if (isSuperAdmin)
-                    _buildNavItem(
-                      6,
-                      '⚙️ Storefront Settings',
-                      isDrawer: isDrawer,
-                    ),
-                  if (!isDispatcher)
-                    _buildNavItem(
-                      7,
-                      '🛡️ Security & Roles',
-                      isDrawer: isDrawer,
-                    ),
+                          if (!isDispatcher) ...[
+                            _buildNavItem(1, '📊 Dashboard', isDrawer: isDrawer),
+                            _buildNavItem(
+                              2,
+                              '🎂 Custom Cake Desk',
+                              count: pendingCustomCakesCount > 0
+                                  ? '$pendingCustomCakesCount'
+                                  : null,
+                              isDrawer: isDrawer,
+                            ),
+                            _buildNavItem(
+                              3,
+                              '🍪 Batch Drops & Menu',
+                              isDrawer: isDrawer,
+                            ),
+                            _buildNavItem(
+                              4,
+                              '✉️ Sweet Notes Inbox',
+                              count: unreadNotesCount > 0 ? '$unreadNotesCount' : null,
+                              isDrawer: isDrawer,
+                            ),
+                            _buildNavItem(
+                              5,
+                              '⭐ Customer Reviews',
+                              count: unreadReviewsCount > 0 ? '$unreadReviewsCount' : null,
+                              isDrawer: isDrawer,
+                            ),
+                          ],
+                          if (isSuperAdmin)
+                            _buildNavItem(
+                              6,
+                              '⚙️ Storefront Settings',
+                              isDrawer: isDrawer,
+                            ),
+                          _buildNavItem(
+                            8,
+                            '💬 Live Support Chats',
+                            count: unreadChatsCount > 0 ? '$unreadChatsCount' : null,
+                            isDrawer: isDrawer,
+                          ),
+                          if (!isDispatcher)
+                            _buildNavItem(
+                              7,
+                              '🛡️ Security & Roles',
+                              isDrawer: isDrawer,
+                            ),
                   const Spacer(),
                   ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(
                       Icons.logout,
-                      color: AppColors.brandRed,
+                      color: Colors.white70,
                       size: 18,
                     ),
                     title: const Text(
                       'Logout Session',
                       style: TextStyle(
-                        color: AppColors.brandRed,
+                        color: Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -678,6 +705,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ],
               ),
             );
+                  },
+                );
               },
             );
           },
@@ -709,7 +738,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: Text(
             label,
             style: TextStyle(
-              color: active ? Colors.white : AppColors.brandRed,
+              color: active ? Colors.white : Colors.white60,
               fontWeight: active ? FontWeight.bold : FontWeight.w500,
               fontSize: 13,
             ),
@@ -760,9 +789,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
             const SizedBox(width: 4),
           ],
-          Expanded(
-            child: Container(
-              height: 38,
+          if (_selectedNavIndex == 1 || _selectedNavIndex == 6 || _selectedNavIndex == 7)
+            const Spacer()
+          else
+            Expanded(
+              child: Container(
+                height: 38,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: wellBg,
@@ -922,6 +954,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             final docs = snapshot.data?.docs ?? [];
             final customCakes = docs
                 .map((d) => {'docId': d.id, ...d.data()})
+                .where((o) {
+                  if (_searchQuery.trim().isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return (o['id'] ?? '').toString().toLowerCase().contains(q) ||
+                      (o['customer'] ?? '').toString().toLowerCase().contains(q) ||
+                      (o['item'] ?? '').toString().toLowerCase().contains(q);
+                })
                 .toList();
             return CustomCakeDeskTab(
               customCakes: customCakes,
@@ -945,6 +984,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             final docs = snapshot.data?.docs ?? [];
             final inventory = docs
                 .map((d) => {'docId': d.id, ...d.data()})
+                .where((o) {
+                  if (_searchQuery.trim().isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return (o['name'] ?? '').toString().toLowerCase().contains(q) ||
+                      (o['category'] ?? '').toString().toLowerCase().contains(q);
+                })
                 .toList();
             return BatchDropsMenuTab(
               inventory: inventory,
@@ -986,13 +1031,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               });
             } catch (_) {}
 
-            final notes = docs.map((d) => {'docId': d.id, ...d.data()}).toList();
+            final notes = docs
+                .map((d) => {'docId': d.id, ...d.data()})
+                .where((o) {
+                  if (_searchQuery.trim().isEmpty) return true;
+                  final q = _searchQuery.toLowerCase();
+                  return (o['senderName'] ?? '').toString().toLowerCase().contains(q) ||
+                      (o['recipientName'] ?? '').toString().toLowerCase().contains(q) ||
+                      (o['message'] ?? '').toString().toLowerCase().contains(q);
+                })
+                .toList();
             return SweetNotesTab(sweetNotes: notes);
           },
         );
 
       case 5:
-        return const CustomerReviewsTab();
+        return CustomerReviewsTab(searchQuery: _searchQuery);
 
       case 6:
         return const StoreSettingsTab();
@@ -1003,6 +1057,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           adminEmail: widget.adminEmail,
         );
 
+      case 8:
+        return SupportChatsTab(searchQuery: _searchQuery);
       default:
         return const Center(child: Text('Invalid Tab Selected'));
     }

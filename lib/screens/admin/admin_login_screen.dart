@@ -491,14 +491,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                           const Icon(
                                             Icons.error_outline_rounded,
                                             size: 16,
-                                            color: AppColors.brandRed,
+                                            color: Colors.white,
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
                                               _errorMessage!,
                                               style: const TextStyle(
-                                                color: AppColors.brandRed,
+                                                color: Colors.white,
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.w600,
                                               ),

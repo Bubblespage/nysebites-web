@@ -99,7 +99,7 @@ class HeroBanner extends StatelessWidget {
             'Goodness\nin Every Bite',
             style: TextStyle(
               fontFamily: 'sans-serif',
-              fontSize: isMobile ? 38 : 64,
+              fontSize: isMobile ? 34 : 64,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               height: 1.1,
@@ -117,116 +117,73 @@ class HeroBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          isMobile
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ElevatedButton(
-                      onPressed: onExploreMenu,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentGold,
-                        foregroundColor: AppColors.textDarkBerry,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Shop Now →',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: onBuildCustomCake,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white, width: 2),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Build Custom Cake',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    ElevatedButton(
-                      onPressed: onExploreMenu,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentGold,
-                        foregroundColor: AppColors.textDarkBerry,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Shop Now →',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    OutlinedButton(
-                      onPressed: onBuildCustomCake,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white, width: 2),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Build Custom Cake',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
+          Wrap(
+            spacing: isMobile ? 12 : 16,
+            runSpacing: isMobile ? 12 : 16,
+            children: [
+              ElevatedButton(
+                onPressed: onExploreMenu,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentGold,
+                  foregroundColor: AppColors.textDarkBerry,
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 32, vertical: isMobile ? 14 : 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 0,
                 ),
+                child: Text(
+                  'Shop Now →',
+                  style: TextStyle(
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              OutlinedButton(
+                onPressed: onBuildCustomCake,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white, width: 2),
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 32, vertical: isMobile ? 14 : 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: Text(
+                  'Build Custom Cake',
+                  style: TextStyle(
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 32),
           
           // Trust Badges
-          isMobile
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTrustBadge(Icons.eco_rounded, '100% Fresh Ingredients', isMobile),
-                    const SizedBox(height: 10),
-                    _buildTrustBadge(Icons.local_shipping_rounded, 'Fast & Safe Delivery', isMobile),
-                    const SizedBox(height: 10),
-                    _buildTrustBadge(Icons.sentiment_very_satisfied_rounded, 'Happiness Guaranteed', isMobile),
-                  ],
-                )
-              : Wrap(
-                  spacing: 24,
-                  runSpacing: 16,
-                  children: [
-                    _buildTrustBadge(Icons.eco_rounded, '100% Fresh\nIngredients', isMobile),
-                    _buildTrustBadge(Icons.local_shipping_rounded, 'Fast & Safe\nDelivery', isMobile),
-                    _buildTrustBadge(Icons.sentiment_very_satisfied_rounded, 'Happiness\nGuaranteed', isMobile),
-                  ],
-                ),
+          Wrap(
+            spacing: isMobile ? 16 : 24,
+            runSpacing: 12,
+            children: [
+              _buildTrustBadge(
+                Icons.eco_rounded,
+                isMobile ? '100% Fresh' : '100% Fresh\nIngredients',
+                isMobile,
+              ),
+              _buildTrustBadge(
+                Icons.local_shipping_rounded,
+                isMobile ? 'Fast Delivery' : 'Fast & Safe\nDelivery',
+                isMobile,
+              ),
+              _buildTrustBadge(
+                Icons.sentiment_very_satisfied_rounded,
+                isMobile ? 'Guaranteed' : 'Happiness\nGuaranteed',
+                isMobile,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -236,13 +193,13 @@ class HeroBanner extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: AppColors.accentGold, size: isMobile ? 16 : 28),
-        SizedBox(width: isMobile ? 4 : 8),
+        Icon(icon, color: AppColors.accentGold, size: isMobile ? 20 : 28),
+        SizedBox(width: isMobile ? 8 : 12),
         Text(
           text,
           style: TextStyle(
             color: Colors.white,
-            fontSize: isMobile ? 10 : 12,
+            fontSize: isMobile ? 13 : 15,
             fontWeight: FontWeight.w700,
             height: 1.2,
           ),

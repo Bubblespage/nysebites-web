@@ -28,12 +28,12 @@ class LiveOrdersTab extends StatefulWidget {
 }
 
 class _LiveOrdersTabState extends State<LiveOrdersTab> {
-  static const Color brandCocoa = AppColors.brandRed;
+  static const Color brandCocoa = AppColors.darkGarnet;
   static const Color darkEspresso = AppColors.darkGarnet;
   static const Color textDark = AppColors.textDarkBerry;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
-  static const Color wellBg = AppColors.brandRed;
+  static const Color textMuted = Colors.grey;
+  static const Color borderLight = Color(0xFFE0E0E0);
+  static const Color wellBg = Color(0xFFF5F5F5);
 
   String _currentFilter = 'All';
   Set<String> _selectedExportIds = {};
@@ -210,12 +210,12 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                           onPressed: () => _showBatchDeleteConfirmation(context),
                           icon: const Icon(Icons.delete_outline, size: 16),
                           label: Text('Delete (${_selectedExportIds.length})'),
-                          style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          style: TextButton.styleFrom(foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                         ),
-                        Container(width: 1, height: 20, color: AppColors.brandRed),
+                        Container(width: 1, height: 20, color: Colors.white24),
                         TextButton(
                           onPressed: () => setState(() => _selectedExportIds.clear()),
-                          style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                          style: TextButton.styleFrom(foregroundColor: Colors.white70, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                           child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                         ),
                       ],
@@ -303,12 +303,12 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                             onPressed: () => _showBatchDeleteConfirmation(context),
                             icon: const Icon(Icons.delete_outline, size: 16),
                             label: Text('Delete (${_selectedExportIds.length})'),
-                            style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                            style: TextButton.styleFrom(foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                           ),
-                          Container(width: 1, height: 20, color: AppColors.brandRed),
+                          Container(width: 1, height: 20, color: Colors.white24),
                           TextButton(
                             onPressed: () => setState(() => _selectedExportIds.clear()),
-                            style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                            style: TextButton.styleFrom(foregroundColor: Colors.white70, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                             child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                           ),
                         ],
@@ -361,7 +361,9 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
                 width: 40,
                 child: Checkbox(
                   value: _selectedExportIds.length == filteredOrders.length && filteredOrders.isNotEmpty,
-                  activeColor: brandCocoa,
+                  activeColor: Colors.white,
+                  checkColor: AppColors.brandRed,
+                  side: const BorderSide(color: Colors.white70),
                   onChanged: (val) {
                     setState(() {
                       if (val == true) {
@@ -630,7 +632,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
   static const TextStyle _headerStyle = TextStyle(
     fontSize: 10.5,
     fontWeight: FontWeight.w800,
-    color: brandCocoa,
+    color: Colors.white70,
     letterSpacing: 0.8,
   );
 
@@ -822,19 +824,19 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
   Widget _buildPaymentBadge(String payment) {
     final cleanPay = payment.trim();
     Color bg = AppColors.brandRed;
-    Color fg = AppColors.brandRed;
+    Color fg = Colors.white;
 
     if (cleanPay.contains('GCash')) {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     } else if (cleanPay.contains('QRPh') ||
         cleanPay.contains('MariBank') ||
         cleanPay.contains('SeaBank')) {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     } else if (cleanPay.contains('Delivery') || cleanPay.contains('COD')) {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     }
 
     return Container(
@@ -854,54 +856,126 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
     final TextEditingController riderNameController = TextEditingController(text: order['riderName']?.toString());
     final TextEditingController trackingLinkController = TextEditingController(text: order['trackingLink']?.toString());
 
-    showDialog(
+        showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Dispatch Order'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: riderNameController,
-              decoration: const InputDecoration(
-                labelText: 'Rider Details (Name / Plate No)',
-                hintText: 'e.g. Juan Dela Cruz - GrabCar',
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          width: 440,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(37, 24, 17, 0.12),
+                blurRadius: 20,
+                offset: Offset(0, 6),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: trackingLinkController,
-              decoration: const InputDecoration(
-                labelText: 'Tracking Link (URL)',
-                hintText: 'https://...',
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Dispatch Order',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF381014),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: riderNameController,
+                decoration: InputDecoration(
+                  labelText: 'Rider Details (Name / Plate No)',
+                  hintText: 'e.g. Juan Dela Cruz - GrabCar',
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF381014)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: trackingLinkController,
+                decoration: InputDecoration(
+                  labelText: 'Tracking Link (URL)',
+                  hintText: 'https://...',
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF381014)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF381014),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      widget.onUpdateStatus(
+                        targetDocId,
+                        'delivering',
+                        '🛵 Out for Delivery',
+                        {
+                          if (riderNameController.text.trim().isNotEmpty)
+                            'riderName': riderNameController.text.trim(),
+                          if (trackingLinkController.text.trim().isNotEmpty)
+                            'trackingLink': trackingLinkController.text.trim(),
+                        },
+                      );
+                    },
+                    child: const Text('Dispatch', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkGarnet),
-            onPressed: () {
-              Navigator.pop(ctx);
-              widget.onUpdateStatus(
-                targetDocId,
-                'delivering',
-                '🛵 Out for Delivery',
-                {
-                  if (riderNameController.text.trim().isNotEmpty)
-                    'riderName': riderNameController.text.trim(),
-                  if (trackingLinkController.text.trim().isNotEmpty)
-                    'trackingLink': trackingLinkController.text.trim(),
-                },
-              );
-            },
-            child: const Text('Dispatch', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
@@ -1175,7 +1249,7 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
           () => widget.onUpdateStatus(targetDocId, 'ready_to_bake', '✓ Ready for Oven'),
         ),
         child: Text(
-          isFull ? 'Verify Full Payment' : 'Verify Retainer',
+          'Verify Payment',
           style: const TextStyle(
             color: Colors.white,
             fontSize: 10.5,
@@ -1313,13 +1387,13 @@ class _LiveOrdersTabState extends State<LiveOrdersTab> {
       fg = brandCocoa;
     } else if (status.contains('pending') || status.contains('verifying')) {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     } else if (status == 'delivering' || status == 'baked_payment_required') {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     } else if (status == 'ready_to_bake') {
       bg = AppColors.brandRed;
-      fg = AppColors.brandRed;
+      fg = Colors.white;
     }
 
     return Container(

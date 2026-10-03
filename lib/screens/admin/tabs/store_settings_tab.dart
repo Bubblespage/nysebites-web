@@ -11,10 +11,10 @@ class StoreSettingsTab extends StatefulWidget {
 
 class _StoreSettingsTabState extends State<StoreSettingsTab> {
   static const Color brandCocoa = AppColors.darkGarnet;
-  static const Color darkEspresso = AppColors.brandRed;
-  static const Color textDark = AppColors.brandRed;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color textDark = AppColors.textDarkBerry;
+  static const Color textMuted = Colors.grey;
+  static const Color borderLight = Color(0xFFE0E0E0);
 
   final DocumentReference<Map<String, dynamic>> _settingsDoc =
       FirebaseFirestore.instance.collection('settings').doc('storefront');

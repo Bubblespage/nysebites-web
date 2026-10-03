@@ -7,11 +7,12 @@ import '../../theme/app_colors.dart';
 
 class AdminModals {
   static const Color brandCocoa = AppColors.darkGarnet;
-  static const Color darkEspresso = AppColors.brandRed;
-  static const Color textDark = AppColors.brandRed;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
-  static const Color wellBg = AppColors.brandRed;
+  static const Color darkEspresso = Color(0xFF2D2323);
+  static const Color textDark = Color(0xFF3A2B2B);
+  static const Color textMuted = Color(0xFF8C7A7A);
+  static const Color borderLight = Color(0xFFE5DCD8);
+  static const Color wellBg = Color(0xFFF7F3F0);
+  static const Color bgOffWhite = Color(0xFFFAF9F8);
 
   static String _cleanPdfCurrency(dynamic val) {
     if (val == null) return 'Php 0.00';
@@ -47,18 +48,13 @@ class AdminModals {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.image_not_supported_outlined,
-              color: textMuted,
+              Icons.image_not_supported_outlined, color: Colors.white70,
               size: 26,
             ),
             const SizedBox(height: 6),
             Text(
               emptyLabel,
-              style: const TextStyle(
-                color: textMuted,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600,),
             ),
           ],
         ),
@@ -88,14 +84,18 @@ class AdminModals {
       );
     } else {
       try {
-        final bytes = base64Decode(imageData);
+        String cleanBase64 = imageData;
+        if (cleanBase64.contains(',')) {
+          cleanBase64 = cleanBase64.split(',').last;
+        }
+        final bytes = base64Decode(cleanBase64.trim().replaceAll(RegExp(r'\s+'), ''));
         imageWidget = Image.memory(
           bytes,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => const Center(
             child: Text(
               'Unable to load Base64 image',
-              style: TextStyle(color: textMuted, fontSize: 11.5),
+              style: TextStyle(color: Colors.white, fontSize: 11.5),
             ),
           ),
         );
@@ -103,7 +103,7 @@ class AdminModals {
         imageWidget = const Center(
           child: Text(
             'Invalid image format',
-            style: TextStyle(color: textMuted, fontSize: 11.5),
+            style: TextStyle(color: Colors.white, fontSize: 11.5),
           ),
         );
       }
@@ -162,7 +162,11 @@ class AdminModals {
       );
     } else {
       try {
-        final bytes = base64Decode(imageData);
+        String cleanBase64 = imageData;
+        if (cleanBase64.contains(',')) {
+          cleanBase64 = cleanBase64.split(',').last;
+        }
+        final bytes = base64Decode(cleanBase64.trim().replaceAll(RegExp(r'\s+'), ''));
         imageWidget = Image.memory(
           bytes,
           errorBuilder: (context, error, stackTrace) => const Padding(
@@ -1103,6 +1107,132 @@ class AdminModals {
   }
 
   // 4. Payment Verification Modal
+  static Widget _buildPaymentOrderDetails(Map<String, dynamic> order) {
+    List<Widget> children = [];
+
+    // 1. Show the overall itemized summary if it exists
+    final String summary = order['item']?.toString() ?? order['productName']?.toString() ?? '';
+    if (summary.isNotEmpty) {
+      children.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            summary,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: brandCocoa),
+          ),
+        ),
+      );
+    }
+
+    // 2. Show custom cake details if present
+    final List<dynamic>? customCakes = order['customCakes'] as List<dynamic>?;
+    if (customCakes != null && customCakes.isNotEmpty) {
+      for (final cake in customCakes) {
+        if (cake is Map<String, dynamic>) {
+          final String name = cake['name']?.toString() ?? 'Custom Cake';
+          final String desc = cake['description']?.toString() ?? '';
+          
+          children.add(
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: borderLight),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: brandCocoa)),
+                  const SizedBox(height: 4),
+                  if (desc.isNotEmpty)
+                    ...desc.split(' • ').map((part) => Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(part.trim(), style: const TextStyle(fontSize: 11.5, color: textMuted)),
+                        )),
+                ],
+              ),
+            ),
+          );
+        }
+      }
+    } else if (order['type'] == 'custom_cake' || order['isCustomCake'] == true) {
+      // Legacy custom cake format
+      String tier = order['tier']?.toString() ?? 'Standard';
+      String frosting = order['frosting']?.toString() ?? order['finish']?.toString() ?? 'Not specified';
+      String dedication = order['dedication']?.toString() ?? order['pipingText']?.toString() ?? order['piping']?.toString() ?? '';
+
+      children.add(
+        Container(
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.all(12),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderLight),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tier / Size: $tier', style: const TextStyle(fontSize: 11.5, color: textMuted)),
+              Text('Frosting / Finish: $frosting', style: const TextStyle(fontSize: 11.5, color: textMuted)),
+              if (dedication.isNotEmpty)
+                Text('Dedication: "$dedication"', style: const TextStyle(fontSize: 11.5, color: textMuted)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 3. Show items array if present (legacy or alternative format)
+    final List<dynamic>? items = order['items'] as List<dynamic>?;
+    if (items != null && items.isNotEmpty) {
+      children.add(const SizedBox(height: 8));
+      for (final item in items) {
+        if (item is Map) {
+          final name = item['name'] ?? 'Unknown Item';
+          final qty = item['quantity'] ?? 1;
+          final price = item['price'] ?? 0.0;
+          children.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text('${qty}x $name', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: textDark)),
+                  ),
+                  Text('₱${(price * qty).toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, color: textMuted)),
+                ],
+              ),
+            ),
+          );
+        }
+      }
+    }
+
+    if (children.isEmpty) {
+      children.add(const Text('No order details available', style: TextStyle(fontSize: 12, color: textMuted)));
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: bgOffWhite,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
   // ── FIX: Updated to look for the new Base64 string fields we added in the Tracker
   static void showPaymentVerificationModal(
     BuildContext context,
@@ -1145,9 +1275,9 @@ class AdminModals {
           constraints: const BoxConstraints(maxWidth: 420, maxHeight: 700),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.brandRed,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.brandRed, width: 1.5),
+              border: Border.all(color: borderLight, width: 1.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color.fromRGBO(37, 24, 17, 0.18),
@@ -1211,6 +1341,62 @@ class AdminModals {
                             height: 1.4,
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'CUSTOMER DETAILS',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: brandCocoa,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: wellBg,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.person, size: 14, color: brandCocoa),
+                                  const SizedBox(width: 8),
+                                  Text(customer, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: textDark)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone, size: 14, color: brandCocoa),
+                                  const SizedBox(width: 8),
+                                  Text(order['contact']?.toString() ?? order['phone']?.toString() ?? 'No contact provided', style: const TextStyle(fontSize: 12, color: textMuted)),
+                                ],
+                              ),
+                              if (order['deliveryAddress'] != null || order['address'] != null) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.location_on, size: 14, color: brandCocoa),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        order['deliveryAddress']?.toString() ?? order['address']?.toString() ?? '', 
+                                        style: const TextStyle(fontSize: 12, color: textMuted),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        
                         if (refNumber != null && refNumber.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           Container(
@@ -1255,6 +1441,18 @@ class AdminModals {
                         ],
                         const SizedBox(height: 16),
                         const Text(
+                          'ORDER DETAILS',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: brandCocoa,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildPaymentOrderDetails(order),
+                        const SizedBox(height: 16),
+                        const Text(
                           'CUSTOMER PAYMENT SCREENSHOT',
                           style: TextStyle(
                             fontSize: 10.5,
@@ -1291,7 +1489,7 @@ class AdminModals {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.brandRed)),
+                    border: Border(top: BorderSide(color: borderLight)),
                   ),
                   child: Row(
                     children: [
@@ -1508,7 +1706,7 @@ class AdminModals {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.brandRed)),
+                    border: Border(top: BorderSide(color: borderLight)),
                   ),
                   child: Row(
                     children: [
@@ -2072,16 +2270,18 @@ class AdminModals {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: const TextStyle(fontSize: 11.5, color: textMuted)),
-          Text(
+          const SizedBox(width: 8), Expanded(child: Text(
             value,
+            textAlign: TextAlign.right,
             style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
               color: textDark,
             ),
+          ),
           ),
         ],
       ),

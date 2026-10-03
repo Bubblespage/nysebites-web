@@ -48,6 +48,10 @@ class _AuthModalState extends State<AuthModal>
     super.initState();
     _passwordController.addListener(() {
       if (_isSignUp) setState(() {});
+      if (_authErrorMessage != null) setState(() => _authErrorMessage = null);
+    });
+    _emailController.addListener(() {
+      if (_authErrorMessage != null) setState(() => _authErrorMessage = null);
     });
     _floatController = AnimationController(
       vsync: this,
@@ -166,8 +170,10 @@ class _AuthModalState extends State<AuthModal>
           _authErrorMessage = e.message ?? 'Authentication failed.';
         }
       });
+      _formKey.currentState?.validate();
     } catch (e) {
       setState(() => _authErrorMessage = 'An error occurred: $e');
+      _formKey.currentState?.validate();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -530,18 +536,30 @@ class _AuthModalState extends State<AuthModal>
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    const Text(
-                                      'NyseBites',
-                                      style: TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: -0.5,
+                                    RichText(
+                                      text: const TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: 'Nyse',
+                                            style: TextStyle(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFFB52424), // matches app bar red
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: 'Bites',
+                                            style: TextStyle(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    _twinkleSparkle(fontSize: 22, phase: 0),
-                                    _twinkleSparkle(fontSize: 16, phase: pi / 3),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
@@ -820,6 +838,9 @@ class _AuthModalState extends State<AuthModal>
                             textInputAction: TextInputAction.next,
                             showCheck: _isValidEmail(_emailController.text),
                             validator: (val) {
+                              if (!_isSignUp && _authErrorMessage != null) {
+                                return 'Incorrect email or password';
+                              }
                               if (val == null || val.trim().isEmpty) {
                                 return 'Please enter your email address';
                               }
@@ -852,6 +873,9 @@ class _AuthModalState extends State<AuthModal>
                                   () => _obscurePassword = !_obscurePassword),
                             ),
                             validator: (val) {
+                              if (!_isSignUp && _authErrorMessage != null) {
+                                return 'Incorrect email or password';
+                              }
                               if (val == null || val.isEmpty) {
                                 return 'Please enter your password';
                               }

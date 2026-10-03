@@ -7,6 +7,7 @@ service cloud.firestore {
       return request.auth != null && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         (
+          // FIX: Added .get('role', '') to prevent evaluation crashes if a user's role field is missing
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '').lower() in [
             'super_admin', 'super admin', 'baker_admin', 'baker admin', 'admin', 'rider', 'order dispatcher'
           ]
@@ -59,10 +60,29 @@ service cloud.firestore {
       allow update, delete: if isStaff();
     }
 
+    // 6. SUPPORT CHATS
+    match /support_chats/{chatId} {
+      allow read, write: if true;
+      match /messages/{messageId} {
+        allow read, write: if true;
+      }
+    }
+
     // 6. STOREFRONT & GLOBAL SETTINGS
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isStaff() || request.auth != null;
+    }
+
+    // 7. SUPPORT CHATS
+    match /support_chats/{chatId} {
+      allow create, read, update: if true;
+      allow delete: if isStaff();
+      
+      match /messages/{messageId} {
+        allow create, read, update: if true;
+        allow delete: if isStaff();
+      }
     }
   }
 }

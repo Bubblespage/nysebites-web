@@ -670,6 +670,35 @@ class _OvenGallerySectionState extends State<OvenGallerySection> {
               },
             ),
           ),
+          if (isMobile) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.bgPastelPink, width: 2),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.brandRed),
+                    onPressed: _scrollLeft,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.bgPastelPink, width: 2),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.brandRed),
+                    onPressed: _scrollRight,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

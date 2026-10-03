@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,8 +23,12 @@ import '../widgets/customer_profile_modal.dart';
 import '../widgets/reviews_slideshow.dart';
 import '../widgets/order_tracker_modal.dart';
 import '../widgets/our_story_section.dart';
+import '../widgets/search_dialog.dart';
+import '../widgets/meet_baker_modal.dart';
 import '../widgets/oven_gallery_section.dart';
 import '../widgets/promo_banner.dart';
+import '../widgets/live_chat_widget.dart';
+import '../widgets/global_search_overlay.dart';
 import 'menu_screen_view.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -64,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Timer? _lastAddedTimer;
   Set<String> _favorites = {};
   bool _isMenuMode = false;
+  int _currentBottomNavIndex = 0;
 
   // ── FIX: Declared here inside _HomeScreenState so it tracks profile picture updates ──
   Uint8List? _globalProfileBytes;
@@ -190,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Uint8List? profileBytes;
             if (photoBase64 != null && photoBase64.isNotEmpty) {
               try {
-                profileBytes = base64Decode(photoBase64);
+                profileBytes = base64Decode((photoBase64.contains(',') ? photoBase64.split(',').last : photoBase64).trim().replaceAll(RegExp(r'\s+'), ''));
               } catch (e) {
                 debugPrint('Error decoding profile image: $e');
               }
@@ -458,8 +464,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _onLogoClick() {
-    setState(() => _isMenuMode = false);
-    _scrollToTop();
+    if (_isMenuMode) {
+      setState(() => _isMenuMode = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToTop();
+      });
+    } else {
+      _scrollToTop();
+    }
   }
 
   void _onMenuClick() {
@@ -481,24 +493,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _scrollToKey(_menuKey);
   }
 
+  void _scrollToHomeSection(GlobalKey key, {double alignment = 0.0}) {
+    if (_isMenuMode) {
+      setState(() => _isMenuMode = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToKey(key, alignment: alignment);
+      });
+    } else {
+      _scrollToKey(key, alignment: alignment);
+    }
+  }
+
   void _onReviewsClick() {
-    _scrollToKey(_reviewsKey, alignment: 0.0);
+    _scrollToHomeSection(_reviewsKey, alignment: 0.0);
   }
 
   void _onOurStoryClick() {
-    _scrollToKey(_ourStoryKey, alignment: 0.0);
+    _scrollToHomeSection(_ourStoryKey, alignment: 0.0);
   }
 
   void _onGalleryClick() {
-    _scrollToKey(_galleryKey, alignment: 0.0);
+    _scrollToHomeSection(_galleryKey, alignment: 0.0);
   }
 
   void _onSweetNoteClick() {
-    _scrollToKey(_sweetNoteKey, alignment: 0.0);
+    _scrollToHomeSection(_sweetNoteKey, alignment: 0.0);
   }
 
   void _onContactClick() {
-    _scrollToKey(_footerKey, alignment: 0.0);
+    _scrollToHomeSection(_footerKey, alignment: 0.0);
   }
 
   void _openAuthModal() {
@@ -742,21 +765,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           key: _scaffoldKey,
           resizeToAvoidBottomInset: false,
           backgroundColor: Colors.transparent,
-          drawer: MobileNavDrawer(
-            currentUser: _currentUser,
-            profileImageBytes: _globalProfileBytes,
-            onProfileClick: () => _openCustomerProfileModal(acceptCustomCakes),
-            onLogoClick: _onLogoClick,
-            onMenuClick: _onMenuClick,
-            onCustomCakesClick: _onCustomCakesClick,
-            onDailyBatchesClick: _onDailyBatchesClick,
-            onReviewsClick: _onReviewsClick,
-            onOurStoryClick: _onOurStoryClick,
-            onGalleryClick: _onGalleryClick,
-            onContactClick: _onContactClick,
-            onOpenAuth: _openAuthModal,
-            onLogout: _logout,
-          ),
+          bottomNavigationBar: isMobile ? _buildBottomNavBar() : null,
           endDrawer: CartDrawer(
             cartItems: _cart,
             totalPrice: _cartTotal,
@@ -781,31 +790,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onOpenAuth: _openAuthModal,
             onLogout: _logout,
             onProfileClick: () => _openCustomerProfileModal(acceptCustomCakes),
-            onLogoClick: _scrollToTop,
+            onLogoClick: _onLogoClick,
             onMenuClick: _onMenuClick,
             onOurStoryClick: _onOurStoryClick,
             onGalleryClick: _onGalleryClick,
             onContactClick: _onContactClick,
             onCartClick: () => _scaffoldKey.currentState?.openEndDrawer(),
+            searchController: _searchController,
+            onSearchChanged: (val) {
+              setState(() => _searchQuery = val);
+            },
             onTrackOrderClick: _openOrderTracker,
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: _buildFloatingActions(),
-          body: _isMenuMode
-              ? MenuScreenView(
-                  selectedCategory: _selectedCategory,
-                  onCategoryChanged: (cat) => setState(() => _selectedCategory = cat),
-                  productsStream: _productsStream,
-                  currentUser: _currentUser,
-                  favorites: _favorites,
-                  onAddToCart: _addToCart,
-                  onToggleFavorite: _toggleFavorite,
-                  onCustomize: (prod) => _openCustomCakeBuilder(prod, acceptCustomCakes),
-                  acceptCustomCakes: acceptCustomCakes,
-                  onBack: _onLogoClick,
-                )
-              : Container(
-                  color: AppColors.bgPastelPink,
+          body: Stack(
+            children: [
+              _isMenuMode
+                  ? MenuScreenView(
+                      selectedCategory: _selectedCategory,
+                      onCategoryChanged: (cat) => setState(() => _selectedCategory = cat),
+                      productsStream: _productsStream,
+                      currentUser: _currentUser,
+                      favorites: _favorites,
+                      onAddToCart: _addToCart,
+                      onToggleFavorite: _toggleFavorite,
+                      onCustomize: (prod) => _openCustomCakeBuilder(prod, acceptCustomCakes),
+                      acceptCustomCakes: acceptCustomCakes,
+                      onBack: _onLogoClick,
+                    )
+                  : Container(
+                      color: AppColors.bgPastelPink,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1440),
@@ -897,7 +910,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   // Our Story
                   OurStorySection(
                     key: _ourStoryKey,
-                    onLearnMore: _onMenuClick,
+                    onLearnMore: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const MeetBakerModal(),
+                      );
+                    },
                   ),
 
                   // Testimonials
@@ -917,7 +935,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   
                   Footer(
                     key: _footerKey,
-                    onHomeClick: _scrollToTop,
+                    onHomeClick: _onLogoClick,
                     onShopClick: _onMenuClick,
                     onAboutClick: _onOurStoryClick,
                   ),
@@ -928,6 +946,50 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),       // ConstrainedBox
             ),         // Center
           ),           // outer Container (bg color)
+              Positioned.fill(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1440),
+                    child: const SizedBox.expand(
+                      child: Stack(
+                        children: [
+                          LiveChatWidget(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (_searchQuery.isNotEmpty)
+                Positioned(
+                  top: 0,
+                  right: isMobile ? 16 : 48,
+                  left: isMobile ? 16 : null,
+                  width: isMobile ? null : 400,
+                  child: GlobalSearchOverlay(
+                    query: _searchQuery,
+                    productsStream: _productsStream,
+                    onNavigateToStory: _onOurStoryClick,
+                    onNavigateToContact: _onContactClick,
+                    onNavigateToGallery: _onGalleryClick,
+                    onTrackOrder: _openOrderTracker,
+                    onProductClick: (product) {
+                      setState(() {
+                        _searchQuery = '';
+                        _searchController.clear();
+                      });
+                      _openCustomCakeBuilder(product, acceptCustomCakes);
+                    },
+                    onClose: () {
+                      setState(() {
+                        _searchQuery = '';
+                        _searchController.clear();
+                      });
+                    },
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );
@@ -1062,10 +1124,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ),
     );
-  }
-
-  Widget? _buildFloatingActions() {
-    return null; // Track Order is now in the app bar
   }
 
   Widget _buildShopSection(bool isMobile, bool acceptCustomCakes) {
@@ -1339,6 +1397,81 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       ),
     ));
+  }
+
+  void _onBottomNavTap(int index) {
+    setState(() => _currentBottomNavIndex = index);
+    if (index == 0) {
+      _onLogoClick();
+    } else if (index == 1) {
+      _onMenuClick();
+    } else if (index == 2) {
+      _onOurStoryClick();
+    } else if (index == 3) {
+      _onGalleryClick();
+    } else if (index == 4) {
+      _onContactClick();
+    }
+  }
+
+  Widget _buildBottomNavBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home_filled, 'Home', 0),
+              _buildNavItem(Icons.restaurant_menu_rounded, 'Menu', 1),
+              _buildNavItem(Icons.auto_stories_rounded, 'Story', 2),
+              _buildNavItem(Icons.collections_outlined, 'Gallery', 3),
+              _buildNavItem(Icons.mail_outline_rounded, 'Contact', 4),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isSelected = _currentBottomNavIndex == index;
+    return GestureDetector(
+      onTap: () => _onBottomNavTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? AppColors.darkGarnet : AppColors.textDarkBerry.withValues(alpha: 0.4),
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          if (isSelected)
+            Container(
+              width: 5,
+              height: 5,
+              decoration: const BoxDecoration(
+                color: AppColors.brandRed,
+                shape: BoxShape.circle,
+              ),
+            )
+          else
+            const SizedBox(height: 5),
+        ],
+      ),
+    );
   }
 
   Widget _buildBestSellersTitle(bool isMobile) {

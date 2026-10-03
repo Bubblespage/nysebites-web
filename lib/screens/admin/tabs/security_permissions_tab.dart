@@ -18,11 +18,11 @@ class SecurityPermissionsTab extends StatefulWidget {
 
 class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
   static const Color brandCocoa = AppColors.darkGarnet;
-  static const Color darkEspresso = AppColors.brandRed;
-  static const Color textDark = AppColors.brandRed;
-  static const Color textMuted = AppColors.brandRed;
-  static const Color borderLight = AppColors.brandRed;
-  static const Color wellBg = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color textDark = AppColors.textDarkBerry;
+  static const Color textMuted = Colors.grey;
+  static const Color borderLight = Color(0xFFE0E0E0);
+  static const Color wellBg = Color(0xFFF5F5F5);
 
   final CollectionReference<Map<String, dynamic>> _usersCollection =
       FirebaseFirestore.instance.collection('users');
@@ -508,8 +508,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w900,
                                         color: isSuperAdmin
-                                            ? AppColors.brandRed
-                                            : AppColors.brandRed,
+                                            ? Colors.white
+                                            : Colors.white,
                                       ),
                                     ),
                                   ),
@@ -581,8 +581,8 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                           fontSize: 10,
                                           fontWeight: FontWeight.w900,
                                           color: isSuperAdmin
-                                              ? AppColors.brandRed
-                                              : AppColors.brandRed,
+                                              ? Colors.white
+                                              : Colors.white,
                                         ),
                                       ),
                                     ),
@@ -615,13 +615,13 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               Icon(
                                 Icons.lock_clock,
                                 size: 14,
-                                color: AppColors.brandRed,
+                                color: Colors.white,
                               ),
                               SizedBox(width: 5),
                               Text(
                                 'Auth Token Valid',
                                 style: TextStyle(
-                                  color: AppColors.brandRed,
+                                  color: Colors.white,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1017,7 +1017,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                                   style: TextStyle(
                                     fontSize: 8.5,
                                     fontWeight: FontWeight.w900,
-                                    color: AppColors.brandRed,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
@@ -1136,7 +1136,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w900,
-                                color: AppColors.brandRed,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -1204,7 +1204,7 @@ class _SecurityPermissionsTabState extends State<SecurityPermissionsTab> {
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w900,
-          color: brandCocoa,
+          color: Colors.white,
           letterSpacing: 0.5,
         ),
       ),

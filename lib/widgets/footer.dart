@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
 
@@ -55,6 +56,158 @@ class Footer extends StatelessWidget {
       debugPrint('Error launching phone: $e');
     }
   }
+
+  void _showPhoneModal(BuildContext context) {
+    const phone = '+639950829180';
+    const displayPhone = '+63 995 082 9180';
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 320,
+          decoration: BoxDecoration(
+            color: AppColors.darkGarnet,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.darkGarnet.withValues(alpha: 0.5),
+                blurRadius: 40,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 28),
+              // Logo circle
+              ClipOval(
+                child: Image.asset(
+                  'assets/images/nysebites_logo.png',
+                  width: 68,
+                  height: 68,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGold.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.4), width: 1.5),
+                    ),
+                    child: const Icon(Icons.phone_rounded, color: AppColors.accentGold, size: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Contact Nyse Bites',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.3),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                displayPhone,
+                style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.6)),
+              ),
+              const SizedBox(height: 24),
+              // Options
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    if (!kIsWeb)
+                      _phoneOption(
+                        context,
+                        icon: Icons.call_rounded,
+                        label: 'Call',
+                        color: const Color(0xFF4CAF50),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _callPhone(phone);
+                        },
+                      ),
+                    if (!kIsWeb)
+                      Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+                    _phoneOption(
+                      context,
+                      icon: Icons.chat_rounded,
+                      label: 'WhatsApp',
+                      color: const Color(0xFF25D366),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _openUrl('https://wa.me/$phone');
+                      },
+                    ),
+                    Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+                    _phoneOption(
+                      context,
+                      icon: Icons.copy_rounded,
+                      label: 'Copy Number',
+                      color: AppColors.accentGold,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        Clipboard.setData(const ClipboardData(text: '+63 995 082 9180'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Number copied! 📋'),
+                            backgroundColor: AppColors.darkGarnet,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _phoneOption(BuildContext context, {required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   void _showPolicyDialog(BuildContext context, {required bool isPrivacy}) {
     final isPrivacyPolicy = isPrivacy;
@@ -271,13 +424,13 @@ class Footer extends StatelessWidget {
         emoji: '🎂',
         title: '6. Custom Cake Policy',
         body:
-            'Custom cake orders require a 50% deposit upon confirmation. We reserve the right to decline designs that are beyond our current capabilities.',
+            'Custom cake orders require full payment upon confirmation. We reserve the right to decline designs that are beyond our current capabilities.',
       ),
       _PolicySection(
         emoji: '📬',
         title: '7. Contact & Concerns',
         body:
-            'For questions, order modifications, or complaints, contact us at nysebites@gmail.com or via Facebook @NYSEbites. We will do our best to respond within 24 hours.',
+            'For questions, order modifications, or complaints, contact us at nysebites@gmail.com, via Facebook @NYSEbites, or directly here in the live chat. We will do our best to respond within 24 hours.',
       ),
     ];
     return sections;
@@ -312,14 +465,17 @@ class Footer extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                Image.asset(
-                                  'assets/images/nysebites_logo.png',
-                                  width: 40,
-                                  height: 40,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.cookie_outlined,
-                                    color: AppColors.accentGold,
-                                    size: 32,
+                                ClipOval(
+                                  child: Image.asset(
+                                    'assets/images/nysebites_logo.png',
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.cookie_outlined,
+                                      color: AppColors.accentGold,
+                                      size: 32,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -432,58 +588,78 @@ class Footer extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(Icons.location_on,
-                                    color: AppColors.accentGold, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Carsadang Bago II\nImus, Cavite, PH',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13,
-                                      height: 1.5,
-                                    ),
-                                  ),
+                            // Location — clickable → Google Maps
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _openUrl(
+                                  'https://www.google.com/maps/search/?api=1&query=NIA+Road+Imus+Cavite+Philippines+4103',
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () => _callPhone('+639950829180'),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.phone,
-                                      color: AppColors.accentGold, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '+63 995 082 9180',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13,
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.location_on, color: AppColors.accentGold, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'N.I.A Road\nImus, Cavite, PH 4103',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.85),
+                                          fontSize: 13,
+                                          height: 1.5,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: Colors.white.withValues(alpha: 0.4),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () => _sendEmail('nysebites@gmail.com'),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.email,
-                                      color: AppColors.accentGold, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'nysebites@gmail.com',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13,
+                            // Phone — clickable → modal with Call / WhatsApp / Copy
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _showPhoneModal(context),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.phone, color: AppColors.accentGold, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '+63 995 082 9180',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        fontSize: 13,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.white.withValues(alpha: 0.4),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Email — clickable → mailto
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _sendEmail('nysebites@gmail.com'),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.email, color: AppColors.accentGold, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'nysebites@gmail.com',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        fontSize: 13,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.white.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],

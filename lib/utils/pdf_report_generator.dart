@@ -6,11 +6,18 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PdfReportGenerator {
-  static final _headerStyle = pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11, color: PdfColors.white);
+  static final _headerStyle = pw.TextStyle(
+    fontWeight: pw.FontWeight.bold,
+    fontSize: 11,
+    color: PdfColors.white,
+  );
   static const _cellStyle = pw.TextStyle(fontSize: 9);
 
   static String _clean(String text) {
-    final noEmoji = text.replaceAll(RegExp(r'[\u{10000}-\u{10FFFF}]', unicode: true), '');
+    final noEmoji = text.replaceAll(
+      RegExp(r'[\u{10000}-\u{10FFFF}]', unicode: true),
+      '',
+    );
     return noEmoji
         .replaceAll('₱', 'P')
         .replaceAll('✅', '[OK]')
@@ -53,37 +60,71 @@ class PdfReportGenerator {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('NYSE BITES - Report', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF2E151A))),
+        pw.Text(
+          'NYSE BITES - Report',
+          style: pw.TextStyle(
+            fontSize: 18,
+            fontWeight: pw.FontWeight.bold,
+            color: const PdfColor.fromInt(0xFF2E151A),
+          ),
+        ),
         pw.SizedBox(height: 4),
-        pw.Text(title, style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+        pw.Text(
+          title,
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
         pw.SizedBox(height: 4),
-        pw.Text('Generated: ${_formatDate(DateTime.now())}', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+        pw.Text(
+          'Generated: ${_formatDate(DateTime.now())}',
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+        ),
         pw.SizedBox(height: 20),
       ],
     );
   }
 
-  static pw.Widget _buildTable(List<String> headers, List<List<String>> data, {Map<int, pw.TableColumnWidth>? columnWidths}) {
+  static pw.Widget _buildTable(
+    List<String> headers,
+    List<List<String>> data, {
+    Map<int, pw.TableColumnWidth>? columnWidths,
+  }) {
     return pw.TableHelper.fromTextArray(
       headers: headers,
       data: data,
       columnWidths: columnWidths,
       headerStyle: _headerStyle,
-      headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF2E151A)),
+      headerDecoration: const pw.BoxDecoration(
+        color: PdfColor.fromInt(0xFF2E151A),
+      ),
       cellStyle: _cellStyle,
       cellPadding: const pw.EdgeInsets.all(6),
       cellAlignments: {
         for (var i = 0; i < headers.length; i++) i: pw.Alignment.centerLeft,
       },
-      oddRowDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF9F9F9)),
+      oddRowDecoration: const pw.BoxDecoration(
+        color: PdfColor.fromInt(0xFFF9F9F9),
+      ),
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
     );
   }
 
   // 1. LIVE ORDERS
-  static Future<Uint8List> generateLiveOrdersReport(List<Map<String, dynamic>> orders, {String filterInfo = ''}) async {
+  static Future<Uint8List> generateLiveOrdersReport(
+    List<Map<String, dynamic>> orders, {
+    String filterInfo = '',
+  }) async {
     final pdf = pw.Document();
-    final headers = ['Order ID', 'Date', 'Customer', 'Contact', 'Address', 'Item', 'Amount', 'Payment', 'Status'];
+    final headers = [
+      'Order ID',
+      'Date',
+      'Customer',
+      'Contact',
+      'Address',
+      'Item',
+      'Amount',
+      'Payment',
+      'Status',
+    ];
     final data = orders.map((order) {
       return [
         _clean((order['id'] ?? order['docId'] ?? 'N/A').toString()),
@@ -102,7 +143,9 @@ class PdfReportGenerator {
       pw.MultiPage(
         pageTheme: _landscapePageTheme(),
         build: (context) => [
-          _buildHeader('Live Kitchen Pipeline${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
+          _buildHeader(
+            'Live Kitchen Pipeline${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}',
+          ),
           _buildTable(headers, data),
         ],
       ),
@@ -111,24 +154,39 @@ class PdfReportGenerator {
   }
 
   // 2. CUSTOM CAKES
-  static Future<Uint8List> generateCustomCakesReport(List<Map<String, dynamic>> cakes, {String filterInfo = ''}) async {
+  static Future<Uint8List> generateCustomCakesReport(
+    List<Map<String, dynamic>> cakes, {
+    String filterInfo = '',
+  }) async {
     final pdf = pw.Document();
-    final headers = ['Order ID', 'Customer Info', 'Cake Specs (Details)', 'Amount', 'Status'];
+    final headers = [
+      'Order ID',
+      'Customer Info',
+      'Cake Specs (Details)',
+      'Amount',
+      'Status',
+    ];
 
     final data = cakes.map((order) {
       final id = _clean((order['id'] ?? order['docId'] ?? 'N/A').toString());
-      final customer = _clean((order['customerName'] ?? order['customer'] ?? 'Guest').toString());
-      final phone = _clean((order['contact'] ?? order['phone'] ?? '').toString());
+      final customer = _clean(
+        (order['customerName'] ?? order['customer'] ?? 'Guest').toString(),
+      );
+      final phone = _clean(
+        (order['contact'] ?? order['phone'] ?? '').toString(),
+      );
       final customerInfo = '$customer\n$phone';
 
       String specs = '';
-      if (order['customCakes'] != null && (order['customCakes'] as List).isNotEmpty) {
+      if (order['customCakes'] != null &&
+          (order['customCakes'] as List).isNotEmpty) {
         final customCakesList = order['customCakes'] as List;
         final List<String> specLines = [];
         for (var c in customCakesList) {
           final qty = c['quantity'] ?? 1;
           final name = c['name'] ?? 'Custom Cake';
-          final desc = c['description']?.toString().replaceAll(' • ', '\n') ?? '';
+          final desc =
+              c['description']?.toString().replaceAll(' • ', '\n') ?? '';
           specLines.add('${qty}x $name\n$desc');
         }
         specs = specLines.join('\n\n');
@@ -136,12 +194,20 @@ class PdfReportGenerator {
         final item = order['item'] ?? order['productName'] ?? 'Custom Cake';
         final tier = order['tier'] ?? '1 Tier';
         final frosting = order['frosting'] ?? 'Standard';
-        final piping = order['dedication'] ?? order['pipingText'] ?? order['piping'] ?? 'No dedication';
+        final piping =
+            order['dedication'] ??
+            order['pipingText'] ??
+            order['piping'] ??
+            'No dedication';
         specs = '$item\nTier: $tier\nFrosting: $frosting\nPiping: "$piping"';
       }
 
-      final amount = _cleanAmount(order['total'] ?? order['totalAmount'] ?? order['subtotal']);
-      final status = _clean((order['statusLabel'] ?? order['status'] ?? '').toString());
+      final amount = _cleanAmount(
+        order['total'] ?? order['totalAmount'] ?? order['subtotal'],
+      );
+      final status = _clean(
+        (order['statusLabel'] ?? order['status'] ?? '').toString(),
+      );
 
       return [id, customerInfo, _clean(specs), amount, status];
     }).toList();
@@ -150,14 +216,20 @@ class PdfReportGenerator {
       pw.MultiPage(
         pageTheme: _landscapePageTheme(),
         build: (context) => [
-          _buildHeader('Custom Cake Desk Requests${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
-          _buildTable(headers, data, columnWidths: {
-            0: const pw.FlexColumnWidth(1.2),
-            1: const pw.FlexColumnWidth(1.5),
-            2: const pw.FlexColumnWidth(4.0),
-            3: const pw.FlexColumnWidth(1.2),
-            4: const pw.FlexColumnWidth(1.5),
-          }),
+          _buildHeader(
+            'Custom Cake Desk Requests${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}',
+          ),
+          _buildTable(
+            headers,
+            data,
+            columnWidths: {
+              0: const pw.FlexColumnWidth(1.2),
+              1: const pw.FlexColumnWidth(1.5),
+              2: const pw.FlexColumnWidth(4.0),
+              3: const pw.FlexColumnWidth(1.2),
+              4: const pw.FlexColumnWidth(1.5),
+            },
+          ),
         ],
       ),
     );
@@ -165,9 +237,18 @@ class PdfReportGenerator {
   }
 
   // 3. BATCH MENU
-  static Future<Uint8List> generateBatchMenuReport(List<Map<String, dynamic>> products, {String filterInfo = ''}) async {
+  static Future<Uint8List> generateBatchMenuReport(
+    List<Map<String, dynamic>> products, {
+    String filterInfo = '',
+  }) async {
     final pdf = pw.Document();
-    final headers = ['SKU / ID', 'Product Details', 'Category & Size', 'Price', 'Stock & Status'];
+    final headers = [
+      'SKU / ID',
+      'Product Details',
+      'Category & Size',
+      'Price',
+      'Stock & Status',
+    ];
 
     final data = products.map((prod) {
       final id = _clean((prod['id'] ?? prod['docId'] ?? 'N/A').toString());
@@ -175,10 +256,14 @@ class PdfReportGenerator {
       final desc = _clean((prod['description'] ?? '').toString());
       final details = '$name${desc.isNotEmpty ? '\n$desc' : ''}';
 
-      final category = _clean((prod['category'] ?? 'N/A').toString().toUpperCase());
+      final category = _clean(
+        (prod['category'] ?? 'N/A').toString().toUpperCase(),
+      );
 
       // Pull specific size/serving info or default to standard variants
-      final size = _clean((prod['size'] ?? prod['servingSize'] ?? 'Box of 4').toString());
+      final size = _clean(
+        (prod['size'] ?? prod['servingSize'] ?? 'Box of 4').toString(),
+      );
 
       // Handle dual box pricing if priceBox6 exists
       String priceStr = _cleanAmount(prod['price']);
@@ -200,14 +285,20 @@ class PdfReportGenerator {
       pw.MultiPage(
         pageTheme: _landscapePageTheme(),
         build: (context) => [
-          _buildHeader('Batch Drops & Menu Items${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
-          _buildTable(headers, data, columnWidths: {
-            0: const pw.FlexColumnWidth(1.2),
-            1: const pw.FlexColumnWidth(3.5),
-            2: const pw.FlexColumnWidth(1.8),
-            3: const pw.FlexColumnWidth(1.5),
-            4: const pw.FlexColumnWidth(1.5),
-          }),
+          _buildHeader(
+            'Batch Drops & Menu Items${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}',
+          ),
+          _buildTable(
+            headers,
+            data,
+            columnWidths: {
+              0: const pw.FlexColumnWidth(1.2),
+              1: const pw.FlexColumnWidth(3.5),
+              2: const pw.FlexColumnWidth(1.8),
+              3: const pw.FlexColumnWidth(1.5),
+              4: const pw.FlexColumnWidth(1.5),
+            },
+          ),
         ],
       ),
     );
@@ -215,7 +306,10 @@ class PdfReportGenerator {
   }
 
   // 4. SWEET NOTES
-  static Future<Uint8List> generateSweetNotesReport(List<Map<String, dynamic>> notes, {String filterInfo = ''}) async {
+  static Future<Uint8List> generateSweetNotesReport(
+    List<Map<String, dynamic>> notes, {
+    String filterInfo = '',
+  }) async {
     final pdf = pw.Document();
     final headers = ['Date', 'Sender', 'Subject', 'Message'];
     final data = notes.map((note) {
@@ -231,13 +325,19 @@ class PdfReportGenerator {
       pw.MultiPage(
         pageTheme: _landscapePageTheme(),
         build: (context) => [
-          _buildHeader('Sweet Notes Inbox${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
-          _buildTable(headers, data, columnWidths: {
-            0: const pw.FlexColumnWidth(15),
-            1: const pw.FlexColumnWidth(20),
-            2: const pw.FlexColumnWidth(15),
-            3: const pw.FlexColumnWidth(50),
-          }),
+          _buildHeader(
+            'Sweet Notes Inbox${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}',
+          ),
+          _buildTable(
+            headers,
+            data,
+            columnWidths: {
+              0: const pw.FlexColumnWidth(15),
+              1: const pw.FlexColumnWidth(20),
+              2: const pw.FlexColumnWidth(15),
+              3: const pw.FlexColumnWidth(50),
+            },
+          ),
         ],
       ),
     );
@@ -245,7 +345,11 @@ class PdfReportGenerator {
   }
 
   // 5. DASHBOARD
-  static Future<Uint8List> generateDashboardReport(Map<String, dynamic> stats, List<Map<String, dynamic>> orders, {String filterInfo = ''}) async {
+  static Future<Uint8List> generateDashboardReport(
+    Map<String, dynamic> stats,
+    List<Map<String, dynamic>> orders, {
+    String filterInfo = '',
+  }) async {
     final pdf = pw.Document();
 
     final recentOrders = List<Map<String, dynamic>>.from(orders);
@@ -254,18 +358,32 @@ class PdfReportGenerator {
       final bDate = b['createdAt'];
       if (aDate == null) return 1;
       if (bDate == null) return -1;
-      if (aDate is Timestamp && bDate is Timestamp) return bDate.compareTo(aDate);
+      if (aDate is Timestamp && bDate is Timestamp)
+        return bDate.compareTo(aDate);
       return 0;
     });
 
-    final headers = ['Order ID', 'Date', 'Customer', 'Item/s', 'Amount', 'Status'];
+    final headers = [
+      'Order ID',
+      'Date',
+      'Customer',
+      'Item/s',
+      'Amount',
+      'Status',
+    ];
     final data = recentOrders.map((order) {
       return [
         _clean((order['id'] ?? order['docId'] ?? 'N/A').toString()),
         _formatDate(order['createdAt']),
-        _clean((order['customerName'] ?? order['customer'] ?? 'Guest').toString()),
-        _clean((order['item'] ?? order['productName'] ?? 'Custom Order').toString()),
-        _cleanAmount(order['total'] ?? order['totalAmount'] ?? order['subtotal']),
+        _clean(
+          (order['customerName'] ?? order['customer'] ?? 'Guest').toString(),
+        ),
+        _clean(
+          (order['item'] ?? order['productName'] ?? 'Custom Order').toString(),
+        ),
+        _cleanAmount(
+          order['total'] ?? order['totalAmount'] ?? order['subtotal'],
+        ),
         _clean((order['statusLabel'] ?? order['status'] ?? '').toString()),
       ];
     }).toList();
@@ -278,31 +396,56 @@ class PdfReportGenerator {
         pageTheme: _landscapePageTheme(),
         build: (context) {
           return [
-            _buildHeader('Dashboard Overview Snapshot${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
+            _buildHeader(
+              'Dashboard Overview Snapshot${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}',
+            ),
             pw.SizedBox(height: 10),
 
             // MATCHING WEB DASHBOARD METRIC BOXES
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatBox('TOTAL REVENUE', 'PHP ${stats['totalSales'] ?? '0.00'}'),
-                _buildStatBox('ACTIVE ORDERS', '$totalOrdersCount Orders\n$customCakesCount custom cakes'),
-                _buildStatBox('BAKING IN OVEN', '${stats['bakingOrders'] ?? '0'} Batches'),
-                _buildStatBox('DELIVERIES DONE', '${stats['completedOrders'] ?? '0'} Orders'),
-              ]
+                _buildStatBox(
+                  'TOTAL REVENUE',
+                  'PHP ${stats['totalSales'] ?? '0.00'}',
+                ),
+                _buildStatBox(
+                  'ACTIVE ORDERS',
+                  '$totalOrdersCount Orders\n$customCakesCount custom cakes',
+                ),
+                _buildStatBox(
+                  'BAKING IN OVEN',
+                  '${stats['bakingOrders'] ?? '0'} Batches',
+                ),
+                _buildStatBox(
+                  'DELIVERIES DONE',
+                  '${stats['completedOrders'] ?? '0'} Orders',
+                ),
+              ],
             ),
 
             pw.SizedBox(height: 24),
-            pw.Text('Comprehensive Transactions Log', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF3D1C23))),
+            pw.Text(
+              'Comprehensive Transactions Log',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: const PdfColor.fromInt(0xFF3D1C23),
+              ),
+            ),
             pw.SizedBox(height: 10),
-            _buildTable(headers, data, columnWidths: {
-              0: const pw.FlexColumnWidth(1.2),
-              1: const pw.FlexColumnWidth(1.5),
-              2: const pw.FlexColumnWidth(2.0),
-              3: const pw.FlexColumnWidth(2.5),
-              4: const pw.FlexColumnWidth(1.2),
-              5: const pw.FlexColumnWidth(1.8),
-            }),
+            _buildTable(
+              headers,
+              data,
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.2),
+                1: const pw.FlexColumnWidth(1.5),
+                2: const pw.FlexColumnWidth(2.0),
+                3: const pw.FlexColumnWidth(2.5),
+                4: const pw.FlexColumnWidth(1.2),
+                5: const pw.FlexColumnWidth(1.8),
+              },
+            ),
           ];
         },
       ),
@@ -312,21 +455,35 @@ class PdfReportGenerator {
   }
 
   // 6. CUSTOMER REVIEWS  (new)
-  static Future<Uint8List> generateReviewsReport(List<Map<String, dynamic>> reviews, {String filterInfo = ''}) async {
+  static Future<Uint8List> generateReviewsReport(
+    List<Map<String, dynamic>> reviews, {
+    String filterInfo = '',
+  }) async {
     final pdf = pw.Document();
-    final headers = ['Date', 'Customer', 'Product', 'Rating', 'Comment', 'Status'];
+    final headers = [
+      'Date',
+      'Customer',
+      'Product',
+      'Rating',
+      'Comment',
+      'Status',
+    ];
 
     final data = reviews.map((review) {
-      final rating = review['rating'] is num ? (review['rating'] as num).toInt() : 5;
+      final rating = review['rating'] is num
+          ? (review['rating'] as num).toInt()
+          : 5;
       return [
         _formatDate(review['createdAt']),
         _clean((review['userName'] ?? 'Anonymous').toString()),
         _clean((review['productName'] ?? 'Unknown Product').toString()),
         '$rating / 5',
-        _clean((review['comment']?.toString().isNotEmpty == true
-                ? review['comment']
-                : 'No written feedback provided.')
-            .toString()),
+        _clean(
+          (review['comment']?.toString().isNotEmpty == true
+                  ? review['comment']
+                  : 'No written feedback provided.')
+              .toString(),
+        ),
         _clean((review['status'] ?? 'new').toString()),
       ];
     }).toList();
@@ -335,15 +492,21 @@ class PdfReportGenerator {
       pw.MultiPage(
         pageTheme: _landscapePageTheme(),
         build: (context) => [
-          _buildHeader('Customer Reviews${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}'),
-          _buildTable(headers, data, columnWidths: {
-            0: const pw.FlexColumnWidth(1.5),
-            1: const pw.FlexColumnWidth(1.5),
-            2: const pw.FlexColumnWidth(1.8),
-            3: const pw.FlexColumnWidth(1.0),
-            4: const pw.FlexColumnWidth(3.5),
-            5: const pw.FlexColumnWidth(1.2),
-          }),
+          _buildHeader(
+            'Customer Reviews${filterInfo.isNotEmpty ? ' - $filterInfo' : ''}',
+          ),
+          _buildTable(
+            headers,
+            data,
+            columnWidths: {
+              0: const pw.FlexColumnWidth(1.5),
+              1: const pw.FlexColumnWidth(1.5),
+              2: const pw.FlexColumnWidth(1.8),
+              3: const pw.FlexColumnWidth(1.0),
+              4: const pw.FlexColumnWidth(3.5),
+              5: const pw.FlexColumnWidth(1.2),
+            },
+          ),
         ],
       ),
     );
@@ -368,20 +531,25 @@ class PdfReportGenerator {
   }) async {
     final pdf = pw.Document();
 
-    final cocoa = const PdfColor.fromInt(0xFF8C4A27);
-    final espresso = const PdfColor.fromInt(0xFF3D1C23);
-    final cream = const PdfColor.fromInt(0xFFFDF1F2);
-    final muted = const PdfColor.fromInt(0xFF757575);
+    final cocoa = const PdfColor.fromInt(0xFF361118);
+    final espresso = const PdfColor.fromInt(0xFF361118);
+    final cream = PdfColors.white;
+    final muted = const PdfColor.fromInt(0xFF2B1218);
     final white = PdfColors.white;
 
     final int itemsCount = parsedItems.length;
-    final int feesCount = (deliveryFee > 0 ? 1 : 0) + (packagingFee > 0 ? 1 : 0);
-    final bool hasGCash = paymentMethod.toLowerCase().contains('gcash') && reference != 'N/A' && reference.isNotEmpty;
+    final int feesCount =
+        (deliveryFee > 0 ? 1 : 0) + (packagingFee > 0 ? 1 : 0);
+    final bool hasGCash =
+        paymentMethod.toLowerCase().contains('gcash') &&
+        reference != 'N/A' &&
+        reference.isNotEmpty;
 
-    double calculatedHeight = 420.0; // Base height (header, total, spacing)
+    double calculatedHeight = 470.0; // Base height (header, total, spacing)
     if (hasGCash) calculatedHeight += 20.0;
     if (customerPhone.isNotEmpty) calculatedHeight += 14.0;
-    if (customerAddress.isNotEmpty) calculatedHeight += 24.0; // Assume address might wrap
+    if (customerAddress.isNotEmpty)
+      calculatedHeight += 24.0; // Assume address might wrap
     calculatedHeight += (itemsCount * 22.0);
     calculatedHeight += (feesCount * 20.0);
 
@@ -395,20 +563,36 @@ class PdfReportGenerator {
       ),
     );
 
-    const String receiptSvg = '''<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5 6 2 4.5 3.5 3 2v20z" fill="white"/></svg>''';
+    const String receiptSvg =
+        '''<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2L7.5 3.5 6 2 4.5 3.5 3 2v20z" fill="white"/></svg>''';
 
-    pw.Widget buildInfoRow(String label, String value, {pw.FontWeight weight = pw.FontWeight.bold}) {
+    pw.Widget buildInfoRow(
+      String label,
+      String value, {
+      pw.FontWeight weight = pw.FontWeight.bold,
+    }) {
       return pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(label, style: pw.TextStyle(color: muted, fontSize: 11)),
-          pw.Text(value, style: pw.TextStyle(color: espresso, fontSize: 11, fontWeight: weight)),
+          pw.Text(label, style: pw.TextStyle(color: muted, fontSize: 13)),
+          pw.Text(
+            value,
+            style: pw.TextStyle(
+              color: espresso,
+              fontSize: 13,
+              fontWeight: weight,
+            ),
+          ),
         ],
       );
     }
 
     pw.Widget buildDivider() {
-      return pw.Divider(color: const PdfColor.fromInt(0xFFE0E0E0), thickness: 1, borderStyle: pw.BorderStyle.dashed);
+      return pw.Divider(
+        color: cocoa,
+        thickness: 1,
+        borderStyle: pw.BorderStyle.dashed,
+      );
     }
 
     pdf.addPage(
@@ -430,14 +614,49 @@ class PdfReportGenerator {
                           padding: const pw.EdgeInsets.all(12),
                           decoration: pw.BoxDecoration(
                             color: cocoa,
-                            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+                            borderRadius: const pw.BorderRadius.all(
+                              pw.Radius.circular(12),
+                            ),
                           ),
-                          child: pw.SvgImage(svg: receiptSvg, width: 28, height: 28),
+                          child: pw.SvgImage(
+                            svg: receiptSvg,
+                            width: 28,
+                            height: 28,
+                          ),
                         ),
                         pw.SizedBox(height: 12),
-                        pw.Text('E-Receipt', style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold, color: espresso)),
+                        pw.Text(
+                          'E-Receipt',
+                          style: pw.TextStyle(
+                            fontSize: 22,
+                            fontWeight: pw.FontWeight.bold,
+                            color: espresso,
+                          ),
+                        ),
                         pw.SizedBox(height: 4),
-                        pw.Text(dateStr, style: pw.TextStyle(fontSize: 12, color: muted)),
+                        pw.Text(
+                          dateStr,
+                          style: pw.TextStyle(fontSize: 12, color: muted),
+                        ),
+                        pw.SizedBox(height: 12),
+                        pw.Text(
+                          'Nyse Bites Bakeshop',
+                          style: pw.TextStyle(
+                            fontSize: 14,
+                            fontWeight: pw.FontWeight.bold,
+                            color: espresso,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          'N.I.A Rd, Imus, Cavite, Philippines',
+                          style: pw.TextStyle(fontSize: 11, color: muted),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          '+63 995 082 9180 • nysebites@gmail.com',
+                          style: pw.TextStyle(fontSize: 11, color: muted),
+                        ),
                       ],
                     ),
                   ],
@@ -448,7 +667,9 @@ class PdfReportGenerator {
                 buildInfoRow('Order ID', orderNumber),
                 pw.SizedBox(height: 8),
                 buildInfoRow('Payment Method', paymentMethod),
-                if (paymentMethod.toLowerCase().contains('gcash') && reference != 'N/A' && reference.isNotEmpty) ...[
+                if (paymentMethod.toLowerCase().contains('gcash') &&
+                    reference != 'N/A' &&
+                    reference.isNotEmpty) ...[
                   pw.SizedBox(height: 8),
                   buildInfoRow('GCash Ref', reference),
                 ],
@@ -458,44 +679,88 @@ class PdfReportGenerator {
                   padding: const pw.EdgeInsets.all(12),
                   decoration: pw.BoxDecoration(
                     color: white,
-                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(12),
+                    ),
                   ),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(customerName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                      pw.Text(
+                        customerName,
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          color: espresso,
+                          fontSize: 13,
+                        ),
+                      ),
                       if (customerPhone.isNotEmpty) ...[
                         pw.SizedBox(height: 2),
-                        pw.Text(customerPhone, style: pw.TextStyle(color: muted, fontSize: 11)),
+                        pw.Text(
+                          customerPhone,
+                          style: pw.TextStyle(color: muted, fontSize: 12),
+                        ),
                       ],
                       if (customerAddress.isNotEmpty) ...[
                         pw.SizedBox(height: 2),
-                        pw.Text(customerAddress, style: pw.TextStyle(color: muted, fontSize: 11)),
+                        pw.Text(
+                          customerAddress,
+                          style: pw.TextStyle(color: muted, fontSize: 12),
+                        ),
                       ],
                     ],
                   ),
                 ),
                 pw.SizedBox(height: 16),
-                pw.Text('ITEMS', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: muted, fontSize: 11, letterSpacing: 1.2)),
+                pw.Text(
+                  'ITEMS',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    color: muted,
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                  ),
+                ),
                 pw.SizedBox(height: 8),
                 ...parsedItems.map((item) {
                   final qty = item['quantity']?.toString() ?? '1';
                   final name = item['name']?.toString() ?? 'Item';
                   final priceVal = item['_calculatedPrice'] as double?;
-                  
+
                   return pw.Padding(
                     padding: const pw.EdgeInsets.only(bottom: 8),
                     child: pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('${qty}x', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                        pw.Text(
+                          '${qty}x',
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            color: espresso,
+                            fontSize: 13,
+                          ),
+                        ),
                         pw.SizedBox(width: 8),
                         pw.Expanded(
-                          child: pw.Text(name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                          child: pw.Text(
+                            name,
+                            style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold,
+                              color: espresso,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                         pw.SizedBox(width: 8),
                         if (priceVal != null && priceVal > 0.0)
-                          pw.Text('₱${priceVal.toStringAsFixed(2)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: espresso, fontSize: 12)),
+                          pw.Text(
+                            '₱${priceVal.toStringAsFixed(2)}',
+                            style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold,
+                              color: espresso,
+                              fontSize: 13,
+                            ),
+                          ),
                       ],
                     ),
                   );
@@ -505,12 +770,20 @@ class PdfReportGenerator {
                   if (deliveryFee > 0)
                     pw.Padding(
                       padding: const pw.EdgeInsets.only(bottom: 6),
-                      child: buildInfoRow('Delivery Fee', '₱${deliveryFee.toStringAsFixed(2)}', weight: pw.FontWeight.normal),
+                      child: buildInfoRow(
+                        'Delivery Fee',
+                        '₱${deliveryFee.toStringAsFixed(2)}',
+                        weight: pw.FontWeight.normal,
+                      ),
                     ),
                   if (packagingFee > 0)
                     pw.Padding(
                       padding: const pw.EdgeInsets.only(bottom: 6),
-                      child: buildInfoRow('Packaging Fee', '₱${packagingFee.toStringAsFixed(2)}', weight: pw.FontWeight.normal),
+                      child: buildInfoRow(
+                        'Packaging Fee',
+                        '₱${packagingFee.toStringAsFixed(2)}',
+                        weight: pw.FontWeight.normal,
+                      ),
                     ),
                 ],
                 pw.SizedBox(height: 8),
@@ -519,8 +792,35 @@ class PdfReportGenerator {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('Total Amount', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: espresso)),
-                    pw.Text('₱${total.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, color: cocoa)),
+                    pw.Text(
+                      'Total Amount',
+                      style: pw.TextStyle(
+                        fontSize: 16,
+                        fontWeight: pw.FontWeight.bold,
+                        color: espresso,
+                      ),
+                    ),
+                    pw.Text(
+                      '₱${total.toStringAsFixed(2)}',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: cocoa,
+                      ),
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 16),
+                pw.Column(
+                  children: [
+                    pw.Text(
+                      'Thank you for your sweet order! 🤎',
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: muted,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -545,9 +845,22 @@ class PdfReportGenerator {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text(title, style: const pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(0xFF2E151A))),
+          pw.Text(
+            title,
+            style: const pw.TextStyle(
+              fontSize: 10,
+              color: PdfColor.fromInt(0xFF2E151A),
+            ),
+          ),
           pw.SizedBox(height: 6),
-          pw.Text(value, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF3D1C23))),
+          pw.Text(
+            value,
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: const PdfColor.fromInt(0xFF3D1C23),
+            ),
+          ),
         ],
       ),
     );

@@ -39,7 +39,7 @@ class MobileNavDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.brandRed, // Warmer beige background
+      backgroundColor: AppColors.darkGarnet, // Warmer beige background
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(28)), // Rounded right edge
       ),
@@ -62,7 +62,7 @@ class MobileNavDrawer extends StatelessWidget {
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       color: AppColors.bgPastelPink,
-                      borderRadius: BorderRadius.circular(14),
+                      shape: BoxShape.circle,
                       border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
                       boxShadow: const [
                         BoxShadow(
@@ -72,13 +72,18 @@ class MobileNavDrawer extends StatelessWidget {
                         )
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        'assets/images/nysebites_logo.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.cookie, color: AppColors.textDarkBerry),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/nysebites_logo.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.cookie, color: AppColors.textDarkBerry),
+                        ),
                       ),
                     ),
                   ),
@@ -92,7 +97,7 @@ class MobileNavDrawer extends StatelessWidget {
                           fontFamily: 'serif',
                           fontSize: 19,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.darkGarnet,
+                          color: AppColors.bgPastelPink,
                           letterSpacing: -0.3,
                         ),
                       ),
@@ -103,7 +108,7 @@ class MobileNavDrawer extends StatelessWidget {
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
-                          color: AppColors.textDarkBerry,
+                          color: AppColors.accentGold,
                         ),
                       ),
                     ],
@@ -204,7 +209,7 @@ class MobileNavDrawer extends StatelessWidget {
                                       width: 42,
                                       height: 42,
                                       decoration: const BoxDecoration(
-                                        color: AppColors.textDarkBerry,
+                                        color: AppColors.accentGold,
                                         shape: BoxShape.circle,
                                       ),
                                       child: ClipOval(
@@ -248,7 +253,7 @@ class MobileNavDrawer extends StatelessWidget {
                                             style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
-                                              color: AppColors.textDarkBerry,
+                                              color: AppColors.accentGold,
                                             ),
                                           ),
                                         ],
@@ -288,7 +293,7 @@ class MobileNavDrawer extends StatelessWidget {
                           backgroundColor: AppColors.brandRed,
                           foregroundColor: Colors.white,
                           elevation: 2,
-                          shadowColor: AppColors.textDarkBerry.withOpacity(0.4),
+                          shadowColor: AppColors.textDarkBerry.withValues(alpha: 0.4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -328,7 +333,7 @@ class MobileNavDrawer extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16), // Smooth highlight borders
           hoverColor: AppColors.bgPastelPink,
-          highlightColor: AppColors.bgPastelPink.withOpacity(0.5),
+          highlightColor: AppColors.bgPastelPink.withValues(alpha: 0.5),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
@@ -339,7 +344,7 @@ class MobileNavDrawer extends StatelessWidget {
                     color: AppColors.brandRed, // Cute boxed icons!
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: AppColors.textDarkBerry, size: 18),
+                  child: Icon(icon, color: AppColors.accentGold, size: 18),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -348,7 +353,7 @@ class MobileNavDrawer extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
-                      color: AppColors.darkGarnet,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -365,5 +370,11 @@ class MobileNavDrawer extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
 
 

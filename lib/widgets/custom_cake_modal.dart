@@ -23,9 +23,11 @@ class CustomCakeModal extends StatefulWidget {
 
 class _CustomCakeModalState extends State<CustomCakeModal> {
   bool get _isStandardCake =>
-      widget.baseProduct.price == 800.0 || widget.baseProduct.name.contains('Pure Decadence');
-  bool get _isOneTierCake => 
-      widget.baseProduct.price == 1450.0 || widget.baseProduct.name.contains('Vanilla Sky');
+      widget.baseProduct.price == 800.0 ||
+      widget.baseProduct.name.contains('Pure Decadence');
+  bool get _isOneTierCake =>
+      widget.baseProduct.price == 1450.0 ||
+      widget.baseProduct.name.contains('Vanilla Sky');
 
   late String _selectedSize;
   late Map<String, double> _sizeOptions;
@@ -86,12 +88,18 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
           _selectedBase = baseStr;
         }
       } else if (part.startsWith('Icing:')) {
-        final icingStr = part.replaceFirst('Icing:', '').replaceAll('(Included)', '').trim();
+        final icingStr = part
+            .replaceFirst('Icing:', '')
+            .replaceAll('(Included)', '')
+            .trim();
         if (_frostingOptions.contains(icingStr)) {
           _selectedFrosting = icingStr;
         }
       } else if (part.startsWith('Piping:')) {
-        final pipingStr = part.replaceFirst('Piping:', '').trim().replaceAll('"', '');
+        final pipingStr = part
+            .replaceFirst('Piping:', '')
+            .trim()
+            .replaceAll('"', '');
         _pipingMessageController.text = pipingStr;
       } else if (part.startsWith('Notes:')) {
         final notesStr = part.replaceFirst('Notes:', '').trim();
@@ -130,7 +138,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
       id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
       name: widget.baseProduct.name,
       category: 'cakes',
-      price: _calculatedTotal,
+      price: 0.0, // Custom cakes require quote from admin
       description: customDescription.toString(),
       imgSrc: widget.baseProduct.imgSrc,
       icon: '🎂',
@@ -138,7 +146,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
     );
 
     widget.onAddCustomCake(customizedCake);
-    
+
     // If it was opened from cart to edit, we don't need to show success banner usually,
     // but showing it is fine or parent handles it.
     Navigator.pop(context);
@@ -544,7 +552,11 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.close, color: AppColors.darkGarnet, size: 20),
+              icon: const Icon(
+                Icons.close,
+                color: AppColors.darkGarnet,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -659,7 +671,7 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
 
                     // Price
                     Text(
-                      '₱${entry.value.toStringAsFixed(0)}',
+                      'Starts at ₱${entry.value.toStringAsFixed(0)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isSelected
@@ -695,6 +707,15 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12.5,
               ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isSelected ? AppColors.brandRed : AppColors.bgPastelPink,
+                  width: 1,
+                ),
+              ),
+              elevation: isSelected ? 4 : 0,
+              shadowColor: AppColors.brandRed.withValues(alpha: 0.3),
               onSelected: (selected) {
                 if (selected) {
                   setState(() => _selectedBase = base);
@@ -724,6 +745,15 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12.5,
               ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isSelected ? AppColors.brandRed : AppColors.bgPastelPink,
+                  width: 1,
+                ),
+              ),
+              elevation: isSelected ? 4 : 0,
+              shadowColor: AppColors.brandRed.withValues(alpha: 0.3),
               onSelected: (selected) {
                 if (selected) {
                   setState(() => _selectedFrosting = frosting);
@@ -738,30 +768,38 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         // 4. Cake Piping Message
         _sectionTitle('4. Cake Piping Message / Inscription'),
         const SizedBox(height: 8),
-        TextField(
-          controller: _pipingMessageController,
-          maxLength: 35,
-          decoration: InputDecoration(
-            hintText: 'e.g. Happy Birthday Mai! 🎂',
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.bgPastelPink),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.bgPastelPink),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2E151A).withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _pipingMessageController,
+            maxLength: 35,
+            decoration: InputDecoration(
+              hintText: 'e.g. Happy Birthday Mai! 🎂',
+              hintStyle: TextStyle(color: AppColors.textDarkBerry.withValues(alpha: 0.5)),
+              filled: true,
+              fillColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              counterStyle: const TextStyle(
+                fontSize: 10,
                 color: AppColors.textDarkBerry,
-                width: 1.5,
               ),
             ),
           ),
@@ -772,29 +810,33 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
         // 5. Special Baking Instructions
         _sectionTitle('5. Special Baking Instructions'),
         const SizedBox(height: 8),
-        TextField(
-          controller: _customNotesController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText:
-                'e.g. Less sweet frosting, color theme preferences, specific toppings...',
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.all(14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.bgPastelPink),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.bgPastelPink),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.textDarkBerry,
-                width: 1.5,
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.bgPastelPink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2E151A).withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
+            ],
+          ),
+          child: TextField(
+            controller: _customNotesController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText:
+                  'e.g. Less sweet frosting, color theme preferences, specific toppings...',
+              hintStyle: TextStyle(color: AppColors.textDarkBerry.withValues(alpha: 0.5)),
+              filled: true,
+              fillColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              contentPadding: const EdgeInsets.all(16),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
             ),
           ),
         ),
@@ -808,27 +850,30 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
 
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.bgPastelPink,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.bgPastelPink),
+            color: AppColors.brandRed.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.brandRed.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             children: [
               const Icon(
-                Icons.calendar_month_outlined,
-                size: 18,
-                color: AppColors.textDarkBerry,
+                Icons.warning_amber_rounded,
+                size: 22,
+                color: AppColors.brandRed,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'Custom cakes require at least 2-week reservation notice before delivery.',
+                  'IMPORTANT: Custom cakes require at least a 2-week reservation notice prior to delivery.',
                   style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDarkBerry,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.brandRed,
+                    height: 1.3,
                   ),
                 ),
               ),
@@ -855,13 +900,16 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Total Cake Price',
-                style: TextStyle(fontSize: 11.5, color: AppColors.textDarkBerry),
+                'Estimated Price',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textDarkBerry,
+                ),
               ),
-              Text(
-                '₱${_calculatedTotal.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 22,
+              const Text(
+                'Pending Quote',
+                style: TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textDarkBerry,
                 ),
@@ -902,62 +950,82 @@ class _CustomCakeModalState extends State<CustomCakeModal> {
   }
 
   Widget _buildImagePickerControl() {
-    return InkWell(
-      onTap: _pickPreferredImage,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.bgPastelPink,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _preferredImageBytes != null
-                ? AppColors.textDarkBerry
-                : AppColors.bgPastelPink,
-          ),
-        ),
-        child: Row(
-          children: [
-            if (_preferredImageBytes != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 42,
-                  height: 42,
-                  child: Image.memory(_preferredImageBytes!, fit: BoxFit.cover),
-                ),
-              ),
-              const SizedBox(width: 12),
-            ] else ...[
-              const Icon(
-                Icons.add_photo_alternate_outlined,
-                color: AppColors.textDarkBerry,
-              ),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Text(
-                _preferredImageName ??
-                    'Upload sample cake photo from gallery...',
-                style: const TextStyle(fontSize: 13, color: AppColors.textDarkBerry),
-                overflow: TextOverflow.ellipsis,
+    if (_preferredImageBytes != null) {
+      return Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Container(
+            width: double.infinity,
+            height: 120,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: Image.memory(
+                _preferredImageBytes!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
               ),
             ),
-            if (_preferredImageBytes != null)
-              IconButton(
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.textDarkBerry,
-                  size: 20,
-                ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Material(
+              color: Colors.black54,
+              shape: const CircleBorder(),
+              child: IconButton(
+                iconSize: 20,
                 onPressed: () {
                   setState(() {
                     _preferredImageBytes = null;
                     _preferredImageName = null;
                   });
                 },
+                icon: const Icon(Icons.close, color: Colors.white),
+                tooltip: 'Remove Image',
               ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return InkWell(
+      onTap: _pickPreferredImage,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        height: 150,
+        decoration: BoxDecoration(
+          color: AppColors.bgPastelPink,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.textDarkBerry.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.add_photo_alternate_outlined,
+              color: AppColors.textDarkBerry,
+              size: 40,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Upload sample cake photo from gallery...',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textDarkBerry,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

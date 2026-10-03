@@ -27,8 +27,8 @@ class BatchDropsMenuTab extends StatefulWidget {
 
 class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
   static const Color brandCocoa = AppColors.darkGarnet;
-  static const Color darkEspresso = AppColors.brandRed;
-  static const Color textDark = AppColors.brandRed;
+  static const Color darkEspresso = AppColors.darkGarnet;
+  static const Color textDark = AppColors.textDarkBerry;
   static const Color textMuted = AppColors.textDarkBerry;
   static const Color borderLight = AppColors.bgPastelPink;
   static const Color creamCard = AppColors.bgPastelPink;
@@ -138,12 +138,12 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 15.5,
-                                      color: textDark,
+                                      color: Colors.white,
                                     ),
                                   ),
                                   Text(
                                     'Bake inventory & stock manager',
-                                    style: TextStyle(fontSize: 11, color: textMuted),
+                                    style: TextStyle(fontSize: 11, color: Colors.white70),
                                   ),
                                 ],
                               ),
@@ -215,7 +215,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 17,
-                                        color: textDark,
+                                        color: Colors.white,
                                         letterSpacing: -0.2,
                                       ),
                                     ),
@@ -228,7 +228,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                   isSuperAdmin
                                       ? 'Bake inventory manager • Full SKU recipes, pricing & active drops.'
                                       : 'Baker station: Real-time stock counters and freshly baked drop controls.',
-                                  style: const TextStyle(fontSize: 11.5, color: textMuted),
+                                  style: const TextStyle(fontSize: 11.5, color: Colors.white70),
                                 ),
                               ],
                             ),
@@ -394,10 +394,10 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                   return Container(
                     width: productCardWidth,
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : AppColors.brandRed,
+                      color: active ? Colors.white : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: active ? AppColors.brandRed : AppColors.brandRed,
+                        color: active ? AppColors.darkGarnet : Colors.grey.shade300,
                         width: 1.4,
                       ),
                     ),
@@ -475,7 +475,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                             Switch(
                               value: active,
                               activeColor: brandCocoa,
-                              activeTrackColor: AppColors.brandRed,
+                              activeTrackColor: AppColors.darkGarnet.withOpacity(0.5),
                               onChanged: (val) => widget.onToggleStatus(originalIndex),
                             ),
                           ],
@@ -536,7 +536,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: AppColors.brandRed,
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: borderLight),
                               ),
@@ -552,7 +552,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       child: Icon(
                                         Icons.remove,
                                         size: 15,
-                                        color: stock > 0 ? textDark : AppColors.brandRed,
+                                        color: stock > 0 ? textDark : Colors.grey,
                                       ),
                                     ),
                                   ),
@@ -564,7 +564,7 @@ class _BatchDropsMenuTabState extends State<BatchDropsMenuTab> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 13,
-                                        color: stock == 0 ? AppColors.brandRed : textDark,
+                                        color: stock == 0 ? Colors.grey : textDark,
                                       ),
                                     ),
                                   ),
