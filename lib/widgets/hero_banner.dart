@@ -80,15 +80,13 @@ class HeroBanner extends StatelessWidget {
 
   Widget _buildTextContent(bool isMobile) {
     return Padding(
-      padding: EdgeInsets.only(
-        top: isMobile ? 24.0 : 0, 
-        bottom: isMobile ? 24.0 : 64.0, 
-        left: isMobile ? 20.0 : 64.0, 
-        right: isMobile ? 20.0 : 64.0
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20.0 : 64.0,
+        vertical: isMobile ? 24.0 : 64.0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Freshly Baked',
