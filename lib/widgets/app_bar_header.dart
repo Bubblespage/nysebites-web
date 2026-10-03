@@ -142,15 +142,17 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                         children: [
                           ScaleTransition(
                             scale: _pulseAnimation,
-                            child: Image.asset(
-                              'assets/images/nysebites_logo.png',
-                              width: 44,
-                              height: 44,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.cookie,
-                                color: AppColors.accentGold,
-                                size: 32,
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/images/nysebites_logo.png',
+                                width: 44,
+                                height: 44,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.cookie,
+                                  color: AppColors.accentGold,
+                                  size: 32,
+                                ),
                               ),
                             ),
                           ),
