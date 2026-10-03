@@ -83,11 +83,13 @@ class Footer extends StatelessWidget {
               const SizedBox(height: 28),
               // Logo circle
               ClipOval(
-                child: Image.asset(
-                  'assets/images/nysebites_logo.png',
-                  width: 68,
-                  height: 68,
-                  fit: BoxFit.cover,
+                child: Container(
+                  color: Colors.white,
+                  child: Image.asset(
+                    'assets/images/nysebites_logo.png',
+                    width: 68,
+                    height: 68,
+                    fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Container(
                     width: 68,
                     height: 68,
@@ -466,17 +468,20 @@ class Footer extends StatelessWidget {
                             Row(
                               children: [
                                 ClipOval(
-                                  child: Image.asset(
-                                    'assets/images/nysebites_logo.png',
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.cookie_outlined,
-                                      color: AppColors.accentGold,
-                                      size: 32,
-                                    ),
+                              child: Container(
+                                color: Colors.white,
+                                child: Image.asset(
+                                  'assets/images/nysebites_logo.png',
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.cookie_outlined,
+                                    color: AppColors.accentGold,
+                                    size: 32,
                                   ),
+                                ),
+                              ),
                                 ),
                                 const SizedBox(width: 12),
                                 const Text(
