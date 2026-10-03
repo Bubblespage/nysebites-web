@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -23,9 +24,8 @@ class _LiveChatWidgetState extends State<LiveChatWidget> {
   String? _chatSessionId;
   String _userName = 'Guest';
 
-  // Replace with your actual Gemini API Key from Google AI Studio
-  static const String _geminiApiKey =
-      'YOUR_GEMINI_API_KEY_HERE';
+  // Get Gemini API Key from .env
+  String get _geminiApiKey => dotenv.env['GEMINI_API_KEY'] ?? 'YOUR_GEMINI_API_KEY_HERE';
   late final GenerativeModel _model;
   ChatSession? _aiChatSession;
 
