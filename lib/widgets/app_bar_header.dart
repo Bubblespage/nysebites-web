@@ -150,14 +150,14 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                                   width: 44,
                                   height: 44,
                                   fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.cookie,
-                                  color: AppColors.accentGold,
-                                  size: 32,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.cookie,
+                                    color: AppColors.accentGold,
+                                    size: 32,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                           const SizedBox(width: 12),
                           if (!isMobile)
                             RichText(
