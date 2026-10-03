@@ -79,10 +79,15 @@ class HeroBanner extends StatelessWidget {
 
   Widget _buildTextContent(bool isMobile) {
     return Padding(
-      padding: EdgeInsets.all(isMobile ? 20.0 : 64.0),
+      padding: EdgeInsets.only(
+        top: isMobile ? 24.0 : 32.0, 
+        bottom: isMobile ? 24.0 : 64.0, 
+        left: isMobile ? 20.0 : 64.0, 
+        right: isMobile ? 20.0 : 64.0
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
             'Freshly Baked',
@@ -211,7 +216,7 @@ class HeroBanner extends StatelessWidget {
   Widget _buildImageContent(bool isMobile) {
     // Only used on desktop now.
     return SizedBox(
-      height: 700,
+      height: 600,
       width: double.infinity,
       child: Stack(
         children: [
