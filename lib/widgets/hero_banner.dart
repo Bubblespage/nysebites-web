@@ -54,8 +54,7 @@ class HeroBanner extends StatelessWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: isMobile
-                    ? Align(
-                        alignment: Alignment.topLeft,
+                    ? Center(
                         child: SingleChildScrollView(
                           child: _buildTextContent(isMobile),
                         ),
@@ -77,15 +76,12 @@ class HeroBanner extends StatelessWidget {
 
   Widget _buildTextContent(bool isMobile) {
     return Padding(
-      padding: EdgeInsets.only(
-        top: isMobile ? 24.0 : 0, 
-        bottom: isMobile ? 24.0 : 64.0, 
-        left: isMobile ? 20.0 : 64.0, 
-        right: isMobile ? 20.0 : 64.0
-      ),
+      padding: isMobile
+          ? const EdgeInsets.all(20.0)
+          : const EdgeInsets.only(top: 0, bottom: 64.0, left: 64.0, right: 64.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: isMobile ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
           Text(
             'Freshly Baked',
