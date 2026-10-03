@@ -102,6 +102,7 @@ class Footer extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
               const SizedBox(height: 14),
               const Text(
                 'Contact Nyse Bites',
