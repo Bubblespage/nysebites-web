@@ -30,46 +30,43 @@ class HeroBanner extends StatelessWidget {
             children: [
               if (topAnnouncementWidget != null) topAnnouncementWidget!,
               Container(
-            width: double.infinity,
-            height: isMobile ? (screenHeight > 600 ? screenHeight - 75 : 600) : null,
-            decoration: BoxDecoration(
-              color: AppColors.darkGarnet,
-              // Background image for mobile only
-              image: isMobile
-                  ? DecorationImage(
-                      image: const AssetImage('assets/images/hero_2.jpg'),
-                      fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(0.65),
-                        BlendMode.darken,
-                      ),
-                    )
-                  : null,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.darkGarnet.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: isMobile
-                ? Expanded(
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: SingleChildScrollView(
-                        child: _buildTextContent(isMobile),
-                      ),
+                width: double.infinity,
+                height: isMobile ? (screenHeight > 600 ? screenHeight - 75 : 600) : null,
+                decoration: BoxDecoration(
+                  color: AppColors.darkGarnet,
+                  image: isMobile
+                      ? DecorationImage(
+                          image: const AssetImage('assets/images/hero_2.jpg'),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.65),
+                            BlendMode.darken,
+                          ),
+                        )
+                      : null,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.darkGarnet.withOpacity(0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 1, child: _buildTextContent(isMobile)),
-                      Expanded(flex: 1, child: _buildImageContent(isMobile)),
-                    ],
-                  ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: isMobile
+                    ? Align(
+                        alignment: Alignment.topLeft,
+                        child: SingleChildScrollView(
+                          child: _buildTextContent(isMobile),
+                        ),
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 1, child: _buildTextContent(isMobile)),
+                          Expanded(flex: 1, child: _buildImageContent(isMobile)),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -80,13 +77,15 @@ class HeroBanner extends StatelessWidget {
 
   Widget _buildTextContent(bool isMobile) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20.0 : 64.0,
-        vertical: isMobile ? 24.0 : 32.0,
+      padding: EdgeInsets.only(
+        top: isMobile ? 24.0 : 0, 
+        bottom: isMobile ? 24.0 : 64.0, 
+        left: isMobile ? 20.0 : 64.0, 
+        right: isMobile ? 20.0 : 64.0
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
             'Freshly Baked',
@@ -215,7 +214,7 @@ class HeroBanner extends StatelessWidget {
   Widget _buildImageContent(bool isMobile) {
     // Only used on desktop now.
     return SizedBox(
-      height: 480,
+      height: 600,
       width: double.infinity,
       child: Stack(
         children: [
