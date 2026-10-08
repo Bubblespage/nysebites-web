@@ -12,6 +12,7 @@ import 'screens/admin/admin_login_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/reset_password_screen.dart';
 import 'theme/app_colors.dart';
+import 'widgets/smooth_cursor_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,6 +108,7 @@ class NyseBitesApp extends StatelessWidget {
         fontFamily: 'sans-serif',
       ),
       initialRoute: '/',
+      builder: (context, child) => SmoothCursorWrapper(child: child!),
       routes: {
         '/': (context) => const SplashScreen(),
         '/home': (context) => const HomeScreen(),
