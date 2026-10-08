@@ -34,9 +34,13 @@ class _SplashScreenState extends State<SplashScreen> {
               height: 150,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                image: DecorationImage(
-                  image: AssetImage('assets/images/nysebites_logo.png'),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/nysebites_logo.png',
                   fit: BoxFit.contain,
+                  cacheWidth: 300,
+                  cacheHeight: 300,
                 ),
               ),
             ),

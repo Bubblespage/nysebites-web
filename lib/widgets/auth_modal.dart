@@ -258,6 +258,8 @@ class _AuthModalState extends State<AuthModal>
         child: Image.asset(
           'assets/images/nysebites_logo.png',
           fit: BoxFit.cover,
+          cacheWidth: 150,
+          cacheHeight: 150,
           errorBuilder: (_, __, ___) => const Center(
             child: Text('🧁', style: TextStyle(fontSize: 26)),
           ),
