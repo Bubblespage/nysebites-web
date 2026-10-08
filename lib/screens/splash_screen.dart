@@ -38,9 +38,11 @@ class _SplashScreenState extends State<SplashScreen> {
               child: ClipOval(
                 child: Image.asset(
                   'assets/images/nysebites_logo.png',
+                  width: 150,
+                  height: 150,
+                  cacheWidth: 150,
+                  cacheHeight: 150,
                   fit: BoxFit.contain,
-                  cacheWidth: 300,
-                  cacheHeight: 300,
                 ),
               ),
             ),

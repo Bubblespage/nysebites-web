@@ -80,6 +80,10 @@ class MobileNavDrawer extends StatelessWidget {
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/nysebites_logo.png',
+                          width: 48,
+                          height: 48,
+                          cacheWidth: 150,
+                          cacheHeight: 150,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) =>
                               const Icon(Icons.cookie, color: AppColors.textDarkBerry),

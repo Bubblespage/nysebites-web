@@ -257,9 +257,11 @@ class _AuthModalState extends State<AuthModal>
         borderRadius: BorderRadius.circular(28),
         child: Image.asset(
           'assets/images/nysebites_logo.png',
-          fit: BoxFit.cover,
+          width: 60,
+          height: 60,
           cacheWidth: 150,
           cacheHeight: 150,
+          fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => const Center(
             child: Text('🧁', style: TextStyle(fontSize: 26)),
           ),
