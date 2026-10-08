@@ -162,15 +162,15 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                           ),
                           const SizedBox(width: 12),
                           RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                                 children: [
                                   TextSpan(
                                     text: 'Nyse ',
                                     style: TextStyle(
                                       fontFamily: 'serif',
-                                      fontSize: 22,
+                                      fontSize: isMobile ? 18 : 22,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFFB52424), // Brighter red to match logo circle
+                                      color: const Color(0xFFB52424), // Brighter red to match logo circle
                                       letterSpacing: -0.5,
                                     ),
                                   ),
@@ -178,7 +178,7 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                                     text: 'Bites',
                                     style: TextStyle(
                                       fontFamily: 'serif',
-                                      fontSize: 22,
+                                      fontSize: isMobile ? 18 : 22,
                                       fontWeight: FontWeight.w900,
                                       color: AppColors.textDarkBerry, // Second tone
                                       letterSpacing: -0.5,
