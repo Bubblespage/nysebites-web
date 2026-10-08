@@ -148,6 +148,8 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                                   'assets/images/nysebites_logo.png',
                                   width: 44,
                                   height: 44,
+                                  cacheWidth: 150,
+                                  cacheHeight: 150,
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) => const Icon(
                                     Icons.cookie,
@@ -159,9 +161,8 @@ class _AppBarHeaderState extends State<AppBarHeader> with SingleTickerProviderSt
                             ),
                           ),
                           const SizedBox(width: 12),
-                          if (!isMobile)
-                            RichText(
-                              text: const TextSpan(
+                          RichText(
+                            text: const TextSpan(
                                 children: [
                                   TextSpan(
                                     text: 'Nyse ',

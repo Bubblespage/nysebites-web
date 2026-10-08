@@ -89,6 +89,8 @@ class Footer extends StatelessWidget {
                     'assets/images/nysebites_logo.png',
                     width: 68,
                     height: 68,
+                    cacheWidth: 200,
+                    cacheHeight: 200,
                     fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Container(
                     width: 68,
@@ -475,6 +477,8 @@ class Footer extends StatelessWidget {
                                   'assets/images/nysebites_logo.png',
                                   width: 40,
                                   height: 40,
+                                  cacheWidth: 120,
+                                  cacheHeight: 120,
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) => const Icon(
                                     Icons.cookie_outlined,

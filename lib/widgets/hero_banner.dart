@@ -78,7 +78,7 @@ class HeroBanner extends StatelessWidget {
     return Padding(
       padding: isMobile
           ? const EdgeInsets.all(20.0)
-          : const EdgeInsets.only(top: 48.0, bottom: 64.0, left: 64.0, right: 64.0),
+          : const EdgeInsets.only(top: 100.0, bottom: 64.0, left: 64.0, right: 64.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: isMobile ? MainAxisAlignment.center : MainAxisAlignment.start,
